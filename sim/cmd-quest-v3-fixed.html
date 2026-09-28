@@ -1,0 +1,2463 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CMD QUEST v2 — Интерактивный тренажёр</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* ═ DAY THEME (default) ═ */
+  --c-bg:       #eef1f6;
+  --c-panel:    #ffffff;
+  --c-chrome:   #e3e7ee;
+  --c-border:   #d3d9e2;
+  --c-border2:  #b9c1cf;
+  --c-green:    #0f9d58;
+  --c-green2:   #0b7a44;
+  --c-amber:    #b8790a;
+  --c-red:      #d93025;
+  --c-blue:     #1a73e8;
+  --c-purple:   #7c4dff;
+  --c-text:     #1b2430;
+  --c-dim:      #8a94a6;
+  --c-dim2:     #5f6b7c;
+  --c-glow:     rgba(15,157,88,0.10);
+  --c-mission-glow: rgba(15,157,88,0.05);
+  --c-search:   #f3f5f8;
+  --c-ok:       #0d8a63;
+  --c-mission-text: #445064;
+  --c-url-text: #33445a;
+  --c-card-url: #35618a;
+  --c-card-body: #51617a;
+  --c-code-text: #0b7a44;
+  --c-code-bg:  rgba(15,157,88,0.08);
+  --c-path-text: #3a5a86;
+}
+html[data-theme="night"] {
+  /* ═ NIGHT THEME (original look) ═ */
+  --c-bg:       #0e0f11;
+  --c-panel:    #13151a;
+  --c-chrome:   #0a0b0d;
+  --c-border:   #1e2128;
+  --c-border2:  #252a34;
+  --c-green:    #3dffa0;
+  --c-green2:   #1a7a4a;
+  --c-amber:    #ffb830;
+  --c-red:      #ff4f5e;
+  --c-blue:     #4dabf7;
+  --c-purple:   #b084f5;
+  --c-text:     #d0d8e8;
+  --c-dim:      #4a5568;
+  --c-dim2:     #6b7280;
+  --c-glow:     rgba(61,255,160,0.12);
+  --c-mission-glow: rgba(61,255,160,0.03);
+  --c-search:   #12141c;
+  --c-ok:       #6effc4;
+  --c-mission-text: #a0b4c8;
+  --c-url-text: #8899bb;
+  --c-card-url: #2a4a6a;
+  --c-card-body: #7a8fa8;
+  --c-code-text: #a0ffcc;
+  --c-code-bg:  rgba(61,255,160,0.07);
+  --c-path-text: #8899cc;
+}
+/* Elements below are always frozen to the night palette on purpose
+   (achievement toast + completion screen keep their dramatic dark look
+   regardless of day/night toggle) */
+#ach-toast, #end-screen {
+  --c-bg:       #0e0f11;
+  --c-panel:    #13151a;
+  --c-border:   #1e2128;
+  --c-border2:  #252a34;
+  --c-green:    #3dffa0;
+  --c-green2:   #1a7a4a;
+  --c-amber:    #ffb830;
+  --c-red:      #ff4f5e;
+  --c-blue:     #4dabf7;
+  --c-purple:   #b084f5;
+  --c-text:     #d0d8e8;
+  --c-dim:      #4a5568;
+  --c-dim2:     #6b7280;
+  --c-glow:     rgba(61,255,160,0.12);
+  --c-search:   #12141c;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;}
+body{
+  background:var(--c-bg);
+  color:var(--c-text);
+  font-family:'JetBrains Mono',monospace;
+  display:flex;
+  flex-direction:column;
+  font-size:13px;
+}
+
+/* ══ HEADER ══ */
+#header{
+  height:40px;
+  background:var(--c-chrome);
+  border-bottom:1px solid var(--c-border);
+  display:flex;
+  align-items:center;
+  padding:0 16px;
+  gap:12px;
+  flex-shrink:0;
+  position:relative;
+}
+#logo{
+  font-family:'Rajdhani',sans-serif;
+  font-size:17px;
+  font-weight:700;
+  color:var(--c-green);
+  letter-spacing:3px;
+  text-shadow:0 0 14px rgba(61,255,160,0.5);
+  white-space:nowrap;
+}
+.hdr-sep{color:var(--c-border2);margin:0 4px;}
+#scenario-title{
+  font-size:11px;
+  color:var(--c-dim2);
+  letter-spacing:0.5px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:340px;
+}
+#hdr-right{
+  margin-left:auto;
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+.hdr-stat{
+  display:flex;
+  align-items:center;
+  gap:5px;
+  font-size:11px;
+}
+.hdr-stat-label{color:var(--c-dim);}
+.hdr-stat-val{color:var(--c-green);font-weight:600;}
+#progress-wrap{
+  width:120px;
+  height:3px;
+  background:var(--c-border2);
+  border-radius:2px;
+  overflow:hidden;
+}
+#progress-fill{
+  height:100%;
+  background:linear-gradient(90deg,var(--c-green2),var(--c-green));
+  width:0%;
+  transition:width .5s ease;
+  box-shadow:0 0 6px var(--c-green);
+}
+#phase-tag{
+  font-size:10px;
+  padding:2px 8px;
+  border:1px solid var(--c-green2);
+  color:var(--c-green2);
+  letter-spacing:1.5px;
+  white-space:nowrap;
+}
+#theme-toggle{
+  width:24px;height:24px;
+  background:var(--c-border);
+  border:none;cursor:pointer;
+  color:var(--c-dim2);
+  font-size:12px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:3px;
+  transition:background .15s,color .15s;
+  flex-shrink:0;
+}
+#theme-toggle:hover{background:var(--c-border2);color:var(--c-text);}
+
+/* ══ BODY ══ */
+#workspace{
+  display:flex;
+  flex:1;
+  overflow:hidden;
+}
+
+/* ══ TERMINAL SIDE ══ */
+#term-side{
+  width:52%;
+  display:flex;
+  flex-direction:column;
+  border-right:1px solid var(--c-border);
+  position:relative;
+}
+/* CRT scanlines */
+#term-side::after{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:repeating-linear-gradient(
+    0deg,transparent,transparent 3px,
+    rgba(0,0,0,0.04) 3px,rgba(0,0,0,0.04) 4px
+  );
+  pointer-events:none;
+  z-index:5;
+}
+
+/* window chrome */
+#term-chrome{
+  height:30px;
+  background:var(--c-chrome);
+  border-bottom:1px solid var(--c-border);
+  display:flex;
+  align-items:center;
+  padding:0 12px;
+  gap:7px;
+  flex-shrink:0;
+  position:relative;
+  z-index:6;
+}
+.wdot{width:11px;height:11px;border-radius:50%;}
+.wd-r{background:#ff5f56;}
+.wd-y{background:#ffbd2e;}
+.wd-g{background:#27c93f;}
+#term-path{
+  margin-left:10px;
+  font-size:11px;
+  color:var(--c-dim);
+  letter-spacing:.3px;
+}
+
+/* output */
+#term-out{
+  flex:1;
+  overflow-y:auto;
+  padding:14px 18px;
+  line-height:1.75;
+  position:relative;
+  z-index:6;
+}
+#term-out::-webkit-scrollbar{width:4px;}
+#term-out::-webkit-scrollbar-track{background:transparent;}
+#term-out::-webkit-scrollbar-thumb{background:var(--c-border2);}
+
+.tl{white-space:pre-wrap;word-break:break-all;}
+.tl-cmd{color:var(--c-green);}
+.tl-out{color:var(--c-text);}
+.tl-err{color:var(--c-red);}
+.tl-sys{color:var(--c-amber);}
+.tl-ok {color:var(--c-ok);}
+.tl-dim{color:var(--c-dim2);}
+.tl-info{color:var(--c-blue);}
+.tl-sp {height:5px;}
+
+/* MISSION TICKER */
+#mission-bar{
+  border-top:1px solid var(--c-border);
+  padding:8px 18px;
+  background:var(--c-mission-glow);
+  position:relative;
+  z-index:6;
+  flex-shrink:0;
+}
+#mission-phase{
+  font-size:9px;
+  color:var(--c-green2);
+  letter-spacing:2px;
+  margin-bottom:3px;
+  font-family:'Rajdhani',sans-serif;
+  font-weight:600;
+}
+#mission-text{
+  font-size:12px;
+  color:var(--c-mission-text);
+  line-height:1.5;
+}
+#mission-text b{color:var(--c-amber);}
+
+/* INPUT */
+#term-input-row{
+  display:flex;
+  align-items:center;
+  padding:8px 18px;
+  border-top:1px solid var(--c-border);
+  background:var(--c-chrome);
+  flex-shrink:0;
+  gap:6px;
+  position:relative;
+  z-index:6;
+}
+#prompt-txt{
+  color:var(--c-green2);
+  font-size:13px;
+  white-space:nowrap;
+  user-select:none;
+}
+#cmd-inp{
+  flex:1;
+  background:transparent;
+  border:none;
+  outline:none;
+  color:var(--c-green);
+  font-family:'JetBrains Mono',monospace;
+  font-size:13px;
+  caret-color:var(--c-green);
+}
+#cmd-inp::placeholder{color:var(--c-dim);font-size:11px;}
+
+/* ══ BROWSER SIDE ══ */
+#browser-side{
+  width:48%;
+  display:flex;
+  flex-direction:column;
+  background:var(--c-panel);
+}
+
+/* browser chrome */
+#browser-chrome{
+  background:var(--c-chrome);
+  border-bottom:1px solid var(--c-border);
+  padding:6px 10px;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  flex-shrink:0;
+}
+.bc-btn{
+  width:24px;height:24px;
+  background:var(--c-border);
+  border:none;cursor:pointer;
+  color:var(--c-dim2);
+  font-size:11px;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s;
+  flex-shrink:0;
+  border-radius:2px;
+}
+.bc-btn:hover{background:var(--c-border2);color:var(--c-text);}
+#browser-url-wrap{
+  flex:1;
+  background:var(--c-search);
+  border:1px solid var(--c-border);
+  border-radius:3px;
+  display:flex;
+  align-items:center;
+  padding:0 8px;
+  gap:6px;
+  transition:border-color .2s;
+}
+#browser-url-wrap:focus-within{border-color:var(--c-blue);}
+.url-lock{color:var(--c-dim);font-size:11px;flex-shrink:0;}
+#browser-url{
+  flex:1;
+  background:transparent;
+  border:none;
+  outline:none;
+  color:var(--c-url-text);
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  padding:4px 0;
+}
+#search-btn{
+  background:var(--c-blue);
+  border:none;
+  color:#0a0b0d;
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  font-weight:700;
+  padding:5px 12px;
+  cursor:pointer;
+  letter-spacing:.5px;
+  transition:opacity .2s;
+  flex-shrink:0;
+  border-radius:2px;
+}
+#search-btn:hover{opacity:.85;}
+
+/* browser tabs */
+#browser-tabs{
+  display:flex;
+  background:var(--c-chrome);
+  border-bottom:1px solid var(--c-border);
+  padding:0 10px;
+  gap:2px;
+  flex-shrink:0;
+}
+.btab{
+  font-size:10px;
+  padding:5px 12px;
+  color:var(--c-dim);
+  cursor:pointer;
+  border-bottom:2px solid transparent;
+  transition:all .15s;
+  letter-spacing:.3px;
+  white-space:nowrap;
+}
+.btab.active{color:var(--c-blue);border-bottom-color:var(--c-blue);}
+.btab:hover:not(.active){color:var(--c-text);}
+
+/* browser body */
+#browser-body{
+  flex:1;
+  overflow-y:auto;
+  padding:16px;
+  font-size:12px;
+}
+#browser-body::-webkit-scrollbar{width:4px;}
+#browser-body::-webkit-scrollbar-thumb{background:var(--c-border2);}
+
+/* search homepage */
+.search-home{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:30px 20px;
+  gap:8px;
+}
+.sh-logo{
+  font-family:'Rajdhani',sans-serif;
+  font-size:28px;
+  font-weight:700;
+  color:var(--c-blue);
+  letter-spacing:4px;
+  margin-bottom:8px;
+}
+.sh-hint{
+  color:var(--c-dim2);
+  font-size:11px;
+  text-align:center;
+  max-width:260px;
+  line-height:1.6;
+}
+.sh-tags{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  justify-content:center;
+  margin-top:8px;
+}
+.sh-tag{
+  background:var(--c-border);
+  color:var(--c-dim2);
+  font-size:10px;
+  padding:3px 8px;
+  border-radius:2px;
+  cursor:pointer;
+  transition:all .2s;
+  border:1px solid var(--c-border2);
+}
+.sh-tag:hover{color:var(--c-blue);border-color:var(--c-blue);}
+
+/* search results */
+.sr-meta{
+  font-size:10px;
+  color:var(--c-dim);
+  margin-bottom:12px;
+  letter-spacing:.5px;
+}
+.sr-meta span{color:var(--c-amber);}
+.sr-card{
+  background:var(--c-search);
+  border:1px solid var(--c-border);
+  border-radius:3px;
+  padding:12px 14px;
+  margin-bottom:10px;
+}
+.sr-card-title{
+  color:var(--c-blue);
+  font-size:12px;
+  margin-bottom:3px;
+  text-decoration:underline;
+  text-underline-offset:2px;
+}
+.sr-card-url{
+  color:var(--c-card-url);
+  font-size:10px;
+  margin-bottom:6px;
+}
+.sr-card-body{
+  color:var(--c-card-body);
+  font-size:11px;
+  line-height:1.65;
+}
+.sr-card-body code{
+  color:var(--c-code-text);
+  background:var(--c-code-bg);
+  padding:1px 5px;
+  border-radius:2px;
+  font-family:'JetBrains Mono',monospace;
+}
+.sr-card-body b{color:var(--c-amber);}
+.sr-card-body .path{
+  color:var(--c-path-text);
+  font-size:10px;
+  margin-top:5px;
+  display:block;
+}
+
+/* loading state */
+.search-loading{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  color:var(--c-dim2);
+  font-size:12px;
+  padding:24px 0;
+}
+.dot-pulse span{
+  display:inline-block;
+  width:5px;height:5px;
+  background:var(--c-blue);
+  border-radius:50%;
+  animation:pulse .9s ease-in-out infinite;
+  margin:0 2px;
+}
+.dot-pulse span:nth-child(2){animation-delay:.15s;}
+.dot-pulse span:nth-child(3){animation-delay:.3s;}
+@keyframes pulse{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+
+/* error state */
+.search-error{
+  color:var(--c-red);
+  font-size:11px;
+  padding:16px 0;
+  line-height:1.6;
+}
+
+/* info panel tab */
+.info-section{
+  border:1px solid var(--c-border);
+  background:var(--c-search);
+  border-radius:3px;
+  margin-bottom:10px;
+  overflow:hidden;
+}
+.info-section-head{
+  padding:8px 12px;
+  background:rgba(255,255,255,0.02);
+  border-bottom:1px solid var(--c-border);
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.info-section-icon{font-size:14px;}
+.info-section-title{
+  font-family:'Rajdhani',sans-serif;
+  font-size:13px;
+  font-weight:600;
+  color:var(--c-text);
+  letter-spacing:.5px;
+}
+.info-section-body{
+  padding:10px 12px;
+  color:var(--c-card-body);
+  font-size:11px;
+  line-height:1.7;
+}
+.info-section-body code{
+  color:var(--c-code-text);
+  background:var(--c-code-bg);
+  padding:1px 5px;
+  border-radius:2px;
+  font-family:'JetBrains Mono',monospace;
+}
+.phase-track{margin-bottom:4px;}
+.pt-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:5px 8px;
+  margin-bottom:2px;
+  font-size:10px;
+  border-radius:2px;
+  transition:background .2s;
+}
+.pt-row.active{background:rgba(61,255,160,0.05);}
+.pt-row.done{opacity:.45;}
+.pt-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--c-border2);flex-shrink:0;
+}
+.pt-row.active .pt-dot{background:var(--c-green);box-shadow:0 0 5px var(--c-green);}
+.pt-row.done .pt-dot{background:var(--c-green2);}
+.pt-name{flex:1;color:var(--c-dim2);}
+.pt-row.active .pt-name{color:var(--c-text);}
+.pt-prog{color:var(--c-dim);font-size:9px;}
+
+/* achievement */
+#ach-toast{
+  position:fixed;
+  top:48px;right:16px;
+  background:linear-gradient(135deg,#0d1a12,#111a14);
+  border:1px solid var(--c-green);
+  border-left:3px solid var(--c-green);
+  padding:10px 14px;
+  min-width:200px;
+  max-width:240px;
+  transform:translateX(280px);
+  transition:transform .4s cubic-bezier(.16,1,.3,1);
+  z-index:999;
+  box-shadow:0 4px 20px rgba(0,0,0,.5),0 0 15px rgba(61,255,160,.1);
+}
+#ach-toast.show{transform:translateX(0);}
+.ach-badge{font-size:9px;color:var(--c-amber);letter-spacing:2px;font-family:'Rajdhani',sans-serif;font-weight:700;margin-bottom:3px;}
+.ach-msg{font-size:12px;color:var(--c-green);}
+
+/* wrong command shake */
+@keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-4px);}75%{transform:translateX(4px);}}
+.shake{animation:shake .25s ease;}
+
+/* correct flash */
+@keyframes rowflash{0%{background:rgba(61,255,160,.08);}100%{background:transparent;}}
+.correct-flash{animation:rowflash .5s ease;}
+
+/* ── LIVE SCORE in header ── */
+#score-wrap{
+  display:flex;align-items:center;gap:6px;
+  padding:2px 10px;border:1px solid var(--c-border2);border-radius:2px;
+}
+#score-lbl{font-size:10px;color:var(--c-dim);letter-spacing:1px;}
+#score-val{
+  font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;
+  color:var(--c-green);transition:color .4s;
+  min-width:28px;text-align:right;
+}
+
+/* ── END SCREEN v3 ── */
+#end-screen{
+  display:none;position:fixed;inset:0;
+  background:rgba(6,7,9,.97);z-index:200;
+  overflow-y:auto;font-family:'JetBrains Mono',monospace;
+}
+#end-screen.show{display:block;}
+.end-wrap{
+  max-width:700px;margin:0 auto;padding:32px 24px 48px;
+  display:flex;flex-direction:column;align-items:center;gap:16px;
+}
+.end-ascii{
+  color:var(--c-green);font-size:11px;text-align:center;line-height:1.2;
+  text-shadow:0 0 16px var(--c-green);font-family:'JetBrains Mono',monospace;
+}
+.end-title-row{text-align:center;}
+.end-title{
+  font-family:'Rajdhani',sans-serif;font-size:26px;font-weight:700;
+  color:var(--c-green);letter-spacing:4px;text-shadow:0 0 20px var(--c-green);
+}
+.end-sub{color:var(--c-dim2);font-size:11px;letter-spacing:1.5px;margin-top:4px;}
+
+/* Score circle */
+.score-ring-wrap{position:relative;width:140px;height:140px;flex-shrink:0;}
+.score-ring-wrap svg{position:absolute;inset:0;}
+.score-center{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:2px;
+}
+.score-num{
+  font-family:'Rajdhani',sans-serif;font-size:36px;font-weight:700;
+  color:var(--c-green);line-height:1;
+}
+.score-of100{font-size:11px;color:var(--c-dim);}
+
+/* Grade badge */
+.grade-badge{
+  padding:6px 20px;border-radius:2px;
+  font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;
+  letter-spacing:3px;border:2px solid;
+}
+.grade-5{color:#3dffa0;border-color:#3dffa0;background:rgba(61,255,160,.08);text-shadow:0 0 12px #3dffa0;}
+.grade-4{color:#4dabf7;border-color:#4dabf7;background:rgba(77,171,247,.08);}
+.grade-3{color:#ffb830;border-color:#ffb830;background:rgba(255,184,48,.08);}
+.grade-2{color:#ff4f5e;border-color:#ff4f5e;background:rgba(255,79,94,.08);}
+
+/* Breakdown panel */
+.breakdown-panel{
+  width:100%;background:var(--c-search);border:1px solid var(--c-border);
+  border-radius:3px;overflow:hidden;
+}
+.bp-head{
+  padding:8px 14px;background:rgba(255,255,255,.02);
+  border-bottom:1px solid var(--c-border);
+  font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;
+  color:var(--c-text);letter-spacing:.5px;display:flex;align-items:center;gap:8px;
+}
+.bp-body{padding:12px 14px;}
+.bp-row{
+  display:flex;align-items:center;gap:10px;
+  padding:6px 8px;margin-bottom:3px;border-radius:2px;
+  background:rgba(255,255,255,.015);font-size:11px;
+}
+.bp-icon{width:20px;text-align:center;flex-shrink:0;}
+.bp-label{flex:1;color:var(--c-dim2);}
+.bp-val{font-weight:600;white-space:nowrap;}
+.bp-bar-wrap{width:100px;height:4px;background:var(--c-border);border-radius:2px;overflow:hidden;flex-shrink:0;}
+.bp-bar{height:100%;border-radius:2px;transition:width 1s ease;}
+
+/* Phase grade table */
+.phase-tbl{width:100%;border-collapse:collapse;font-size:11px;}
+.phase-tbl th{
+  text-align:left;padding:5px 8px;color:var(--c-dim);
+  border-bottom:1px solid var(--c-border);letter-spacing:.5px;font-weight:400;
+}
+.phase-tbl td{padding:5px 8px;border-bottom:1px solid rgba(255,255,255,.03);}
+.phase-tbl tr:last-child td{border-bottom:none;}
+.td-phase{color:var(--c-text);}
+.td-weight{color:var(--c-dim2);text-align:right;}
+.td-errors{color:var(--c-red);text-align:right;}
+.td-score{font-weight:600;text-align:right;}
+
+/* Scale legend */
+.scale-row{
+  display:flex;gap:8px;width:100%;flex-wrap:wrap;justify-content:center;
+}
+.scale-item{
+  display:flex;align-items:center;gap:6px;
+  padding:4px 10px;border:1px solid var(--c-border);border-radius:2px;
+  font-size:10px;color:var(--c-dim2);
+}
+.scale-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+
+.end-restart-btn{
+  background:transparent;border:1px solid var(--c-green);color:var(--c-green);
+  font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:600;
+  padding:8px 32px;letter-spacing:2px;cursor:pointer;transition:all .3s;
+}
+.end-restart-btn:hover{background:rgba(61,255,160,.1);text-shadow:0 0 8px var(--c-green);}
+
+/* Error weight indicator in terminal */
+.err-weight{
+  display:inline-block;padding:1px 6px;margin-left:6px;
+  font-size:10px;border-radius:2px;vertical-align:middle;
+}
+.ew-high{background:rgba(255,79,94,.15);color:#ff4f5e;border:1px solid rgba(255,79,94,.3);}
+.ew-med {background:rgba(255,184,48,.12);color:#ffb830;border:1px solid rgba(255,184,48,.25);}
+.ew-low {background:rgba(77,171,247,.1); color:#4dabf7; border:1px solid rgba(77,171,247,.2);}
+
+/* live penalty ticker */
+.penalty-flash{animation:penaltyPulse .6s ease;}
+@keyframes penaltyPulse{0%{color:var(--c-red);}100%{color:var(--c-green);}}
+
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="header">
+  <div id="logo">⬛ CMDQUEST</div>
+  <span class="hdr-sep">│</span>
+  <div style="font-size:9px;color:var(--c-green2);letter-spacing:1px;white-space:nowrap">v3</div>
+  <div id="scenario-title">Сценарий: Нет интернета и нет доступа к сетевому диску</div>
+  <div id="hdr-right">
+    <div class="hdr-stat"><span class="hdr-stat-label">ШАГ</span><span class="hdr-stat-val" id="h-step">0/47</span></div>
+    <div id="progress-wrap"><div id="progress-fill"></div></div>
+    <div id="score-wrap">
+      <span class="score-lbl" id="score-lbl">БАЛЛ</span>
+      <span id="score-val">100</span>
+    </div>
+    <div id="phase-tag">ФАЗА 1</div>
+    <button id="theme-toggle" title="Переключить день/ночь" onclick="toggleTheme()">🌙</button>
+  </div>
+</div>
+
+<!-- WORKSPACE -->
+<div id="workspace">
+
+  <!-- TERMINAL -->
+  <div id="term-side">
+    <div id="term-chrome">
+      <div class="wdot wd-r"></div>
+      <div class="wdot wd-y"></div>
+      <div class="wdot wd-g"></div>
+      <span id="term-path">C:\Windows\System32\cmd.exe</span>
+    </div>
+    <div id="term-out"></div>
+    <div id="mission-bar">
+      <div id="mission-phase">● ЗАДАНИЕ</div>
+      <div id="mission-text">Загрузка...</div>
+    </div>
+    <div id="term-input-row">
+      <span id="prompt-txt">C:\Users\Student&gt;</span>
+      <input id="cmd-inp" type="text" autocomplete="off" autocorrect="off" spellcheck="false"
+             placeholder="введите команду...">
+    </div>
+  </div>
+
+  <!-- BROWSER -->
+  <div id="browser-side">
+    <div id="browser-chrome">
+      <button class="bc-btn" id="btn-back" title="Назад">◀</button>
+      <button class="bc-btn" id="btn-fwd"  title="Вперёд">▶</button>
+      <button class="bc-btn" id="btn-ref"  title="Обновить">↻</button>
+      <div id="browser-url-wrap">
+        <span class="url-lock">🔒</span>
+        <input id="browser-url" type="text" value="about:newtab"
+               placeholder="Поиск или адрес...">
+      </div>
+      <button id="search-btn" onclick="runSearch()">НАЙТИ</button>
+    </div>
+    <div id="browser-tabs">
+      <div class="btab active" data-tab="search" onclick="switchTab('search')">🔍 Поиск</div>
+      <div class="btab" data-tab="info" onclick="switchTab('info')">📋 Прогресс</div>
+    </div>
+    <div id="browser-body"></div>
+  </div>
+</div>
+
+<!-- ACHIEVEMENT -->
+<div id="ach-toast">
+  <div class="ach-badge">🏆 ДОСТИЖЕНИЕ</div>
+  <div class="ach-msg" id="ach-msg"></div>
+</div>
+
+<!-- END SCREEN v3 -->
+<div id="end-screen">
+  <div class="end-wrap">
+    <pre class="end-ascii">
+ ██████╗██╗███████╗████████╗███████╗███╗   ███╗
+██╔════╝╚██╗██╔════╝╚══██╔══╝██╔════╝████╗ ████║
+╚█████╗  ╚═╝███████╗   ██║   █████╗  ██╔████╔██║
+ ╚═══██╗ ██╗╚════██║   ██║   ██╔══╝  ██║╚██╔╝██║
+██████╔╝╚═╝███████║   ██║   ███████╗██║ ╚═╝ ██║
+╚═════╝    ╚══════╝   ╚═╝   ╚══════╝╚═╝     ╚═╝</pre>
+
+    <div class="end-title-row">
+      <div class="end-title">МИССИЯ ВЫПОЛНЕНА</div>
+      <div class="end-sub">Сеть восстановлена · Доступ к диску получен · Итоговая оценка</div>
+    </div>
+
+    <!-- Score ring + grade -->
+    <div style="display:flex;align-items:center;gap:28px;flex-wrap:wrap;justify-content:center">
+      <div class="score-ring-wrap" id="score-ring-wrap">
+        <svg viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="70" cy="70" r="58" fill="none" stroke="#1e2128" stroke-width="10"/>
+          <circle id="score-arc" cx="70" cy="70" r="58" fill="none"
+                  stroke="#3dffa0" stroke-width="10"
+                  stroke-dasharray="364.4" stroke-dashoffset="364.4"
+                  stroke-linecap="round"
+                  transform="rotate(-90 70 70)"
+                  style="transition:stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1),stroke .4s"/>
+        </svg>
+        <div class="score-center">
+          <div class="score-num" id="end-score-num">0</div>
+          <div class="score-of100">из 100</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-start">
+        <div class="grade-badge" id="end-grade-badge">—</div>
+        <div style="font-size:11px;color:var(--c-dim2);line-height:1.8">
+          Шагов пройдено: <b id="e-steps" style="color:var(--c-green)">47</b> / 47<br>
+          Ошибок допущено: <b id="e-errors" style="color:var(--c-red)">0</b><br>
+          Обращений к поиску: <b id="e-searches" style="color:var(--c-blue)">0</b>
+        </div>
+      </div>
+    </div>
+
+    <!-- Score formula breakdown -->
+    <div class="breakdown-panel" style="width:100%">
+      <div class="bp-head">📊 Формула оценки</div>
+      <div class="bp-body">
+        <div class="bp-row">
+          <span class="bp-icon">⚖️</span>
+          <span class="bp-label">Набрано очков (взвешенные шаги)</span>
+          <span class="bp-val" id="bd-earned" style="color:var(--c-green)">0</span>
+          <div class="bp-bar-wrap"><div class="bp-bar" id="bd-bar-earned" style="background:var(--c-green);width:0%"></div></div>
+        </div>
+        <div class="bp-row">
+          <span class="bp-icon">❌</span>
+          <span class="bp-label">Штраф за ошибки (взвешенный)</span>
+          <span class="bp-val" id="bd-err-pen" style="color:var(--c-red)">−0</span>
+          <div class="bp-bar-wrap"><div class="bp-bar" id="bd-bar-err" style="background:var(--c-red);width:0%"></div></div>
+        </div>
+        <div class="bp-row">
+          <span class="bp-icon">🔍</span>
+          <span class="bp-label">Штраф за поиск (×0.5 за запрос)</span>
+          <span class="bp-val" id="bd-srch-pen" style="color:var(--c-amber)">−0</span>
+          <div class="bp-bar-wrap"><div class="bp-bar" id="bd-bar-srch" style="background:var(--c-amber);width:0%"></div></div>
+        </div>
+        <div style="border-top:1px solid var(--c-border);margin:8px 0;"></div>
+        <div class="bp-row" style="background:rgba(61,255,160,.04)">
+          <span class="bp-icon">🏆</span>
+          <span class="bp-label"><b>Итоговый балл (нормировано 0–100)</b></span>
+          <span class="bp-val" id="bd-final" style="color:var(--c-green);font-size:14px">0</span>
+          <div class="bp-bar-wrap"><div class="bp-bar" id="bd-bar-final" style="background:var(--c-green);width:0%"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase breakdown table -->
+    <div class="breakdown-panel" style="width:100%">
+      <div class="bp-head">📋 Результат по фазам</div>
+      <div class="bp-body" style="padding:8px 6px">
+        <table class="phase-tbl">
+          <thead><tr>
+            <th>Фаза</th>
+            <th style="text-align:right">Вес</th>
+            <th style="text-align:right">Ошибок</th>
+            <th style="text-align:right">Штраф</th>
+            <th style="text-align:right">Очки</th>
+          </tr></thead>
+          <tbody id="phase-tbl-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Scale legend -->
+    <div class="scale-row">
+      <div class="scale-item"><div class="scale-dot" style="background:#ff4f5e"></div>0–49: Неудовл.</div>
+      <div class="scale-item"><div class="scale-dot" style="background:#ffb830"></div>50–69: Удовл.</div>
+      <div class="scale-item"><div class="scale-dot" style="background:#4dabf7"></div>70–84: Хорошо</div>
+      <div class="scale-item"><div class="scale-dot" style="background:#3dffa0"></div>85–100: Отлично</div>
+    </div>
+
+    <button class="end-restart-btn" onclick="location.reload()">[ НАЧАТЬ ЗАНОВО ]</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  QUEST STEPS — no hints given, only task description
+// ═══════════════════════════════════════════════════════════════
+const PHASES = [
+  {n:1, name:"Знакомство с терминалом",  color:"#3dffa0"},
+  {n:2, name:"Диагностика сети",          color:"#4dabf7"},
+  {n:3, name:"Физический уровень",        color:"#ffb830"},
+  {n:4, name:"Восстановление IP",         color:"#ff8844"},
+  {n:5, name:"Проверка и трассировка",    color:"#b084f5"},
+  {n:6, name:"Локальная сеть и диски",    color:"#44ffcc"},
+  {n:7, name:"Файлы и система",           color:"#4dabf7"},
+  {n:8, name:"Службы и завершение",       color:"#3dffa0"},
+];
+
+const Q = [
+// ── 1. Инициализация ──────────────────────────────────────────
+{id:1,ph:1,w:1,errW:0.5,
+ task:"Вы открыли командную строку. Перед вами старый экран с текстом. <b>Очистите экран</b>, чтобы начать работу чисто.",
+ cmd:["cls","clear","cls ","  cls"],
+ out:"[ЭКРАН ОЧИЩЕН]",clearScreen:true,
+ ok:"Экран очищен. Команда CLS (Clear Screen) — первая команда которую знает каждый системный администратор.",
+ ach:"🖥️ Первый шаг сделан!"},
+
+{id:2,ph:1,w:1,errW:0.5,
+ task:"Прежде чем что-то делать — нужно понять <b>на каком компьютере вы работаете</b>. Узнайте сетевое имя машины.",
+ cmd:["hostname","hostname ","echo %computername%"],
+ out:"WORKSTATION-07",
+ ok:"Имя компьютера: WORKSTATION-07. Пригодится для документирования инцидента и обращения к техподдержке."},
+
+{id:3,ph:1,w:1,errW:0.5,
+ task:"Теперь выясните <b>под каким пользователем вы вошли в систему</b>. Это важно для понимания ваших прав.",
+ cmd:["whoami","whoami /user","echo %username%"],
+ out:"workstation-07\\techuser",
+ ok:"Вы работаете как пользователь techuser. Не администратор — некоторые команды потребуют запуска cmd от имени администратора."},
+
+// ── 2. Диагностика сети ───────────────────────────────────────
+{id:4,ph:2,w:3,errW:2,
+ task:"Пользователь жалуется: 'Пропал интернет и не могу зайти на сервер'. <b>Первым делом проверьте текущие сетевые настройки</b> — IP-адрес, маску, шлюз.",
+ cmd:["ipconfig","ipconfig /4","ipconfig | more"],
+ out:`Windows IP Configuration
+
+Ethernet adapter Ethernet:
+   Connection-specific DNS Suffix  . :
+   Link-local IPv6 Address . . . . . : fe80::c3:1a2b:e4f5:8a9b%5
+   IPv4 Address. . . . . . . . . . . : 169.254.88.14
+   Subnet Mask . . . . . . . . . . . : 255.255.0.0
+   Default Gateway . . . . . . . . . :`,
+ ok:"Вы видите IP 169.254.88.14 — это APIPA адрес! Он присваивается автоматически когда DHCP сервер недоступен. Шлюз отсутствует. Нужно копать глубже.",
+ ach:"🔍 Диагностика начата!"},
+
+{id:5,ph:2,w:3,errW:2,
+ task:"IP-адрес подозрительный. Нужно получить <b>полную информацию о всех сетевых адаптерах</b> — включая MAC-адрес, DHCP, DNS. Используйте расширенный ключ к предыдущей команде.",
+ cmd:["ipconfig /all","ipconfig/all","ipconfig -all","ipconfig /all | more"],
+ out:`Windows IP Configuration
+
+   Host Name . . . . . . . . . . . . : WORKSTATION-07
+   Primary Dns Suffix  . . . . . . . :
+   Node Type . . . . . . . . . . . . : Hybrid
+   IP Routing Enabled. . . . . . . . : No
+
+Ethernet adapter Ethernet:
+   Description . . . . . . . . . . . : Intel(R) I219-V
+   Physical Address. . . . . . . . . : B8-AC-6F-11-22-33
+   DHCP Enabled. . . . . . . . . . . : Yes
+   Autoconfiguration Enabled . . . . : Yes
+   IPv4 Address. . . . . . . . . . . : 169.254.88.14
+   DHCP Server . . . . . . . . . . . : (пусто)
+   DNS Servers . . . . . . . . . . . : (пусто)
+   Lease Obtained. . . . . . . . . . :
+   Lease Expires . . . . . . . . . . :`,
+ ok:"DHCP включён, но сервер не ответил (поле пустое). Нет DNS. Нет аренды IP. Это говорит о проблеме на физическом или канальном уровне — скорее всего кабель или коммутатор."},
+
+{id:6,ph:2,w:2,errW:1,
+ task:"Нужно проверить <b>работает ли вообще сетевой стек TCP/IP</b> на этом компьютере. Отправьте тестовый пакет на петлевой адрес.",
+ cmd:["ping 127.0.0.1","ping 127.0.0.1 -n 4","ping 127.0.0.1 -n 2","ping localhost","ping loopback"],
+ out:`Pinging 127.0.0.1 with 32 bytes of data:
+Reply from 127.0.0.1: bytes=32 time<1ms TTL=128
+Reply from 127.0.0.1: bytes=32 time<1ms TTL=128
+Reply from 127.0.0.1: bytes=32 time<1ms TTL=128
+Reply from 127.0.0.1: bytes=32 time<1ms TTL=128
+
+Ping statistics for 127.0.0.1:
+    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss)`,
+ ok:"Loopback пингуется — TCP/IP стек исправен. Проблема не в программной части Windows, а выше: в физическом подключении или настройках адаптера."},
+
+{id:7,ph:2,w:2,errW:1,
+ task:"Проверьте <b>известны ли компьютеру другие устройства в сети</b>. Посмотрите кэш таблицы разрешения адресов.",
+ cmd:["arp -a","arp -A","arp /a","arp"],
+ out:`Interface: 169.254.88.14 --- 0x5
+  Internet Address      Physical Address      Type
+  169.254.255.255       ff-ff-ff-ff-ff-ff     static`,
+ ok:"ARP-таблица практически пустая — только широковещательный адрес. Компьютер не видит ни одного соседнего устройства. Физическая изоляция подтверждена."},
+
+{id:8,ph:2,w:2,errW:1,
+ task:"Посмотрите <b>список активных сетевых соединений и открытых портов</b>. Это покажет есть ли хоть какие-то внешние соединения.",
+ cmd:["netstat -an","netstat -AN","netstat -an | more","netstat","netstat -a"],
+ out:`Active Connections
+
+  Proto  Local Address          Foreign Address        State
+  TCP    0.0.0.0:135            0.0.0.0:0              LISTENING
+  TCP    0.0.0.0:445            0.0.0.0:0              LISTENING
+  TCP    127.0.0.1:49155        0.0.0.0:0              LISTENING
+  UDP    0.0.0.0:68             *:*`,
+ ok:"Нет ни одного ESTABLISHED соединения с внешними адресами. Порт 68 (DHCP клиент) слушает, но никто не ответил. Картина ясная — нет сети."},
+
+// ── 3. Физический уровень ─────────────────────────────────────
+{id:9,ph:3,w:3,errW:2,
+ task:"Пора проверить <b>состояние сетевых интерфейсов на уровне Windows</b> — включены ли они, подключены ли физически. Используйте утилиту netsh для просмотра интерфейсов.",
+ cmd:["netsh interface show interface","netsh int show int","netsh int show interface","netsh interface show int"],
+ out:`Admin State    State          Type             Interface Name
+-------------------------------------------------------------------------
+Enabled        Disconnected   Dedicated        Ethernet
+Enabled        Enabled        Dedicated        Loopback Pseudo-Interface 1`,
+ ok:"Ethernet показывает состояние DISCONNECTED! Адаптер включён (Admin State: Enabled), но нет физического сигнала. Возможно: кабель отошёл, порт коммутатора сломан, или адаптер требует переинициализации.",
+ ach:"⚠️ Найдена причина!"},
+
+{id:10,ph:3,w:2,errW:1,
+ task:"Проверьте <b>текущую конфигурацию IP для интерфейса Ethernet</b> через netsh — DHCP включён? Какой адрес?",
+ cmd:["netsh interface ip show config","netsh int ip show config","netsh interface ipv4 show config"],
+ out:`Configuration for interface "Ethernet"
+    DHCP enabled:                         Yes
+    IP Address:                           169.254.88.14
+    SubnetMask:                           255.255.0.0
+    InterfaceMetric:                      25
+    DNS servers configured through DHCP:  none
+    Register with which suffix:           Primary only`,
+ ok:"DHCP включён, IP получен автоматически (APIPA). DNS пустой. Всё указывает на одно: нужно восстановить физическое соединение и принудительно включить адаптер."},
+
+{id:11,ph:3,w:3,errW:2,
+ task:"Попробуйте <b>принудительно включить сетевой адаптер Ethernet</b> через командную строку. Иногда адаптер зависает в отключённом состоянии.",
+ cmd:["netsh interface set interface ethernet enable","netsh int set int ethernet enable","netsh interface set interface \"ethernet\" enable","netsh int set interface ethernet enable"],
+ out:`Ok.`,
+ ok:"Команда выполнена. Windows отправила сигнал на включение адаптера. Теперь нужно проверить изменилось ли состояние.",
+ ach:"🔌 Адаптер активирован!"},
+
+{id:12,ph:3,w:2,errW:1,
+ task:"<b>Проверьте состояние интерфейсов ещё раз</b>. Изменился ли статус Ethernet после включения?",
+ cmd:["netsh interface show interface","netsh int show int","netsh int show interface"],
+ out:`Admin State    State          Type             Interface Name
+-------------------------------------------------------------------------
+Enabled        Connected      Dedicated        Ethernet
+Enabled        Enabled        Dedicated        Loopback Pseudo-Interface 1`,
+ ok:"Статус сменился на CONNECTED! Физическое соединение восстановлено. Теперь нужно получить нормальный IP от DHCP сервера.",
+ ach:"✅ Соединение установлено!"},
+
+// ── 4. Восстановление IP ──────────────────────────────────────
+{id:13,ph:4,w:3,errW:2,
+ task:"Соединение есть, но IP всё ещё старый (APIPA). <b>Освободите текущий DHCP-адрес</b> — скажите системе что старый IP больше не нужен.",
+ cmd:["ipconfig /release","ipconfig /release *","ipconfig/release"],
+ out:`Windows IP Configuration
+
+Ethernet adapter Ethernet:
+   Connection-specific DNS Suffix  . :
+   IPv4 Address. . . . . . . . . . . : 0.0.0.0
+   Subnet Mask . . . . . . . . . . . : 0.0.0.0
+   Default Gateway . . . . . . . . . :`,
+ ok:"IP-адрес освобождён. Адаптер теперь без адреса (0.0.0.0). Можно запрашивать новый у DHCP сервера."},
+
+{id:14,ph:4,w:3,errW:2,
+ task:"Теперь <b>запросите новый IP у DHCP сервера</b>. Это заставит Windows отправить DHCP Discover и получить настройки сети.",
+ cmd:["ipconfig /renew","ipconfig /renew *","ipconfig/renew"],
+ out:`Windows IP Configuration
+
+Ethernet adapter Ethernet:
+   Connection-specific DNS Suffix  . : corp.local
+   IPv4 Address. . . . . . . . . . . : 192.168.10.47
+   Subnet Mask . . . . . . . . . . . : 255.255.255.0
+   Default Gateway . . . . . . . . . : 192.168.10.1`,
+ ok:"Отлично! IP получен от DHCP: 192.168.10.47. Появился шлюз (192.168.10.1) и DNS-суффикс домена corp.local. Сеть должна заработать!",
+ ach:"🎉 IP получен от DHCP!"},
+
+{id:15,ph:4,w:2,errW:1,
+ task:"<b>Очистите кэш DNS</b> — старые записи могут мешать разрешению имён в новой сети.",
+ cmd:["ipconfig /flushdns","ipconfig/flushdns"],
+ out:`Windows IP Configuration
+Successfully flushed the DNS Resolver Cache.`,
+ ok:"DNS кэш очищен. Теперь все запросы к именам пойдут напрямую к DNS серверу, без устаревших записей."},
+
+{id:16,ph:4,w:2,errW:1,
+ task:"Сбросьте <b>каталог Winsock</b> (интерфейс Windows для работы с сетевыми протоколами) — это может понадобиться если были проблемы с TCP/IP стеком.",
+ cmd:["netsh winsock reset","netsh winsock reset catalog","netsh int ip reset","netsh winsock reset all"],
+ out:`Successfully reset the Winsock Catalog.
+You must restart the computer in order to complete the reset.
+
+(В симуляторе перезагрузка не требуется — продолжаем)`,
+ ok:"Winsock сброшен. В реальной ситуации потребуется перезагрузка. Winsock — это интерфейс Windows для работы с сетевыми протоколами."},
+
+// ── 5. Проверка и трассировка ─────────────────────────────────
+{id:17,ph:5,w:3,errW:2,
+ task:"Проверьте <b>доступен ли основной шлюз</b>. Это первый узел на пути в интернет — если он не пингуется, дальше всё бессмысленно.",
+ cmd:["ping 192.168.10.1","ping 192.168.10.1 -n 4","ping 192.168.10.1 -n 2","ping 192.168.10.1 -t"],
+ out:`Pinging 192.168.10.1 with 32 bytes of data:
+Reply from 192.168.10.1: bytes=32 time=1ms TTL=64
+Reply from 192.168.10.1: bytes=32 time=1ms TTL=64
+Reply from 192.168.10.1: bytes=32 time=2ms TTL=64
+Reply from 192.168.10.1: bytes=32 time=1ms TTL=64
+
+Ping statistics for 192.168.10.1:
+    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss)`,
+ ok:"Шлюз отвечает! 0% потерь, время отклика 1-2мс — отличный результат для локальной сети."},
+
+{id:18,ph:5,w:3,errW:2,
+ task:"Проверьте <b>доступность DNS сервера Google 8.8.8.8</b> — это подтвердит что интернет работает.",
+ cmd:["ping 8.8.8.8","ping 8.8.8.8 -n 2","ping 8.8.8.8 -n 4","ping 4.4.4.4","ping 1.1.1.1"],
+ out:`Pinging 8.8.8.8 with 32 bytes of data:
+Reply from 8.8.8.8: bytes=32 time=14ms TTL=118
+Reply from 8.8.8.8: bytes=32 time=15ms TTL=118
+Reply from 8.8.8.8: bytes=32 time=14ms TTL=118
+Reply from 8.8.8.8: bytes=32 time=14ms TTL=118
+
+Ping statistics for 8.8.8.8:
+    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss)`,
+ ok:"Интернет работает! 8.8.8.8 отвечает за ~14мс — нормальная задержка.",
+ ach:"🌐 Интернет восстановлен!"},
+
+{id:19,ph:5,w:2,errW:1,
+ task:"Проверьте <b>работает ли DNS разрешение имён</b>. Узнайте IP-адрес домена ya.ru через DNS запрос.",
+ cmd:["nslookup ya.ru","nslookup ya.ru 8.8.8.8","nslookup google.com","nslookup ya.ru 192.168.10.1"],
+ out:`Server:  dns.corp.local
+Address:  192.168.10.1
+
+Non-authoritative answer:
+Name:    ya.ru
+Addresses:  213.180.204.11
+            87.250.250.242`,
+ ok:"DNS работает! Сервер corp.local (корпоративный) успешно разрешил ya.ru в IP-адреса. DNS суффикс домена активен."},
+
+{id:20,ph:5,w:2,errW:1,
+ task:"Выполните <b>трассировку маршрута до 8.8.8.8</b> — это покажет путь пакета через все промежуточные узлы.",
+ cmd:["tracert 8.8.8.8","tracert -d 8.8.8.8","tracert google.com","tracert ya.ru","tracert 8.8.8.8 -d"],
+ out:`Tracing route to dns.google [8.8.8.8]
+over a maximum of 30 hops:
+
+  1     1 ms     1 ms     1 ms  192.168.10.1
+  2     8 ms     8 ms     9 ms  10.100.0.1
+  3    13 ms    13 ms    12 ms  195.34.53.17
+  4    15 ms    14 ms    15 ms  8.8.8.8
+
+Trace complete.`,
+ ok:"Маршрут: наш шлюз → роутер провайдера → магистраль → Google DNS. 4 хопа, всё отлично. TRACERT незаменим при поиске где именно обрывается связь."},
+
+{id:21,ph:5,w:2,errW:1,
+ task:"Посмотрите <b>актуальную таблицу маршрутизации</b>. Убедитесь что есть маршрут по умолчанию через шлюз.",
+ cmd:["route print","route print -4","route print | more","netstat -r"],
+ out:`===========================================================================
+IPv4 Route Table
+===========================================================================
+Active Routes:
+Network Destination    Netmask          Gateway       Interface  Metric
+          0.0.0.0      0.0.0.0      192.168.10.1  192.168.10.47      25
+        127.0.0.0      255.0.0.0         On-link       127.0.0.1     331
+      192.168.10.0  255.255.255.0         On-link   192.168.10.47      25
+  192.168.10.47   255.255.255.255         On-link   192.168.10.47     281
+        224.0.0.0        240.0.0.0         On-link       127.0.0.1     331
+
+Default Gateway:   192.168.10.1`,
+ ok:"В таблице есть маршрут по умолчанию (0.0.0.0/0) через шлюз 192.168.10.1. Это значит что любой трафик не для локальной сети пойдёт в интернет. Маршрутизация настроена корректно."},
+
+// ── 6. Локальная сеть ─────────────────────────────────────────
+{id:22,ph:6,w:2,errW:1,
+ task:"Теперь нужно найти <b>файловый сервер в локальной сети</b>. Посмотрите какие сетевые ресурсы доступны в домене.",
+ cmd:["net view","net view /all","net view /domain"],
+ out:`Server Name            Remark
+-------------------------------------------------------------------------------
+\\\\FILESERVER01         Корпоративный файловый сервер
+\\\\PRINTSERVER01        Сервер печати
+\\\\DC01                 Контроллер домена
+
+The command completed successfully.`,
+ ok:"Видим серверы в домене. Нас интересует FILESERVER01 — корпоративный файловый сервер. Туда нам и нужно подключиться.",
+ ach:"🏢 Домен найден!"},
+
+{id:23,ph:6,w:2,errW:1,
+ task:"Посмотрите <b>какие именно общие папки (шары) есть на файловом сервере</b> FILESERVER01.",
+ cmd:["net view \\\\fileserver01","net view \\\\FILESERVER01","net view //fileserver01"],
+ out:`Shared resources at \\\\FILESERVER01
+
+Share name   Type   Used as   Comment
+-------------------------------------------------------------------------------
+docs         Disk             Документы отдела
+public       Disk             Общая папка
+software     Disk             Дистрибутивы ПО
+tools        Disk             Системные утилиты
+
+The command completed successfully.`,
+ ok:"На сервере 4 сетевые папки. Нам скорее всего нужна 'docs' — документы отдела. Попробуем подключить её как сетевой диск."},
+
+{id:24,ph:6,w:1,errW:0.5,
+ task:"Проверьте <b>нет ли уже подключённых сетевых дисков</b> на этом компьютере.",
+ cmd:["net use","net use *","net use /persistent:no"],
+ out:`New connections will be remembered.
+
+There are no entries in the list.`,
+ ok:"Список пустой — никаких сетевых дисков не подключено. Подключим нужные вручную."},
+
+{id:25,ph:6,w:3,errW:2,
+ task:"<b>Подключите сетевой диск Z:</b> к папке 'docs' на файловом сервере FILESERVER01.",
+ cmd:["net use z: \\\\fileserver01\\docs","net use z: \\\\FILESERVER01\\docs","net use z: \\\\FILESERVER01\\DOCS","net use z: \\\\fileserver01\\Docs"],
+ out:`The command completed successfully.`,
+ ok:"Диск Z: подключён к \\\\FILESERVER01\\docs. Теперь он доступен как обычный локальный диск.",
+ ach:"💾 Сетевой диск подключён!"},
+
+{id:26,ph:6,w:1,errW:0.5,
+ task:"Убедитесь что диск подключился корректно. <b>Проверьте список всех подключённых сетевых ресурсов.</b>",
+ cmd:["net use","net use *"],
+ out:`New connections will be remembered.
+
+Status       Local     Remote                    Network
+-------------------------------------------------------------------------------
+OK           Z:        \\\\FILESERVER01\\docs     Microsoft Windows Network
+
+The command completed successfully.`,
+ ok:"Статус OK. Диск Z: работает. В реальной системе вы бы уже увидели его в Проводнике."},
+
+{id:27,ph:6,w:2,errW:1,
+ task:"Посмотрите <b>содержимое подключённого сетевого диска</b> Z:",
+ cmd:["dir z:\\","dir z:","dir z:\\ /w","dir z:\\ /b"],
+ out:` Volume in drive Z is docs
+ Volume Serial Number is 3F2A-1B8C
+
+ Directory of Z:\\
+
+28.02.2025  09:15    <DIR>          .
+28.02.2025  09:15    <DIR>          ..
+20.02.2025  14:30    <DIR>          2024_Отчёты
+25.02.2025  16:45    <DIR>          Инструкции
+27.02.2025  11:20    <DIR>          Проекты
+28.02.2025  08:55       84 480      readme.txt
+               1 File(s)         84 480 bytes
+               4 Dir(s)   23 456 780 288 bytes free`,
+ ok:"Видим содержимое сетевого диска. Папки с документами и readme.txt. Доступ к сетевым файлам получен!"},
+
+{id:28,ph:6,w:1,errW:0.5,
+ task:"Перейдите в папку <b>Инструкции</b> на сетевом диске.",
+ cmd:["cd z:\\инструкции","cd z:\\Инструкции","cd z:\\инструкции\\"],
+ out:`Z:\\Инструкции>`,promptChange:"Z:\\Инструкции>",
+ ok:"Вы теперь находитесь в папке Инструкции на сетевом диске. Команда CD (Change Directory) работает одинаково для локальных и сетевых дисков."},
+
+{id:29,ph:6,w:1,errW:0.5,
+ task:"Выведите <b>список файлов в текущей папке</b>.",
+ cmd:["dir","dir /w","dir /b"],
+ out:` Directory of Z:\\Инструкции
+
+28.02.2025  10:00    <DIR>          .
+28.02.2025  10:00    <DIR>          ..
+15.01.2025  09:30       45 056   Настройка_VPN.pdf
+22.01.2025  14:15      102 400   Инструкция_по_сети.docx
+28.02.2025  10:00       18 432   Контакты_IT_отдела.xlsx
+               3 File(s)        165 888 bytes`,
+ ok:"Видим файлы инструкций. Найдём нужный и скопируем на рабочий стол.",
+ ach:"📁 Файлы найдены!"},
+
+// ── 7. Файлы и система ────────────────────────────────────────
+{id:30,ph:7,w:1,errW:0.5,
+ task:"Вернитесь на <b>рабочий стол пользователя</b> на диске C: (вы сейчас на диске Z:). Используйте абсолютный путь и ключ, который переключает текущий диск.",
+ cmd:["cd /d c:\\users\\techuser\\desktop","cd /d c:\\Users\\TechUser\\Desktop","cd /d c:\\Users\\techuser\\Desktop"],
+ out:`C:\\Users\\TechUser\\Desktop>`,promptChange:"C:\\Users\\TechUser\\Desktop>",
+ ok:"Вернулись на рабочий стол. Ключ /D обязателен: обычная команда CD не переключает текущий диск, если вы находитесь на другом диске — без /D вы остались бы на Z:."},
+
+{id:31,ph:7,w:1,errW:0.5,
+ task:"Создайте папку <b>IT_Documents</b> на рабочем столе для хранения скачанных инструкций.",
+ cmd:["mkdir it_documents","mkdir IT_Documents","md IT_Documents","md it_documents","mkdir \"IT_Documents\""],
+ out:``,
+ ok:"Папка IT_Documents создана. MKDIR (Make Directory) — стандартная команда создания директорий."},
+
+{id:32,ph:7,w:2,errW:1,
+ task:"<b>Скопируйте файл инструкции</b> Инструкция_по_сети.docx с сетевого диска в созданную папку.",
+ cmd:["copy z:\\инструкции\\инструкция_по_сети.docx it_documents\\","copy z:\\Инструкции\\Инструкция_по_сети.docx IT_Documents\\","copy \"z:\\инструкции\\инструкция_по_сети.docx\" it_documents\\","copy z:\\инструкции\\инструкция_по_сети.docx it_documents"],
+ out:`        1 file(s) copied.`,
+ ok:"Файл скопирован. Команда COPY: источник → назначение. Обратный слэш в конце пути означает 'в эту папку'.",
+ ach:"📥 Инструкция скачана!"},
+
+{id:33,ph:7,w:1,errW:0.5,
+ task:"Убедитесь что файл на месте. <b>Посмотрите содержимое папки IT_Documents.</b>",
+ cmd:["dir it_documents","dir it_documents\\","DIR IT_Documents","dir IT_Documents\\"],
+ out:` Directory of C:\\Users\\TechUser\\Desktop\\IT_Documents
+
+06.03.2025  10:45    <DIR>          .
+06.03.2025  10:45    <DIR>          ..
+22.01.2025  14:15      102 400   Инструкция_по_сети.docx
+               1 File(s)        102 400 bytes`,
+ ok:"Файл на месте. Теперь проверим общее состояние системы."},
+
+{id:34,ph:7,w:1,errW:0.5,
+ task:"Получите <b>полную системную информацию</b> — версию ОС, процессор, оперативную память, домен.",
+ cmd:["systeminfo","systeminfo | more"],
+ out:`Host Name:                 WORKSTATION-07
+OS Name:                   Microsoft Windows 10 Pro
+OS Version:                10.0.19045 Build 19045
+System Type:               x64-based PC
+Processor(s):              Intel(R) Core(TM) i7-10700 @ 2.90GHz
+Total Physical Memory:     16,384 MB
+Available Physical Memory: 8,892 MB
+Windows Directory:         C:\\Windows
+Boot Device:               \\Device\\HarddiskVolume2
+Domain:                    corp.local
+Logon Server:              \\\\DC01`,
+ ok:"Компьютер в домене corp.local, сервер аутентификации DC01. Windows 10 Pro, 16GB RAM. Всё что нужно для протокола инцидента."},
+
+{id:35,ph:7,w:1,errW:0.5,
+ task:"Посмотрите <b>запущенные процессы</b> — убедитесь что нет лишних зависших программ.",
+ cmd:["tasklist","tasklist /v","tasklist | more"],
+ out:`Image Name                   PID  Session  Mem Usage
+========================= ======  =======  =========
+System Idle Process            0  Services      8 K
+System                         4  Services  1 544 K
+svchost.exe                  876  Services 48 312 K
+explorer.exe                2840  Console  61 220 K
+chrome.exe                  4112  Console 218 440 K
+outlook.exe                 4388  Console  98 760 K
+iexplore.exe                5120  Console  44 032 K
+notepad.exe                 5680  Console   7 892 K`,
+ ok:"Видим список процессов. Notepad открыт — видимо забытый документ. Internet Explorer тоже запущен — устаревший браузер, можно закрыть."},
+
+{id:36,ph:7,w:1,errW:0.5,
+ task:"<b>Принудительно завершите процесс iexplore.exe</b> (Internet Explorer) — он устарел и не нужен.",
+ cmd:["taskkill /im iexplore.exe /f","taskkill /IM iexplore.exe /F","TASKKILL /IM IEXPLORE.EXE /F"],
+ out:`SUCCESS: The process "iexplore.exe" with PID 5120 has been terminated.`,
+ ok:"Internet Explorer закрыт. /IM — указывает имя процесса, /F — принудительное завершение (Force). Без /F процесс может игнорировать команду завершения."},
+
+// ── 8. Службы и завершение ────────────────────────────────────
+{id:37,ph:8,w:2,errW:1,
+ task:"Проверьте <b>статус службы DHCP клиента</b> в Windows. Убедитесь что она работает нормально.",
+ cmd:["sc query dhcp","sc query \"dhcp\"","sc query Dhcp","sc queryex dhcp"],
+ out:`SERVICE_NAME: Dhcp
+        TYPE               : 20  WIN32_SHARE_PROCESS
+        STATE              : 4  RUNNING
+                                (STOPPABLE, NOT_PAUSABLE, ACCEPTS_SHUTDOWN)
+        WIN32_EXIT_CODE    : 0  (0x0)
+        WAIT_HINT          : 0x0`,
+ ok:"DHCP клиент в состоянии RUNNING (4). WIN32_EXIT_CODE 0 означает нет ошибок. SC QUERY — мощный инструмент для диагностики Windows служб."},
+
+{id:38,ph:8,w:1,errW:0.5,
+ task:"Посмотрите <b>список всех запущенных служб</b> Windows. Это полезно при проверке здоровья системы.",
+ cmd:["net start","net start | more","sc query type= all state= active"],
+ out:`These Windows services are started:
+
+   DHCP Client
+   DNS Client
+   Network Location Awareness
+   Remote Procedure Call (RPC)
+   Security Accounts Manager
+   Server
+   Windows Management Instrumentation
+   Windows Update
+   Workstation
+
+The command completed successfully.`,
+ ok:"Все ключевые сетевые службы запущены: DHCP Client, DNS Client, Network Location Awareness. Система здорова."},
+
+{id:39,ph:8,w:3,errW:2,
+ task:"Обновите <b>групповые политики домена</b> — после восстановления сети нужно применить политики контроллера домена.",
+ cmd:["gpupdate /force","gpupdate /force /wait:0","gpupdate","gpupdate /force /sync"],
+ out:`Updating policy...
+
+Computer Policy update has completed successfully.
+User Policy update has completed successfully.`,
+ ok:"Групповые политики применены. GPUPDATE /FORCE обязательна в корпоративной среде — без неё не применятся настройки безопасности, маппинг дисков и другие политики Active Directory.",
+ ach:"🔄 Политики обновлены!"},
+
+{id:40,ph:8,w:2,errW:1,
+ task:"Выполните <b>итоговую проверку сетевых настроек</b>. Подтвердите что всё в порядке.",
+ cmd:["ipconfig","ipconfig /all","ipconfig /4"],
+ out:`Windows IP Configuration
+
+Ethernet adapter Ethernet:
+   Connection-specific DNS Suffix  . : corp.local
+   IPv4 Address. . . . . . . . . . . : 192.168.10.47
+   Subnet Mask . . . . . . . . . . . : 255.255.255.0
+   Default Gateway . . . . . . . . . : 192.168.10.1`,
+ ok:"Финальная проверка: IP корректный (192.168.10.47), шлюз есть, DNS-суффикс домена corp.local — всё идеально настроено."},
+
+{id:41,ph:8,w:1,errW:0.5,
+ task:"Проверьте <b>ARP-таблицу</b> теперь — насколько компьютер 'познакомился' с соседями в сети?",
+ cmd:["arp -a","arp -A"],
+ out:`Interface: 192.168.10.47 --- 0x5
+  Internet Address      Physical Address      Type
+  192.168.10.1          00-1a-2b-3c-4d-5e     dynamic
+  192.168.10.10         b8-27-eb-aa-bb-cc     dynamic
+  192.168.10.20         d4-6a-6a-11-22-33     dynamic
+  192.168.10.255        ff-ff-ff-ff-ff-ff     static`,
+ ok:"ARP таблица заполнена! Компьютер знает шлюз и двух соседей в подсети. Динамические записи добавились автоматически при обмене трафиком."},
+
+{id:42,ph:8,w:2,errW:1,
+ task:"Посмотрите <b>активные сетевые соединения</b>. Теперь должны быть ESTABLISHED соединения.",
+ cmd:["netstat -an","netstat -AN","netstat -an | more","netstat"],
+ out:`Active Connections
+
+  Proto  Local Address          Foreign Address        State
+  TCP    0.0.0.0:135            0.0.0.0:0              LISTENING
+  TCP    192.168.10.47:49305    192.168.10.20:445      ESTABLISHED
+  TCP    192.168.10.47:49401    172.217.16.14:443      ESTABLISHED
+  TCP    192.168.10.47:49512    104.22.19.89:443       ESTABLISHED
+  UDP    0.0.0.0:68             *:*`,
+ ok:"Видим ESTABLISHED соединения! С локальным сервером (:445 — SMB, сетевые диски) и с интернетом (:443 — HTTPS). Сеть полностью функционирует.",
+ ach:"🌐 Сеть полностью активна!"},
+
+{id:43,ph:8,w:1,errW:0.5,
+ task:"Отключите сетевой диск Z: <b>после завершения работы</b> — хорошая практика безопасности.",
+ cmd:["net use z: /delete","net use z:/delete","NET USE Z: /DELETE","net use * /delete /yes"],
+ out:`Z: was deleted successfully.`,
+ ok:"Диск Z: отключён. /DELETE — ключ удаления подключения. В корпоративной среде принято отключать ненужные ресурсы во избежание утечки данных."},
+
+{id:44,ph:8,w:1,errW:0.5,
+ task:"Выполните итоговую <b>проверку сетевых дисков</b> — убедитесь что Z: отключён.",
+ cmd:["net use"],
+ out:`New connections will be remembered.
+
+There are no entries in the list.`,
+ ok:"Список пустой. Все сетевые диски корректно отключены. Рабочее место приведено в порядок."},
+
+{id:45,ph:8,w:1,errW:0.5,
+ task:"Посмотрите <b>версию операционной системы</b> с помощью команды VER.",
+ cmd:["ver","ver "],
+ out:`Microsoft Windows [Version 10.0.19045.3693]`,
+ ok:"Команда VER — быстрый способ узнать версию Windows. 19045 — это номер сборки Windows 10 22H2."},
+
+{id:46,ph:8,w:1,errW:0.5,
+ task:"Посмотрите <b>переменные среды</b> командой SET — там хранятся полезные системные пути и параметры.",
+ cmd:["set","set | more","set path"],
+ out:`COMPUTERNAME=WORKSTATION-07
+HOMEDRIVE=C:
+HOMEPATH=\\Users\\TechUser
+LOGONSERVER=\\\\DC01
+NUMBER_OF_PROCESSORS=8
+OS=Windows_NT
+PATH=C:\\Windows\\system32;C:\\Windows;C:\\Windows\\System32\\Wbem
+PROCESSOR_ARCHITECTURE=AMD64
+SystemDrive=C:
+SystemRoot=C:\\Windows
+TEMP=C:\\Users\\TechUser\\AppData\\Local\\Temp
+USERNAME=TechUser
+USERDOMAIN=CORP
+WINDIR=C:\\Windows`,
+ ok:"Переменные среды — это системные параметры Windows. LOGONSERVER показывает контроллер домена, PATH — пути поиска программ, USERDOMAIN — имя домена."},
+
+{id:47,ph:8,w:2,errW:1,
+ task:"Последний шаг! Запустите <b>финальную диагностику сетевого стека</b>: покажите текущую конфигурацию протокола IP.",
+ cmd:["netsh interface ip show config","netsh int ip show config","netsh interface ipv4 show config"],
+ out:`Configuration for interface "Ethernet"
+    DHCP enabled:                         Yes
+    IP Address:                           192.168.10.47
+    SubnetMask:                           255.255.255.0
+    Default Gateway:                      192.168.10.1
+    InterfaceMetric:                      25
+    DNS servers configured through DHCP:  192.168.10.1
+    Register with which suffix:           Primary only
+    
+    === КВЕСТ ЗАВЕРШЁН · СИСТЕМА ПОЛНОСТЬЮ ВОССТАНОВЛЕНА ===`,
+ ok:"Финальная проверка пройдена! IP корректный, DHCP работает, DNS настроен, шлюз активен. Вы успешно восстановили сетевое подключение и доступ к корпоративным ресурсам через командную строку!",
+ ach:"🏆 КВЕСТ ПРОЙДЕН!"},
+];
+
+// ═══════════════════════════════════════════════════════════════
+//  STATE — v3 Weighted Scoring
+// ═══════════════════════════════════════════════════════════════
+let stepIdx      = 0;
+let errorCount   = 0;   // total wrong attempts
+let searchCount  = 0;   // total searches
+let cmdHistory   = [];
+let histIdx      = -1;
+let promptText   = "C:\\Users\\Student>";
+let activeTab    = 'search';
+let browserHistory   = [];
+let browserFwdStack  = [];
+
+// ── Scoring v3 ──────────────────────────────────────────
+const MAX_WEIGHT  = Q.reduce((s,q) => s + q.w, 0);  // 85
+let earnedWeight  = 0;    // Σ q.w for completed steps
+let penaltyPoints = 0;    // Σ errW per wrong attempt + 0.5 per search
+let phaseErrors   = {};   // {phaseNum: {errCount, penSum}}
+let stepAttempts  = {};   // {stepId: wrongAttempts} for per-step tracking
+
+function calcScore() {
+  const raw = (earnedWeight - penaltyPoints) / MAX_WEIGHT * 100;
+  return Math.max(0, Math.min(100, Math.round(raw)));
+}
+function getGrade(score) {
+  if (score >= 85) return {label:'ОТЛИЧНО',    cls:'grade-5', color:'#3dffa0'};
+  if (score >= 70) return {label:'ХОРОШО',     cls:'grade-4', color:'#4dabf7'};
+  if (score >= 50) return {label:'УДОВЛ.',     cls:'grade-3', color:'#ffb830'};
+  return              {label:'НЕУДОВЛ.',    cls:'grade-2', color:'#ff4f5e'};
+}
+function errWeightLabel(errW) {
+  if (errW >= 2)   return `<span class="err-weight ew-high">−${errW} балла</span>`;
+  if (errW >= 1)   return `<span class="err-weight ew-med">−${errW} балл</span>`;
+  return                  `<span class="err-weight ew-low">−${errW}</span>`;
+}
+
+const $out     = document.getElementById('term-out');
+const $inp     = document.getElementById('cmd-inp');
+const $prompt  = document.getElementById('prompt-txt');
+const $mtext   = document.getElementById('mission-text');
+const $mphase  = document.getElementById('mission-phase');
+const $pfill   = document.getElementById('progress-fill');
+const $hstep   = document.getElementById('h-step');
+const $ptag    = document.getElementById('phase-tag');
+const $bbody   = document.getElementById('browser-body');
+const $burl    = document.getElementById('browser-url');
+
+// ═══════════════════════════════════════════════════════════════
+//  TERMINAL HELPERS
+// ═══════════════════════════════════════════════════════════════
+function tLine(text, cls='tl-out') {
+  const d = document.createElement('div');
+  d.className = 'tl ' + cls;
+  d.textContent = text;
+  $out.appendChild(d);
+  $out.scrollTop = $out.scrollHeight;
+  return d;
+}
+function tHtml(html, cls='tl-out') {
+  const d = document.createElement('div');
+  d.className = 'tl ' + cls;
+  d.innerHTML = html;
+  $out.appendChild(d);
+  $out.scrollTop = $out.scrollHeight;
+  return d;
+}
+function tBlank() {
+  const d = document.createElement('div');
+  d.className = 'tl-sp';
+  $out.appendChild(d);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════════════════════════
+function boot() {
+  const lines = [
+    ["Microsoft Windows [Version 10.0.19045.3693]", "tl-sys"],
+    ["(c) Microsoft Corporation. Все права защищены.", "tl-dim"],
+    ["", "tl-out"],
+    ["╔══════════════════════════════════════════════════════╗", "tl-dim"],
+    ["║        CMD QUEST v3  ·  Тренажёр администратора ║", "tl-sys"],
+    ["╠══════════════════════════════════════════════════════╣", "tl-dim"],
+    ["║ СИТУАЦИЯ: Пользователь звонит в IT-поддержку.    ║", "tl-out"],
+    ["║ 'Пропал интернет и не могу открыть рабочие файлы'║", "tl-out"],
+    ["║ Интернет и сетевой диск недоступны.              ║", "tl-out"],
+    ["║ Ваша задача: восстановить всё через CMD.         ║", "tl-out"],
+    ["╠══════════════════════════════════════════════════════╣", "tl-dim"],
+    ["║ 🔍 Используйте браузер справа для поиска команд ║", "tl-info"],
+    ["║ ❌ Подсказок нет — думайте и ищите!             ║", "tl-info"],
+    ["║ ↑↓ История команд доступна стрелками            ║", "tl-dim"],
+    ["╚══════════════════════════════════════════════════════╝", "tl-dim"],
+    ["", "tl-out"],
+  ];
+  let d = 0;
+  lines.forEach(([t, c], i) => {
+    setTimeout(() => {
+      tLine(t, c);
+      if (i === lines.length - 1) loadStep();
+    }, d);
+    d += 55;
+  });
+  showSearchHome();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  STEP MANAGEMENT
+// ═══════════════════════════════════════════════════════════════
+function loadStep() {
+  if (stepIdx >= Q.length) { showEnd(); return; }
+  const q = Q[stepIdx];
+  const ph = PHASES[q.ph - 1];
+  $mphase.textContent = `● ФАЗА ${q.ph}: ${ph.name.toUpperCase()} · ШАГ ${q.id} из ${Q.length}`;
+  $mtext.innerHTML = q.task;
+  updateHdr();
+  if (activeTab === 'info') renderInfoTab();
+}
+
+function updateHdr() {
+  if (stepIdx > Q.length) return;
+  const q = stepIdx < Q.length ? Q[stepIdx] : Q[Q.length-1];
+  $hstep.textContent = `${stepIdx}/${Q.length}`;
+  $pfill.style.width = Math.max(2, Math.round(stepIdx / Q.length * 100)) + '%';
+  $ptag.textContent  = `ФАЗА ${q.ph}`;
+  // live score
+  const sc = document.getElementById('score-val');
+  if (sc) {
+    const score = calcScore();
+    const g = getGrade(score);
+    sc.textContent = score;
+    sc.style.color = g.color;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  COMMAND INPUT
+// ═══════════════════════════════════════════════════════════════
+$inp.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const v = $inp.value.trim();
+    if (!v) return;
+    cmdHistory.unshift(v);
+    histIdx = -1;
+    execCmd(v);
+    $inp.value = '';
+  }
+  if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (histIdx < cmdHistory.length - 1) { histIdx++; $inp.value = cmdHistory[histIdx]; }
+  }
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    histIdx > 0 ? ($inp.value = cmdHistory[--histIdx]) : (histIdx = -1, $inp.value = '');
+  }
+});
+
+function execCmd(raw) {
+  // echo input
+  tHtml(
+    `<span style="color:var(--c-dim2)">${esc(promptText)}</span>&nbsp;<span class="tl-cmd">${esc(raw)}</span>`
+  );
+
+  if (stepIdx >= Q.length) {
+    tLine("Все задания выполнены. Квест завершён!", "tl-sys");
+    return;
+  }
+
+  const q   = Q[stepIdx];
+  const inp = raw.toLowerCase().replace(/\s+/g,' ').trim();
+  const ok  = q.cmd.some(a => inp === a.toLowerCase().replace(/\s+/g,' ').trim());
+
+  if (ok) {
+    handleOk(q);
+  } else {
+    handleErr(raw, q);
+  }
+}
+
+function handleOk(q) {
+  tBlank();
+
+  if (q.clearScreen) {
+    $out.innerHTML = '';
+  } else {
+    q.out.split('\n').forEach(l => tLine(l, 'tl-out'));
+  }
+
+  tBlank();
+  const fl = tHtml(`<span style="color:#3dffa0">✓</span> <span class="tl-ok">${esc(q.ok)}</span> <span style="font-size:10px;color:var(--c-green2)">[+${q.w} ${q.w===1?'очко':q.w<5?'очка':'очков'}]</span>`);
+  fl.classList.add('correct-flash');
+  tBlank();
+
+  // ── scoring ──
+  earnedWeight += q.w;
+  updateLiveScore();
+
+  if (q.promptChange) {
+    promptText = q.promptChange;
+    $prompt.textContent = promptText;
+    document.getElementById('term-path').textContent = promptText.replace('>','');
+  }
+
+  if (q.ach) showAch(q.ach);
+
+  stepIdx++;
+  updateHdr();
+
+  if (stepIdx >= Q.length) {
+    setTimeout(showEnd, 1200);
+  } else {
+    loadStep();
+  }
+}
+
+function handleErr(raw, q) {
+  tBlank();
+  const row = document.getElementById('term-input-row');
+  row.classList.remove('shake');
+  void row.offsetWidth;
+  row.classList.add('shake');
+
+  tLine(`'${raw}' не является внутренней или внешней командой,`, 'tl-err');
+  tLine("исполняемой программой или пакетным файлом.", 'tl-err');
+  tBlank();
+
+  // ── weighted error penalty ──
+  errorCount++;
+  penaltyPoints += q.errW;
+  stepAttempts[q.id] = (stepAttempts[q.id] || 0) + 1;
+  // track by phase
+  if (!phaseErrors[q.ph]) phaseErrors[q.ph] = {errCount:0, penSum:0};
+  phaseErrors[q.ph].errCount++;
+  phaseErrors[q.ph].penSum += q.errW;
+
+  // Show weighted penalty message
+  const isKeyStep = q.w >= 3;
+  const penMsg = isKeyStep
+    ? `⚠ Ключевой шаг (вес ${q.w}): штраф ${errWeightLabel(q.errW)}. Используйте браузер для поиска команды →`
+    : `↳ Штраф: ${errWeightLabel(q.errW)}. Поищите в браузере справа →`;
+  tHtml(penMsg, 'tl-dim');
+  tBlank();
+
+  updateLiveScore();
+}
+
+function updateLiveScore() {
+  const score = calcScore();
+  const $sv = document.getElementById('score-val');
+  if (!$sv) return;
+  $sv.textContent = score;
+  const g = getGrade(score);
+  $sv.style.color = g.color;
+  $sv.classList.remove('penalty-flash');
+  void $sv.offsetWidth;
+  $sv.classList.add('penalty-flash');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  ACHIEVEMENT TOAST
+// ═══════════════════════════════════════════════════════════════
+function showAch(msg) {
+  const t = document.getElementById('ach-toast');
+  document.getElementById('ach-msg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  BROWSER TABS
+// ═══════════════════════════════════════════════════════════════
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.btab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  if (tab === 'search') showSearchHome();
+  else renderInfoTab();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  BROWSER SEARCH HOME
+// ═══════════════════════════════════════════════════════════════
+function showSearchHome() {
+  $burl.value = 'about:newtab';
+  $bbody.innerHTML = `
+  <div class="search-home">
+    <div class="sh-logo">NEXUS</div>
+    <div style="color:var(--c-dim2);font-size:10px;letter-spacing:2px;margin-bottom:8px;">ПОИСКОВАЯ СИСТЕМА</div>
+    <div class="sh-hint">Задавайте вопросы на русском языке. Например:<br>
+    «как узнать ip адрес windows» или «команда для просмотра сетевых дисков»</div>
+    <div class="sh-tags">
+      <span class="sh-tag" onclick="quickSearch('как проверить ip адрес windows 10')">📶 проверить IP</span>
+      <span class="sh-tag" onclick="quickSearch('сетевые настройки командная строка')">🔧 сетевые настройки</span>
+      <span class="sh-tag" onclick="quickSearch('подключить сетевой диск cmd')">💾 сетевой диск</span>
+      <span class="sh-tag" onclick="quickSearch('параметры сети windows 10')">⚙️ параметры сети</span>
+      <span class="sh-tag" onclick="quickSearch('как открыть свойства сети windows')">🪟 свойства сети</span>
+      <span class="sh-tag" onclick="quickSearch('как включить сетевой адаптер cmd')">🔌 включить адаптер</span>
+      <span class="sh-tag" onclick="quickSearch('ping tracert диагностика сети')">🏓 ping / tracert</span>
+      <span class="sh-tag" onclick="quickSearch('tasklist taskkill управление процессами')">⚡ процессы</span>
+    </div>
+  </div>`;
+}
+
+function quickSearch(q) {
+  $burl.value = q;
+  runSearch();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  ЛОКАЛЬНАЯ БАЗА ЗНАНИЙ — работает без интернета и сервера
+// ═══════════════════════════════════════════════════════════════
+const KB = [
+  // ── ipconfig ──────────────────────────────────────────────────
+  { keys:["ipconfig","ip адрес","ip-адрес","проверить ip","узнать ip","сетевые настройки","ip конфигурация","настройки сети","текущий ip"],
+    title:"IPCONFIG — просмотр IP-адреса и сетевых настроек",
+    url:"docs.microsoft.com/ru/windows-server/administration/windows-commands/ipconfig",
+    body:`Команда <code>ipconfig</code> показывает IP-адрес, маску подсети и шлюз для всех сетевых адаптеров.<br>
+<b>Расширенный вывод</b> (MAC, DHCP, DNS): <code>ipconfig /all</code><br>
+Если видите адрес <b>169.254.x.x</b> — это APIPA (автоматический приватный адрес), означает что DHCP сервер недоступен и нормального соединения нет.<br>
+<b>GUI:</b> Пуск → Параметры → Сеть и Интернет → Состояние → «Просмотр свойств сети»`,
+    path:"CMD → Сетевые команды"
+  },
+  { keys:["ipconfig all","полная информация сеть","mac адрес","dhcp enabled","dns сервер"],
+    title:"IPCONFIG /ALL — полные сведения об адаптерах",
+    url:"support.microsoft.com/ru-ru/windows/ipconfig-all",
+    body:`<code>ipconfig /all</code> выводит расширенную информацию: физический адрес (MAC), включён ли DHCP, адрес DHCP-сервера, DNS-серверы, срок аренды IP-адреса.<br>
+Если <b>DHCP Server</b> пустой — компьютер не получил ответ от сервера (нет кабеля или проблема с коммутатором).<br>
+<b>GUI:</b> Параметры → Сеть и Интернет → Ethernet → щёлкните по соединению → прокрутите вниз до «Свойства»`,
+    path:"CMD → Сетевые команды"
+  },
+  // ── DHCP release/renew ────────────────────────────────────────
+  { keys:["ipconfig release","освободить ip","сбросить ip","dhcp отключить"],
+    title:"IPCONFIG /RELEASE — освободить DHCP адрес",
+    url:"winitpro.ru/index.php/2019/04/ipconfig-release-renew",
+    body:`<code>ipconfig /release</code> — освобождает IP-адрес полученный от DHCP сервера. После выполнения адаптер остаётся без адреса (0.0.0.0).<br>
+Используется перед <code>ipconfig /renew</code> для получения нового адреса.<br>
+<b>Аналог через GUI:</b> Параметры → Сеть и Интернет → Ethernet → Изменить → «Автоматически (DHCP)» → Сохранить`,
+    path:"CMD → DHCP управление"
+  },
+  { keys:["ipconfig renew","обновить ip","получить ip","запросить dhcp","dhcp renew","dhcp обновить"],
+    title:"IPCONFIG /RENEW — запросить новый IP от DHCP",
+    url:"winitpro.ru/index.php/2019/04/ipconfig-release-renew",
+    body:`<code>ipconfig /renew</code> — отправляет DHCP Discover и запрашивает новый IP-адрес у DHCP сервера.<br>
+После успешного выполнения появится корректный IP (например 192.168.x.x), маска, шлюз и DNS.<br>
+Если выдаётся ошибка «unable to contact DHCP server» — нет физического соединения с сетью.<br>
+<b>GUI:</b> Параметры → Сеть и Интернет → Ethernet → Отключить → Включить (пересоединение)`,
+    path:"CMD → DHCP управление"
+  },
+  // ── DNS flush ─────────────────────────────────────────────────
+  { keys:["flushdns","очистить dns","dns кэш","сбросить dns","dns cache"],
+    title:"IPCONFIG /FLUSHDNS — очистить кэш DNS",
+    url:"support.microsoft.com/ru-ru/windows/flush-dns",
+    body:`<code>ipconfig /flushdns</code> — очищает локальный кэш DNS резолвера Windows.<br>
+Нужно выполнять после смены DNS сервера, восстановления сети или при ошибках открытия сайтов.<br>
+<b>GUI аналога нет</b> — только через CMD или PowerShell: <code>Clear-DnsClientCache</code><br>
+После очистки все DNS запросы пойдут напрямую к серверу, без кэша.`,
+    path:"CMD → DNS"
+  },
+  // ── ping ──────────────────────────────────────────────────────
+  { keys:["ping","пинг","проверить соединение","доступность узла","icmp","ping команда"],
+    title:"PING — проверка сетевой доступности узла",
+    url:"docs.microsoft.com/ru/windows-server/administration/windows-commands/ping",
+    body:`<code>ping &lt;адрес&gt;</code> — отправляет ICMP пакеты и измеряет время отклика.<br>
+Примеры: <code>ping 127.0.0.1</code> (петлевой адрес — проверка TCP/IP стека), <code>ping 192.168.1.1</code> (шлюз), <code>ping 8.8.8.8</code> (интернет).<br>
+Ключ <b>-n X</b> задаёт количество пакетов: <code>ping 8.8.8.8 -n 2</code><br>
+100% потерь → узел недоступен. 0% потерь → соединение есть.`,
+    path:"CMD → Диагностика сети"
+  },
+  { keys:["loopback","127.0.0.1","петлевой адрес","tcp ip стек","проверка стека"],
+    title:"Ping 127.0.0.1 — проверка стека TCP/IP",
+    url:"it-handbook.ru/network/loopback",
+    body:`<code>ping 127.0.0.1</code> — пинг петлевого (loopback) адреса. Не зависит от сети — проверяет только программный стек TCP/IP Windows.<br>
+Если 127.0.0.1 <b>не пингуется</b> — серьёзная проблема с TCP/IP стеком, нужен <code>netsh winsock reset</code> и перезагрузка.<br>
+Если пингуется — стек исправен, проблема в физическом соединении или настройках адаптера.`,
+    path:"CMD → Диагностика"
+  },
+  // ── netsh ─────────────────────────────────────────────────────
+  { keys:["netsh","сетевая оболочка","netsh interface","состояние интерфейса","сетевой интерфейс"],
+    title:"NETSH — сетевая оболочка Windows",
+    url:"docs.microsoft.com/ru/windows-server/networking/technologies/netsh/netsh",
+    body:`<code>netsh</code> — мощная утилита настройки сетевых компонентов Windows через CMD.<br>
+Просмотр адаптеров: <code>netsh interface show interface</code><br>
+Включить адаптер: <code>netsh interface set interface "Ethernet" enable</code><br>
+Отключить адаптер: <code>netsh interface set interface "Ethernet" disable</code><br>
+<b>GUI:</b> Параметры → Сеть и Интернет → Изменение параметров адаптера → ПКМ на адаптере → Включить/Отключить`,
+    path:"CMD → Netsh"
+  },
+  { keys:["включить адаптер","отключить адаптер","сетевой адаптер включить","ethernet включить","адаптер disconnected"],
+    title:"Включение сетевого адаптера через CMD",
+    url:"winitpro.ru/index.php/2019/06/enable-disable-network-adapter-cmd",
+    body:`Включить адаптер: <code>netsh interface set interface "Ethernet" enable</code><br>
+Отключить: <code>netsh interface set interface "Ethernet" disable</code><br>
+Проверить состояние: <code>netsh interface show interface</code> — столбец State должен стать <b>Connected</b><br>
+<b>GUI:</b> Параметры → Сеть и Интернет → Изменение параметров адаптера (или Win+R → <code>ncpa.cpl</code>) → ПКМ на адаптере → Включить`,
+    path:"CMD → Netsh → Адаптеры"
+  },
+  { keys:["netsh winsock","winsock reset","сброс winsock","winsock","сброс стека"],
+    title:"NETSH WINSOCK RESET — сброс сетевого стека",
+    url:"support.microsoft.com/ru-ru/windows/winsock-reset",
+    body:`<code>netsh winsock reset</code> — сбрасывает Winsock каталог (интерфейс Windows для работы с сетью) до состояния по умолчанию.<br>
+<code>netsh int ip reset</code> — сбрасывает IP-стек.<br>
+После выполнения <b>обязательно нужна перезагрузка</b> компьютера.<br>
+Применяется при повреждении TCP/IP стека, вирусах, или после некорректного удаления сетевого ПО.`,
+    path:"CMD → Netsh → Winsock"
+  },
+  { keys:["netsh ip show config","конфигурация ip","настройки интерфейса"],
+    title:"NETSH — просмотр конфигурации IP интерфейса",
+    url:"docs.microsoft.com/ru/windows-server/networking/technologies/netsh/netsh-contexts",
+    body:`<code>netsh interface ip show config</code> — выводит подробную конфигурацию IP для каждого адаптера.<br>
+Показывает: включён ли DHCP, текущий IP, маску, шлюз, DNS серверы.<br>
+Полезно для сравнения настроек до и после изменений.<br>
+<b>GUI:</b> Параметры → Сеть и Интернет → Ethernet → соединение → прокрутить до раздела «Свойства»`,
+    path:"CMD → Netsh → IP"
+  },
+  // ── ARP ───────────────────────────────────────────────────────
+  { keys:["arp","arp таблица","mac адрес соседи","arp -a","таблица адресов","разрешение адресов"],
+    title:"ARP -A — таблица разрешения адресов",
+    url:"docs.microsoft.com/ru/windows-server/administration/windows-commands/arp",
+    body:`<code>arp -a</code> — показывает кэш ARP: соответствие IP-адресов → MAC-адресов известных устройств в сети.<br>
+Пустая таблица (только broadcast) означает что компьютер не обменивался трафиком с соседями — признак физической изоляции.<br>
+<code>arp -d</code> — очищает кэш. <code>arp -s &lt;ip&gt; &lt;mac&gt;</code> — добавляет статическую запись.<br>
+<b>GUI аналога нет</b> — только через CMD.`,
+    path:"CMD → Диагностика сети"
+  },
+  // ── NETSTAT ───────────────────────────────────────────────────
+  { keys:["netstat","активные соединения","открытые порты","netstat an","сетевые соединения","tcp соединения"],
+    title:"NETSTAT -AN — активные соединения и порты",
+    url:"docs.microsoft.com/ru/windows-server/administration/windows-commands/netstat",
+    body:`<code>netstat -an</code> — список всех активных TCP/UDP соединений и открытых портов.<br>
+Статусы: <b>LISTENING</b> — порт ждёт подключений, <b>ESTABLISHED</b> — активное соединение, <b>TIME_WAIT</b> — закрывается.<br>
+Если нет ESTABLISHED соединений с внешними IP — интернета нет.<br>
+<code>netstat -ano</code> — добавляет PID процесса. <b>GUI:</b> Диспетчер задач → вкладка «Производительность» → «Открыть монитор ресурсов» → Сеть`,
+    path:"CMD → Диагностика сети"
+  },
+  // ── TRACERT ───────────────────────────────────────────────────
+  { keys:["tracert","трассировка","маршрут пакета","traceroute","hops","узлы маршрута"],
+    title:"TRACERT — трассировка маршрута",
+    url:"docs.microsoft.com/ru/windows-server/administration/windows-commands/tracert",
+    body:`<code>tracert &lt;адрес&gt;</code> — показывает все промежуточные узлы (роутеры) на пути к цели с временем отклика.<br>
+Пример: <code>tracert 8.8.8.8</code> — трассировка до Google DNS.<br>
+Ключ <b>-d</b> отключает DNS разрешение (быстрее): <code>tracert -d 8.8.8.8</code><br>
+Если маршрут обрывается на каком-то хопе (* * *) — именно там проблема.<br>
+<b>GUI аналога нет.</b>`,
+    path:"CMD → Диагностика сети"
+  },
+  // ── ROUTE ─────────────────────────────────────────────────────
+  { keys:["route print","таблица маршрутизации","маршрут по умолчанию","default gateway","шлюз по умолчанию"],
+    title:"ROUTE PRINT — таблица маршрутизации Windows",
+    url:"docs.microsoft.com/ru/windows-server/administration/windows-commands/route_ws2008",
+    body:`<code>route print</code> — выводит таблицу маршрутизации IPv4 и IPv6.<br>
+Строка <b>0.0.0.0 / 0.0.0.0</b> — маршрут по умолчанию (через шлюз). Если её нет — интернет недоступен даже при наличии IP.<br>
+<code>route print -4</code> — только IPv4. <code>route add</code> — добавить маршрут. <code>route delete</code> — удалить.<br>
+<b>GUI:</b> Параметры → Сеть и Интернет → Ethernet → соединение → «Изменить» → раздел IPv4`,
+    path:"CMD → Маршрутизация"
+  },
+  // ── NSLOOKUP ──────────────────────────────────────────────────
+  { keys:["nslookup","dns запрос","разрешение имён","dns проверить","узнать ip домена","dns lookup"],
+    title:"NSLOOKUP — DNS запрос и проверка разрешения имён",
+    url:"docs.microsoft.com/ru/windows-server/administration/windows-commands/nslookup",
+    body:`<code>nslookup &lt;домен&gt;</code> — запрашивает IP-адрес домена у DNS сервера.<br>
+Пример: <code>nslookup ya.ru</code> — узнать IP Яндекса.<br>
+<code>nslookup ya.ru 8.8.8.8</code> — запрос к конкретному DNS серверу (Google).<br>
+Если в ответе написано «can't find» или «server failed» — DNS не работает или сервер недоступен.<br>
+<b>GUI:</b> Параметры → Сеть и Интернет → Ethernet → Изменить → вручную задать DNS`,
+    path:"CMD → DNS"
+  },
+  // ── NET VIEW ──────────────────────────────────────────────────
+  { keys:["net view","сетевые ресурсы","ресурсы домена","серверы домена","общие папки","net view fileserver"],
+    title:"NET VIEW — просмотр серверов и сетевых ресурсов",
+    url:"docs.microsoft.com/ru/windows-server/administration/windows-commands/net-view",
+    body:`<code>net view</code> — показывает список компьютеров (серверов) в домене или рабочей группе.<br>
+<code>net view \\\\SERVERNAME</code> — список общих папок на конкретном сервере.<br>
+<code>net view /all</code> — все доступные ресурсы включая административные шары (C$, IPC$ и т.д.)<br>
+<b>GUI:</b> Проводник → введите в адресную строку <code>\\\\SERVERNAME</code> → Enter`,
+    path:"CMD → Сетевые ресурсы"
+  },
+  // ── NET USE ───────────────────────────────────────────────────
+  { keys:["net use","сетевой диск","подключить диск","отключить диск","map drive","маппинг диска","подключить сетевую папку"],
+    title:"NET USE — подключение сетевого диска",
+    url:"docs.microsoft.com/ru/windows-server/administration/windows-commands/net-use",
+    body:`Подключить диск: <code>net use Z: \\\\SERVERNAME\\sharename</code><br>
+С логином: <code>net use Z: \\\\SERVER\\share /user:DOMAIN\\user password</code><br>
+Отключить: <code>net use Z: /delete</code><br>
+Список подключений: <code>net use</code> (без параметров)<br>
+<b>GUI:</b> Проводник → «Этот компьютер» → на панели «Подключить сетевой диск» или ПКМ → «Подключить сетевой диск»`,
+    path:"CMD → Сетевые диски"
+  },
+  // ── DIR, CD, MKDIR, COPY ──────────────────────────────────────
+  { keys:["dir","список файлов","просмотр папки","содержимое директории","dir команда"],
+    title:"DIR — список файлов и папок",
+    url:"docs.microsoft.com/ru/windows-server/administration/windows-commands/dir",
+    body:`<code>dir</code> — показывает содержимое текущей папки.<br>
+<code>dir C:\\Users\\</code> — содержимое указанной папки.<br>
+Ключи: <b>/w</b> — широкий формат, <b>/b</b> — только имена, <b>/s</b> — включая подпапки, <b>/a</b> — скрытые файлы.<br>
+<b>GUI аналог:</b> открыть папку в Проводнике Windows.`,
+    path:"CMD → Файловая система"
+  },
+  { keys:["cd","смена директории","перейти в папку","change directory","сменить диск"],
+    title:"CD — смена текущей директории",
+    url:"docs.microsoft.com/ru/windows-server/administration/windows-commands/cd",
+    body:`<code>cd &lt;путь&gt;</code> — переход в папку. Пример: <code>cd C:\\Users\\Student\\Desktop</code><br>
+<code>cd ..</code> — на уровень вверх. <code>cd \\</code> — в корень диска.<br>
+Для перехода на другой диск: <code>cd /d Z:\\</code> или просто <code>Z:</code> (Enter).<br>
+<b>GUI:</b> просто открыть нужную папку в Проводнике.`,
+    path:"CMD → Файловая система"
+  },
+  { keys:["mkdir","создать папку","md команда","make directory","новая директория"],
+    title:"MKDIR / MD — создание папки",
+    url:"docs.microsoft.com/ru/windows-server/administration/windows-commands/mkdir",
+    body:`<code>mkdir ИМЯ_ПАПКИ</code> или коротко <code>md ИМЯ_ПАПКИ</code> — создаёт новую папку.<br>
+Создать с подпапками: <code>mkdir C:\\Temp\\Logs\\2025</code><br>
+<b>GUI:</b> ПКМ в Проводнике → Создать → Папку.`,
+    path:"CMD → Файловая система"
+  },
+  { keys:["copy","копировать файл","скопировать","copy команда","xcopy","robocopy"],
+    title:"COPY — копирование файлов",
+    url:"docs.microsoft.com/ru/windows-server/administration/windows-commands/copy",
+    body:`<code>copy &lt;источник&gt; &lt;назначение&gt;</code> — копирует файл.<br>
+Пример: <code>copy Z:\\Docs\\file.docx C:\\Desktop\\</code><br>
+Обратный слэш в конце пути назначения означает «скопировать в папку сохранив имя файла».<br>
+Для копирования с подпапками используйте <code>xcopy /s /e</code> или <code>robocopy</code>.<br>
+<b>GUI:</b> Ctrl+C → Ctrl+V в Проводнике.`,
+    path:"CMD → Файловая система"
+  },
+  // ── TASKLIST / TASKKILL ───────────────────────────────────────
+  { keys:["tasklist","список процессов","запущенные программы","процессы windows","диспетчер задач cmd"],
+    title:"TASKLIST — список запущенных процессов",
+    url:"docs.microsoft.com/ru/windows-server/administration/windows-commands/tasklist",
+    body:`<code>tasklist</code> — выводит все запущенные процессы с PID и потреблением памяти.<br>
+Фильтр по имени: <code>tasklist /fi "imagename eq chrome.exe"</code><br>
+<b>GUI:</b> Ctrl+Shift+Esc — открыть Диспетчер задач → вкладка «Процессы» или «Подробности».`,
+    path:"CMD → Процессы"
+  },
+  { keys:["taskkill","завершить процесс","закрыть программу","убить процесс","kill process"],
+    title:"TASKKILL — принудительное завершение процесса",
+    url:"docs.microsoft.com/ru/windows-server/administration/windows-commands/taskkill",
+    body:`<code>taskkill /im &lt;имя.exe&gt; /f</code> — завершить процесс по имени.<br>
+<code>taskkill /pid &lt;число&gt; /f</code> — завершить по PID.<br>
+Ключ <b>/f</b> — принудительно (Force), без него процесс может проигнорировать команду.<br>
+Пример: <code>taskkill /im notepad.exe /f</code><br>
+<b>GUI:</b> Диспетчер задач → ПКМ на процессе → «Снять задачу».`,
+    path:"CMD → Процессы"
+  },
+  // ── SC / NET START ─────────────────────────────────────────────
+  { keys:["sc query","служба статус","состояние службы","service control","windows service","служба запущена"],
+    title:"SC QUERY — состояние службы Windows",
+    url:"docs.microsoft.com/ru/windows-server/administration/windows-commands/sc-query",
+    body:`<code>sc query &lt;имя_службы&gt;</code> — проверяет состояние службы. Состояния: <b>RUNNING</b> (работает), <b>STOPPED</b> (остановлена), <b>PAUSED</b>.<br>
+Примеры: <code>sc query dhcp</code>, <code>sc query "dns client"</code>, <code>sc query wuauserv</code> (Windows Update)<br>
+Запустить: <code>sc start &lt;служба&gt;</code> или <code>net start &lt;служба&gt;</code><br>
+<b>GUI:</b> Win+R → <code>services.msc</code> → найти службу в списке.`,
+    path:"CMD → Службы Windows"
+  },
+  { keys:["net start","net stop","запуск службы","остановить службу","перезапустить службу","службы net"],
+    title:"NET START / NET STOP — управление службами",
+    url:"docs.microsoft.com/ru/windows-server/administration/windows-commands/net-start",
+    body:`<code>net start</code> (без параметров) — список всех запущенных служб.<br>
+Запустить: <code>net start "DNS Client"</code> (кавычки нужны если в имени есть пробел).<br>
+Остановить: <code>net stop "DNS Client"</code><br>
+Перезапуск — сначала stop, потом start.<br>
+<b>GUI:</b> Win+R → <code>services.msc</code> → ПКМ на службе → Запустить/Остановить/Перезапустить.`,
+    path:"CMD → Службы Windows"
+  },
+  // ── GPUPDATE ──────────────────────────────────────────────────
+  { keys:["gpupdate","групповые политики","gpo","active directory политики","обновить политики"],
+    title:"GPUPDATE /FORCE — обновление групповых политик",
+    url:"docs.microsoft.com/ru/windows-server/administration/windows-commands/gpupdate",
+    body:`<code>gpupdate /force</code> — принудительно применяет все групповые политики домена (Computer и User Policy).<br>
+Необходимо выполнять после восстановления сети в корпоративной среде — без этого не применятся маппинг дисков, политики безопасности, настройки IE и т.д.<br>
+<code>gpupdate /force /wait:0</code> — не ждать завершения.<br>
+<b>GUI аналога нет</b> — только CMD или PowerShell: <code>Invoke-GPUpdate -Force</code>`,
+    path:"CMD → Active Directory"
+  },
+  // ── SYSTEMINFO ────────────────────────────────────────────────
+  { keys:["systeminfo","информация о системе","версия windows","процессор память","os version","домен компьютера"],
+    title:"SYSTEMINFO — полная информация о системе",
+    url:"docs.microsoft.com/ru/windows-server/administration/windows-commands/systeminfo",
+    body:`<code>systeminfo</code> — выводит: имя компьютера, версию ОС, процессор, объём RAM, домен, сервер входа, установленные обновления.<br>
+Поле <b>Domain</b> — показывает к какому домену подключён компьютер.<br>
+Поле <b>Logon Server</b> — контроллер домена который обрабатывал аутентификацию.<br>
+<b>GUI:</b> Параметры → Система → О системе; или Win+Pause/Break.`,
+    path:"CMD → Система"
+  },
+  // ── HOSTNAME / WHOAMI / VER ────────────────────────────────────
+  { keys:["hostname","имя компьютера","узнать имя пк","computer name","сетевое имя"],
+    title:"HOSTNAME — имя компьютера",
+    url:"docs.microsoft.com/ru/windows-server/administration/windows-commands/hostname",
+    body:`<code>hostname</code> — выводит сетевое имя компьютера.<br>
+<b>GUI:</b> Параметры → Система → О системе → «Имя устройства». Или Win+Pause/Break.<br>
+Сменить имя через CMD (требует прав): <code>wmic computersystem where name="%computername%" rename "НОВОЕ_ИМЯ"</code>`,
+    path:"CMD → Система"
+  },
+  { keys:["whoami","текущий пользователь","имя пользователя","кто вошёл","текущий логин"],
+    title:"WHOAMI — имя текущего пользователя",
+    url:"docs.microsoft.com/ru/windows-server/administration/windows-commands/whoami",
+    body:`<code>whoami</code> — показывает DOMAIN\\username текущего пользователя.<br>
+<code>whoami /groups</code> — группы безопасности пользователя.<br>
+<code>whoami /priv</code> — привилегии (права). Позволяет понять запущена ли CMD с правами администратора.<br>
+<b>GUI:</b> Параметры → Учётные записи → Ваши данные.`,
+    path:"CMD → Пользователи"
+  },
+  { keys:["ver","версия windows","windows version","build number","номер сборки"],
+    title:"VER — версия Windows",
+    url:"docs.microsoft.com/ru/windows-server/administration/windows-commands/ver",
+    body:`<code>ver</code> — быстро показывает версию и номер сборки Windows.<br>
+Пример вывода: <code>Microsoft Windows [Version 10.0.19045.3693]</code><br>
+19045 — это Windows 10 22H2. 22000+ — это Windows 11.<br>
+<b>GUI:</b> Win+R → <code>winver</code> → красивое окно с версией ОС.`,
+    path:"CMD → Система"
+  },
+  { keys:["set","переменные среды","environment variables","path windows","системные переменные"],
+    title:"SET — переменные среды Windows",
+    url:"docs.microsoft.com/ru/windows-server/administration/windows-commands/set_1",
+    body:`<code>set</code> — показывает все переменные среды текущего сеанса.<br>
+Важные переменные: <b>%USERNAME%</b> — имя пользователя, <b>%COMPUTERNAME%</b> — имя ПК, <b>%USERPROFILE%</b> — путь к профилю, <b>%PATH%</b> — пути поиска программ, <b>%LOGONSERVER%</b> — контроллер домена.<br>
+<b>GUI:</b> Параметры → Система → О системе → Дополнительные параметры системы → Переменные среды.`,
+    path:"CMD → Система"
+  },
+  // ── ПАРАМЕТРЫ WINDOWS GUI ─────────────────────────────────────
+  { keys:["параметры сети","открыть сетевые параметры","сеть и интернет windows 10","свойства сети","network settings"],
+    title:"Параметры сети Windows 10/11 — где открыть",
+    url:"support.microsoft.com/ru-ru/windows/network-settings-windows-10",
+    body:`<b>Способ 1 (быстрый):</b> ПКМ на значке сети в трее (правый нижний угол) → «Открыть параметры сети и Интернет»<br>
+<b>Способ 2:</b> Пуск → Параметры (шестерёнка) → Сеть и Интернет<br>
+<b>Способ 3 (CMD):</b> <code>start ms-settings:network</code><br>
+<b>Способ 4:</b> Win+R → <code>ncpa.cpl</code> — сразу открывает список адаптеров`,
+    path:"GUI → Параметры сети"
+  },
+  { keys:["свойства адаптера","изменить параметры адаптера","ethernet свойства","сетевые подключения","ncpa.cpl"],
+    title:"Свойства сетевого адаптера — как открыть",
+    url:"support.microsoft.com/ru-ru/windows/network-adapter-properties",
+    body:`<b>CMD:</b> <code>start ncpa.cpl</code> — открывает «Сетевые подключения»<br>
+<b>GUI:</b> Параметры → Сеть и Интернет → Изменение параметров адаптера<br>
+Затем ПКМ на нужном адаптере → <b>Свойства</b> → выбрать «IP версии 4 (TCP/IPv4)» → Свойства<br>
+Здесь можно задать статический IP или переключить на DHCP.`,
+    path:"GUI → Адаптеры"
+  },
+  { keys:["статический ip","задать ip вручную","static ip","ручная настройка ip","ipv4 настроить"],
+    title:"Задать статический IP-адрес Windows 10/11",
+    url:"winitpro.ru/index.php/2019/09/staticnyj-ip-windows",
+    body:`<b>Через CMD (netsh):</b><br>
+<code>netsh interface ip set address "Ethernet" static 192.168.1.100 255.255.255.0 192.168.1.1</code><br>
+<b>Вернуть DHCP:</b> <code>netsh interface ip set address "Ethernet" dhcp</code><br>
+<b>GUI:</b> ncpa.cpl → ПКМ на адаптере → Свойства → IP версии 4 → Свойства → «Использовать следующий IP-адрес»`,
+    path:"Настройка сети → Статический IP"
+  },
+  { keys:["dns настроить","задать dns","изменить dns сервер","dns сервер windows","google dns","8.8.8.8"],
+    title:"Настройка DNS-серверов Windows 10/11",
+    url:"support.microsoft.com/ru-ru/windows/configure-dns",
+    body:`<b>Через CMD:</b> <code>netsh interface ip set dns "Ethernet" static 8.8.8.8</code><br>
+Добавить второй DNS: <code>netsh interface ip add dns "Ethernet" 8.8.4.4 index=2</code><br>
+Вернуть DHCP-DNS: <code>netsh interface ip set dns "Ethernet" dhcp</code><br>
+<b>GUI:</b> ncpa.cpl → ПКМ → Свойства → IP v4 → Свойства → «Использовать следующие адреса DNS»`,
+    path:"Настройка сети → DNS"
+  },
+  { keys:["брандмауэр","firewall windows","открыть брандмауэр","firewall cmd","разрешить программу"],
+    title:"Брандмауэр Windows — управление через CMD",
+    url:"docs.microsoft.com/ru/windows/security/threat-protection/windows-firewall",
+    body:`Открыть GUI: <code>start wf.msc</code> (расширенные настройки) или <code>start firewall.cpl</code><br>
+Включить/выключить через CMD: <code>netsh advfirewall set allprofiles state on</code><br>
+Отключить (осторожно!): <code>netsh advfirewall set allprofiles state off</code><br>
+Проверить статус: <code>netsh advfirewall show allprofiles</code>`,
+    path:"CMD → Безопасность"
+  },
+  { keys:["ping google","доступность интернет","есть ли интернет","проверить интернет","интернет работает"],
+    title:"Как проверить есть ли интернет через CMD",
+    url:"it-handbook.ru/network/check-internet-cmd",
+    body:`Быстрая проверка: <code>ping 8.8.8.8</code> — Google DNS (всегда доступен при наличии интернета)<br>
+Проверка DNS: <code>ping google.com</code> — если нет ответа при работающем 8.8.8.8, проблема с DNS<br>
+<code>ping 8.8.8.8 -n 2</code> — отправить только 2 пакета для быстроты<br>
+100% потерь → нет соединения. 0% потерь → интернет работает.`,
+    path:"CMD → Диагностика"
+  },
+  { keys:["apipa","169.254","автоматический адрес","почему 169","link local","dhcp не работает"],
+    title:"169.254.x.x — что это значит?",
+    url:"support.microsoft.com/ru-ru/windows/apipa-address",
+    body:`Адрес <b>169.254.0.0/16</b> — это APIPA (Automatic Private IP Addressing).<br>
+Windows назначает его <b>автоматически</b> когда DHCP сервер не отвечает в течение ~60 секунд.<br>
+Причины: кабель не подключён, порт коммутатора отключён, DHCP сервер недоступен.<br>
+<b>Решение:</b> проверить физическое подключение → <code>netsh interface show interface</code> → <code>ipconfig /release</code> → <code>ipconfig /renew</code>`,
+    path:"Сеть → Диагностика → APIPA"
+  },
+];
+
+// ── Поиск по базе знаний ────────────────────────────────────────
+function searchKB(query) {
+  const q = query.toLowerCase().trim();
+  const words = q.split(/\s+/);
+
+  const scored = KB.map(item => {
+    let score = 0;
+    // Проверяем ключевые слова
+    item.keys.forEach(kw => {
+      const k = kw.toLowerCase();
+      if (q.includes(k)) score += 10;
+      words.forEach(w => { if (w.length > 2 && k.includes(w)) score += 3; });
+    });
+    // Проверяем заголовок
+    const titleL = item.title.toLowerCase();
+    if (titleL.includes(q)) score += 8;
+    words.forEach(w => { if (w.length > 2 && titleL.includes(w)) score += 2; });
+    // Проверяем тело
+    const bodyL = (item.body + item.path).toLowerCase().replace(/<[^>]+>/g,'');
+    words.forEach(w => { if (w.length > 3 && bodyL.includes(w)) score += 1; });
+    return { item, score };
+  });
+
+  return scored
+    .filter(x => x.score > 0)
+    .sort((a,b) => b.score - a.score)
+    .slice(0,4)
+    .map(x => x.item);
+}
+
+function runSearch() {
+  const query = $burl.value.trim();
+  if (!query || query === 'about:newtab') return;
+
+  searchCount++;
+  penaltyPoints += 0.5;   // −0.5 за каждый поисковый запрос
+  browserHistory.push(query);
+  browserFwdStack = [];
+  updateLiveScore();
+
+  const results = searchKB(query);
+  renderResults(query, results);
+}
+
+function renderResults(query, results) {
+  if (results.length === 0) {
+    $bbody.innerHTML = `
+    <div class="sr-meta">Запрос: <span>${esc(query)}</span></div>
+    <div style="color:var(--c-dim2);font-size:12px;line-height:1.8;padding:10px 0">
+      По запросу <b style="color:var(--c-amber)">${esc(query)}</b> ничего не найдено.<br><br>
+      Попробуйте другие ключевые слова:<br>
+      <span style="color:var(--c-blue);cursor:pointer" onclick="quickSearch('ipconfig сетевые настройки')">→ ipconfig сетевые настройки</span><br>
+      <span style="color:var(--c-blue);cursor:pointer" onclick="quickSearch('подключить сетевой диск')">→ подключить сетевой диск</span><br>
+      <span style="color:var(--c-blue);cursor:pointer" onclick="quickSearch('ping диагностика сети')">→ ping диагностика сети</span><br>
+      <span style="color:var(--c-blue);cursor:pointer" onclick="quickSearch('netsh включить адаптер ethernet')">→ netsh включить адаптер</span>
+    </div>`;
+    return;
+  }
+  let html = `<div class="sr-meta">Найдено: <span>${results.length}</span> по запросу: <span>${esc(query)}</span></div>`;
+  results.forEach(r => {
+    html += `<div class="sr-card">
+      <div class="sr-card-title">${esc(r.title || '')}</div>
+      <div class="sr-card-url">🌐 ${esc(r.url || '')}</div>
+      <div class="sr-card-body">${r.body || ''}
+        ${r.path ? `<span class="path">📂 ${esc(r.path)}</span>` : ''}
+      </div>
+    </div>`;
+  });
+  $bbody.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  INFO TAB — progress tracker
+// ═══════════════════════════════════════════════════════════════
+function renderInfoTab() {
+  const cur  = Q[Math.min(stepIdx, Q.length-1)];
+  const score = calcScore();
+  const grade = getGrade(score);
+  const pct  = Math.round(stepIdx / Q.length * 100);
+
+  let phasesHtml = '<div class="phase-track">';
+  PHASES.forEach(ph => {
+    const phSteps  = Q.filter(q => q.ph === ph.n);
+    const doneN    = Q.filter(q => q.ph === ph.n && Q.indexOf(q) < stepIdx).length;
+    const isActive = cur && cur.ph === ph.n;
+    const isDone   = cur ? cur.ph > ph.n : false;
+    phasesHtml += `<div class="pt-row ${isActive?'active':''} ${isDone?'done':''}">
+      <div class="pt-dot"></div>
+      <div class="pt-name">Ф${ph.n}: ${ph.name}</div>
+      <div class="pt-prog">${isDone ? '✓' : isActive ? `${doneN}/${phSteps.length}` : `0/${phSteps.length}`}</div>
+    </div>`;
+  });
+  phasesHtml += '</div>';
+
+  const errPen  = (Q.reduce((s,q) => s + q.errW*(stepAttempts[q.id]||0), 0)).toFixed(1);
+  const srchPen = (searchCount*0.5).toFixed(1);
+
+  $bbody.innerHTML = `
+  <div class="info-section">
+    <div class="info-section-head"><span class="info-section-icon">🏆</span>
+      <span class="info-section-title">ТЕКУЩИЙ БАЛЛ</span></div>
+    <div class="info-section-body">
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:8px">
+        <div style="font-family:'Rajdhani',sans-serif;font-size:36px;font-weight:700;color:${grade.color};text-shadow:0 0 12px ${grade.color}">${score}</div>
+        <div>
+          <div style="font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:${grade.color}">${grade.label}</div>
+          <div style="font-size:10px;color:var(--c-dim)">из 100 баллов</div>
+        </div>
+      </div>
+      <div style="height:5px;background:var(--c-border);border-radius:3px;overflow:hidden;margin-bottom:10px">
+        <div style="height:100%;width:${score}%;background:${grade.color};transition:width .5s"></div>
+      </div>
+      <div style="font-size:10px;color:var(--c-dim2);line-height:1.9">
+        Набрано: <b style="color:var(--c-green)">+${earnedWeight}</b> из ${MAX_WEIGHT} (шаги)<br>
+        Штраф ошибки: <b style="color:var(--c-red)">−${errPen}</b> (${errorCount} попыток)<br>
+        Штраф поиск: <b style="color:var(--c-amber)">−${srchPen}</b> (${searchCount} запросов)
+      </div>
+    </div>
+  </div>
+
+  <div class="info-section">
+    <div class="info-section-head"><span class="info-section-icon">📊</span>
+      <span class="info-section-title">ПРОГРЕСС</span></div>
+    <div class="info-section-body">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span>Шагов: <b style="color:var(--c-green)">${stepIdx} / ${Q.length}</b></span>
+        <span style="color:var(--c-amber)">${pct}%</span>
+      </div>
+      <div style="height:5px;background:var(--c-border);border-radius:3px;overflow:hidden;margin-bottom:10px">
+        <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--c-green2),var(--c-green));transition:width .5s"></div>
+      </div>
+      ${phasesHtml}
+    </div>
+  </div>
+
+  <div class="info-section">
+    <div class="info-section-head"><span class="info-section-icon">⚖️</span>
+      <span class="info-section-title">ШКАЛА ОЦЕНОК</span></div>
+    <div class="info-section-body" style="font-size:11px;line-height:2">
+      <span style="color:#ff4f5e">■</span> 0–49: Неудовлетворительно<br>
+      <span style="color:#ffb830">■</span> 50–69: Удовлетворительно<br>
+      <span style="color:#4dabf7">■</span> 70–84: Хорошо<br>
+      <span style="color:#3dffa0">■</span> 85–100: Отлично<br>
+      <span style="color:var(--c-dim);font-size:10px">Формула: (∑вес_шагов − штраф_ошибок − штраф_поиска) / ${MAX_WEIGHT} × 100</span>
+    </div>
+  </div>
+
+  <div class="info-section">
+    <div class="info-section-head"><span class="info-section-icon">💡</span>
+      <span class="info-section-title">КАК ПОЛЬЗОВАТЬСЯ</span></div>
+    <div class="info-section-body">
+      • Читайте задание внизу терминала<br>
+      • Если не знаете команду — <b>ищите в браузере</b><br>
+      • Стрелки ↑↓ — история команд<br>
+      • Каждый поиск −0.5 балла<br>
+      • Ошибка на ключевом шаге −2 балла<br>
+      • Ошибка на обычном шаге −1 балл<br>
+      • Ошибка на второст. шаге −0.5 балла
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  BROWSER NAVIGATION
+// ═══════════════════════════════════════════════════════════════
+// Re-renders a previously-searched query WITHOUT charging a new search
+// penalty and WITHOUT touching the history/forward stacks — used only
+// for cached back/forward navigation, unlike runSearch() which is for
+// genuinely new searches.
+function displayCachedQuery(query) {
+  $burl.value = query;
+  if (!query || query === 'about:newtab') { showSearchHome(); return; }
+  const results = searchKB(query);
+  renderResults(query, results);
+}
+
+document.getElementById('btn-back').onclick = () => {
+  if (browserHistory.length > 1) {
+    browserFwdStack.push(browserHistory.pop());
+    const prev = browserHistory[browserHistory.length - 1];
+    if (prev) { displayCachedQuery(prev); }
+    else showSearchHome();
+  }
+};
+document.getElementById('btn-fwd').onclick = () => {
+  if (browserFwdStack.length > 0) {
+    const next = browserFwdStack.pop();
+    browserHistory.push(next);
+    displayCachedQuery(next);
+  }
+};
+document.getElementById('btn-ref').onclick = () => {
+  if ($burl.value !== 'about:newtab') runSearch();
+  else showSearchHome();
+};
+$burl.addEventListener('keydown', e => { if (e.key === 'Enter') runSearch(); });
+
+// ═══════════════════════════════════════════════════════════════
+//  END SCREEN v3
+// ═══════════════════════════════════════════════════════════════
+function showEnd() {
+  const score    = calcScore();
+  const grade    = getGrade(score);
+  const errPen   = Q.reduce((s,q) => s + q.errW * (stepAttempts[q.id]||0), 0);
+  const srchPen  = searchCount * 0.5;
+
+  // Basic stats
+  document.getElementById('e-steps').textContent   = Q.length;
+  document.getElementById('e-errors').textContent  = errorCount;
+  document.getElementById('e-searches').textContent = searchCount;
+
+  // Score number
+  const $num = document.getElementById('end-score-num');
+  $num.textContent = score;
+  $num.style.color  = grade.color;
+
+  // Grade badge
+  const $badge = document.getElementById('end-grade-badge');
+  $badge.textContent  = grade.label;
+  $badge.className    = `grade-badge ${grade.cls}`;
+
+  // SVG arc animation (circumference = 2π×58 ≈ 364.4)
+  const arc = document.getElementById('score-arc');
+  const offset = 364.4 * (1 - score / 100);
+  arc.style.stroke = grade.color;
+  setTimeout(() => { arc.style.strokeDashoffset = offset; }, 200);
+
+  // Breakdown rows
+  const barEarned = Math.round(earnedWeight / MAX_WEIGHT * 100);
+  const barErr    = Math.min(100, Math.round(errPen / MAX_WEIGHT * 100));
+  const barSrch   = Math.min(100, Math.round(srchPen / MAX_WEIGHT * 100));
+
+  document.getElementById('bd-earned').textContent   = `+${earnedWeight.toFixed(1)} / ${MAX_WEIGHT}`;
+  document.getElementById('bd-err-pen').textContent  = `−${errPen.toFixed(1)}`;
+  document.getElementById('bd-srch-pen').textContent = `−${srchPen.toFixed(1)}`;
+  document.getElementById('bd-final').textContent    = `${score} / 100`;
+
+  setTimeout(() => {
+    document.getElementById('bd-bar-earned').style.width = barEarned + '%';
+    document.getElementById('bd-bar-err').style.width    = barErr + '%';
+    document.getElementById('bd-bar-srch').style.width   = barSrch + '%';
+    document.getElementById('bd-bar-final').style.background = grade.color;
+    document.getElementById('bd-bar-final').style.width  = score + '%';
+  }, 400);
+
+  // Phase table
+  const tbody = document.getElementById('phase-tbl-body');
+  tbody.innerHTML = '';
+  PHASES.forEach(ph => {
+    const phSteps  = Q.filter(q => q.ph === ph.n);
+    const phWeight = phSteps.reduce((s,q) => s + q.w, 0);
+    const phErr    = phaseErrors[ph.n] ? phaseErrors[ph.n].errCount : 0;
+    const phPen    = phaseErrors[ph.n] ? phaseErrors[ph.n].penSum   : 0;
+    const phEarned = phSteps.reduce((s,q) => s + q.w, 0); // all done (completed full quest)
+    const phScore  = Math.max(0, phEarned - phPen).toFixed(1);
+    const scoreColor = phPen === 0 ? '#3dffa0' : phPen < phWeight * 0.3 ? '#4dabf7' : '#ffb830';
+    tbody.innerHTML += `<tr>
+      <td class="td-phase">Ф${ph.n}: ${ph.name}</td>
+      <td class="td-weight">${phWeight}</td>
+      <td class="td-errors" style="color:${phErr>0?'#ff4f5e':'#4a5568'}">${phErr}</td>
+      <td class="td-errors" style="color:${phPen>0?'#ffb830':'#4a5568'}">−${phPen.toFixed(1)}</td>
+      <td class="td-score" style="color:${scoreColor}">${phScore}</td>
+    </tr>`;
+  });
+  // Totals row
+  const totalEarned = earnedWeight.toFixed(1);
+  const totalPen = (errPen + srchPen).toFixed(1);
+  tbody.innerHTML += `<tr style="border-top:1px solid var(--c-border2)">
+    <td class="td-phase" style="color:var(--c-text);font-weight:600">ИТОГО</td>
+    <td class="td-weight" style="color:var(--c-text)">${MAX_WEIGHT}</td>
+    <td class="td-errors" style="color:#ff4f5e">${errorCount}</td>
+    <td class="td-errors" style="color:#ffb830">−${totalPen}</td>
+    <td class="td-score" style="color:${grade.color};font-size:13px">${score}</td>
+  </tr>`;
+
+  document.getElementById('end-screen').classList.add('show');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════════════════
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  DAY / NIGHT THEME TOGGLE — defaults to DAY on every load
+// ═══════════════════════════════════════════════════════════════
+function toggleTheme() {
+  const html = document.documentElement;
+  const btn  = document.getElementById('theme-toggle');
+  const isNight = html.getAttribute('data-theme') === 'night';
+  if (isNight) {
+    html.removeAttribute('data-theme');
+    btn.textContent = '🌙';
+    btn.title = 'Включить ночную тему';
+  } else {
+    html.setAttribute('data-theme', 'night');
+    btn.textContent = '☀️';
+    btn.title = 'Включить дневную тему';
+  }
+}
+
+// Keep terminal focused
+document.addEventListener('click', e => {
+  if (!document.getElementById('browser-side').contains(e.target)) $inp.focus();
+});
+
+// ═══════════════════════════════════════════════════════════════
+//  START
+// ═══════════════════════════════════════════════════════════════
+boot();
+updateHdr();
+</script>
+</body>
+</html>

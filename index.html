@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NetAcademy — Симуляторы сетевых технологий</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Exo+2:wght@300;400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep:   #0a0f1a;
+    --bg-panel:  #0d1525;
+    --bg-card:   #111b2e;
+    --border:    #1e3a5f;
+    --text-main: #c8d4e8;
+    --text-dim:  #5a7a9e;
+    --green:     #00d68f;
+    --yellow:    #ffaa00;
+    --red:       #ff5a5a;
+    --purple:    #b388ff;
+    --cyan:      #00bcd4;
+    --accent:    #4fc3f7;
+    --orange:    #ff9800;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+
+  body {
+    background: #0a0f1a;
+    color: #c8d4e8;
+    font-family: 'Exo 2', sans-serif;
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+  body::before {
+    content:''; position:fixed; inset:0;
+    background-image:
+      linear-gradient(rgba(79,195,247,.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(79,195,247,.03) 1px, transparent 1px);
+    background-size:50px 50px;
+    pointer-events:none; z-index:0;
+  }
+
+  /* NAV */
+  .topnav {
+    position:sticky; top:0; z-index:100;
+    background:rgba(10,15,26,.96); backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--border);
+    display:flex; align-items:center; gap:6px;
+    padding:0 24px; height:52px; overflow-x:auto;
+  }
+  .topnav::-webkit-scrollbar{height:0;}
+  .nav-logo{font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--accent);white-space:nowrap;margin-right:20px;letter-spacing:1px;}
+  .nav-link{white-space:nowrap;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);text-decoration:none;padding:6px 12px;border-radius:3px;transition:color .2s,background .2s;font-family:'Exo 2',sans-serif;font-weight:600;}
+  .nav-link:hover{color:var(--text-main);background:rgba(79,195,247,.08);}
+
+  /* HERO */
+  .hero{position:relative;z-index:2;text-align:center;padding:80px 20px 60px;}
+  .hero-glow{position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse at center,rgba(79,195,247,.18) 0%,transparent 70%);pointer-events:none;}
+  .hero-badge{display:inline-block;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:3px;color:var(--cyan);border:1px solid rgba(0,188,212,.4);padding:5px 16px;margin-bottom:24px;background:rgba(0,188,212,.06);text-transform:uppercase;}
+  .hero h1{font-family:'Rajdhani',sans-serif;font-size:clamp(42px,7vw,88px);font-weight:700;line-height:.95;letter-spacing:-1px;}
+  .hero h1 .line1{display:block;background:linear-gradient(135deg,#fff 0%,#81d4fa 50%,#4fc3f7 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  .hero h1 .line2{display:block;background:linear-gradient(135deg,#4fc3f7,#00bcd4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  .hero-sub{margin-top:20px;font-size:16px;color:var(--text-dim);max-width:580px;margin-inline:auto;line-height:1.7;}
+  .stats-row{display:flex;justify-content:center;gap:40px;flex-wrap:wrap;margin-top:44px;}
+  .stat-num{font-family:'Share Tech Mono',monospace;font-size:36px;color:var(--accent);display:block;text-shadow:0 0 18px rgba(79,195,247,.4);}
+  .stat-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);}
+
+  /* CONTENT */
+  .content{position:relative;z-index:2;max-width:1280px;margin:0 auto;padding:0 24px 80px;}
+
+  /* MODULE */
+  .module{margin-bottom:56px;}
+  .module-header{display:flex;align-items:center;gap:14px;margin-bottom:24px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+  .module-num{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text-dim);letter-spacing:2px;}
+  .module-title{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;}
+  .module-badge{margin-left:auto;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;padding:3px 10px;border-radius:2px;text-transform:uppercase;}
+
+  .mod-green .module-title{color:var(--green);}
+  .mod-green .module-badge{background:rgba(0,214,143,.1);color:var(--green);border:1px solid rgba(0,214,143,.3);}
+  .mod-green .module-header{border-color:rgba(0,214,143,.2);}
+  .mod-yellow .module-title{color:var(--yellow);}
+  .mod-yellow .module-badge{background:rgba(255,170,0,.1);color:var(--yellow);border:1px solid rgba(255,170,0,.3);}
+  .mod-yellow .module-header{border-color:rgba(255,170,0,.2);}
+  .mod-red .module-title{color:var(--red);}
+  .mod-red .module-badge{background:rgba(255,90,90,.1);color:var(--red);border:1px solid rgba(255,90,90,.3);}
+  .mod-red .module-header{border-color:rgba(255,90,90,.2);}
+  .mod-purple .module-title{color:var(--purple);}
+  .mod-purple .module-badge{background:rgba(179,136,255,.1);color:var(--purple);border:1px solid rgba(179,136,255,.3);}
+  .mod-purple .module-header{border-color:rgba(179,136,255,.2);}
+  .mod-orange .module-title{color:var(--orange);}
+  .mod-orange .module-badge{background:rgba(255,152,0,.1);color:var(--orange);border:1px solid rgba(255,152,0,.3);}
+  .mod-orange .module-header{border-color:rgba(255,152,0,.2);}
+  .mod-cyan .module-title{color:var(--cyan);}
+  .mod-cyan .module-badge{background:rgba(0,188,212,.1);color:var(--cyan);border:1px solid rgba(0,188,212,.3);}
+  .mod-cyan .module-header{border-color:rgba(0,188,212,.2);}
+
+  /* CARDS */
+  .sim-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
+  .sim-card{background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:20px;cursor:pointer;transition:border-color .25s,transform .25s,box-shadow .25s;position:relative;overflow:hidden;}
+  .sim-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--card-accent,var(--accent)),transparent);opacity:0;transition:opacity .25s;}
+  .sim-card:hover{border-color:var(--card-accent,var(--accent));transform:translateY(-3px);box-shadow:0 8px 32px rgba(0,0,0,.4);}
+  .sim-card:hover::before{opacity:1;}
+  .sim-card.color-green{--card-accent:var(--green);}
+  .sim-card.color-yellow{--card-accent:var(--yellow);}
+  .sim-card.color-red{--card-accent:var(--red);}
+  .sim-card.color-purple{--card-accent:var(--purple);}
+  .sim-card.color-orange{--card-accent:var(--orange);}
+  .sim-card.color-cyan{--card-accent:var(--cyan);}
+  .sim-card.loading{opacity:.5;pointer-events:none;}
+  .sim-card.missing{border-color:rgba(255,90,90,.5);}
+  .card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .card-num{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--card-accent,var(--accent));letter-spacing:2px;}
+  .card-diff{font-size:10px;padding:2px 8px;border-radius:2px;font-family:'Share Tech Mono',monospace;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:var(--text-dim);}
+  .card-title{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:var(--text-main);margin-bottom:8px;line-height:1.2;}
+  .card-desc{font-size:12px;color:var(--text-dim);line-height:1.55;margin-bottom:16px;}
+  .card-footer{display:flex;align-items:center;justify-content:space-between;}
+  .card-steps{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim);letter-spacing:1px;}
+  .card-steps span{color:var(--card-accent,var(--accent));}
+  .card-actions{display:flex;gap:6px;align-items:center;}
+  .card-btn{font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:6px 14px;border:1px solid var(--card-accent,var(--accent));background:rgba(79,195,247,.05);color:var(--card-accent,var(--accent));border-radius:3px;cursor:pointer;transition:background .2s;}
+  .sim-card:hover .card-btn{background:rgba(79,195,247,.12);}
+  .card-btn-alt{padding:6px 10px;letter-spacing:0;font-size:13px;line-height:1;}
+
+  /* SPECIAL MODULE */
+  .special-module-bg{background:linear-gradient(135deg,rgba(179,136,255,.04),rgba(255,152,0,.04));border:1px solid rgba(179,136,255,.1);border-radius:8px;padding:24px;position:relative;overflow:hidden;}
+  .special-module-bg::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--purple),var(--orange),transparent);opacity:.5;}
+  .disclaimer-box{background:rgba(255,152,0,.06);border:1px solid rgba(255,152,0,.2);border-left:3px solid var(--orange);border-radius:4px;padding:14px 16px;margin-bottom:20px;font-size:12px;color:#ffb74d;line-height:1.6;}
+  .disclaimer-box strong{letter-spacing:1px;display:block;margin-bottom:4px;font-family:'Share Tech Mono',monospace;font-size:11px;}
+
+  /* OVERLAY (ошибка / проверка файлов) */
+  #ph-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);backdrop-filter:blur(6px);z-index:9999;align-items:center;justify-content:center;padding:20px;}
+  #ph-overlay.on{display:flex;}
+  .ph-box{background:#0d1525;border:1px solid #1e3a5f;border-radius:8px;width:100%;max-width:560px;padding:40px;text-align:center;position:relative;max-height:86vh;overflow-y:auto;}
+  .ph-close-btn{position:absolute;top:14px;right:14px;width:30px;height:30px;background:rgba(255,255,255,.05);border:1px solid #1e3a5f;border-radius:4px;color:#5a7a9e;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s,color .2s;}
+  .ph-close-btn:hover{background:rgba(255,90,90,.2);color:#ff5a5a;}
+  .ph-ico{font-size:52px;opacity:.2;margin-bottom:16px;}
+  .ph-ttl{font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:3px;color:#5a7a9e;text-transform:uppercase;margin-bottom:12px;}
+  .ph-msg{font-size:13px;color:rgba(90,122,158,.8);line-height:1.8;margin-bottom:20px;}
+  .ph-code{display:block;margin:10px 0;padding:12px 16px;background:rgba(79,195,247,.07);border:1px solid rgba(79,195,247,.2);border-radius:4px;color:#4fc3f7;font-family:'Share Tech Mono',monospace;font-size:11px;line-height:1.8;text-align:left;white-space:pre-wrap;word-break:break-all;}
+  .ph-tag{display:inline-block;font-family:'Share Tech Mono',monospace;font-size:11px;background:rgba(79,195,247,.05);border:1px solid rgba(79,195,247,.15);color:#4fc3f7;padding:7px 16px;border-radius:3px;letter-spacing:1px;}
+  .chk-row{display:flex;align-items:center;gap:10px;text-align:left;padding:7px 12px;margin:5px 0;border-radius:3px;font-family:'Share Tech Mono',monospace;font-size:11px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);}
+  .chk-row.ok{border-color:rgba(0,214,143,.35);color:#00d68f;}
+  .chk-row.err{border-color:rgba(255,90,90,.35);color:#ff5a5a;}
+  .chk-row .n{flex:0 0 46px;opacity:.7;}
+  .chk-row .p{flex:1;word-break:break-all;}
+
+  /* SCAN LINE */
+  .scan-line{position:fixed;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(79,195,247,.6),transparent);z-index:1;animation:scanDown 8s linear infinite;pointer-events:none;}
+  @keyframes scanDown{0%{top:0;opacity:0}5%{opacity:1}95%{opacity:1}100%{top:100vh;opacity:0}}
+
+  footer{position:relative;z-index:2;text-align:center;padding:40px 20px;border-top:1px solid var(--border);font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text-dim);letter-spacing:2px;}
+  .foot-tools{margin-top:14px;display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap;letter-spacing:1px;}
+  .foot-tag{border:1px solid #1e3a5f;border-radius:3px;padding:5px 12px;color:#4fc3f7;}
+  .foot-btn{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1px;background:rgba(79,195,247,.06);border:1px solid rgba(79,195,247,.3);color:#4fc3f7;padding:5px 14px;border-radius:3px;cursor:pointer;transition:background .2s;}
+  .foot-btn:hover{background:rgba(79,195,247,.18);}
+
+  ::-webkit-scrollbar{width:5px;}
+  ::-webkit-scrollbar-track{background:#0a0f1a;}
+  ::-webkit-scrollbar-thumb{background:#1e3a5f;border-radius:3px;}
+  @media(max-width:600px){.stats-row{gap:24px;}.sim-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div class="scan-line"></div>
+
+<!--
+╔══════════════════════════════════════════════════════════════════╗
+║  АРХИТЕКТУРА v2 — ФАЙЛОВЫЕ СИМУЛЯТОРЫ                             ║
+║                                                                  ║
+║  Симуляторы больше НЕ вставляются внутрь этого файла.             ║
+║  Каждый симулятор — отдельный .html в папке ./sim/ рядом с ним:  ║
+║                                                                  ║
+║      netacademy/                                                  ║
+║      ├── index.html      ← этот лендинг                           ║
+║      └── sim/            ← папка с симуляторами                   ║
+║          ├── cmd-quest-v3-fixed.html                             ║
+║          ├── lab1_topology.html                                  ║
+║          └── ... (остальные 13)                                  ║
+║                                                                  ║
+║  ЧТО ИЗМЕНИЛОСЬ                                                  ║
+║  ✗ Blob URL / <template>  →  обычный переход location.href        ║
+║  ✗ iframe                  →  полноценная отдельная страница      ║
+║  ✓ CSS/JS симулятора не может протечь на лендинг                 ║
+║  ✓ Каждый файл можно править, версионировать и открывать сам     ║
+║  ✓ Кнопка «Назад» браузера работает как обычно                   ║
+║                                                                  ║
+║  КАК ПОДКЛЮЧИТЬ НОВЫЙ СИМУЛЯТОР                                    ║
+║  1. Положи файл в ./sim/                                          ║
+║  2. Открой объект SIMS в конце файла и добавь строку:              ║
+║       16: {num:'#10', title:'...', file:'мой_сим.html', ...}      ║
+║  3. Привяжи карточку к этой цифре через openSim(16)               ║
+║                                                                  ║
+║  Переименовать папку можно одной строкой:                          ║
+║  задай window.NA_SIM_DIR = 'моя_папка/' ВЫШЕ блока с SIMS         ║
+║  (например, в отдельном теге script перед ним)                    ║
+╚══════════════════════════════════════════════════════════════════╝
+-->
+
+<!-- ════════════════════ ОВЕРЛЕЙ: ОШИБКА / ПРОВЕРКА ФАЙЛОВ ════════════════════ -->
+<div id="ph-overlay">
+  <div class="ph-box">
+    <button class="ph-close-btn" onclick="closePh()" title="Закрыть (Esc)">✕</button>
+    <div class="ph-ico" id="ph-ico">⬡</div>
+    <div class="ph-ttl" id="ph-ttl">Симулятор не найден</div>
+    <div class="ph-msg" id="ph-msg"></div>
+    <span class="ph-tag" id="ph-tag">// ОЖИДАЕТ ФАЙЛ //</span>
+  </div>
+</div>
+
+<!-- ════════════════════ ВИДИМАЯ ЧАСТЬ ЛЕНДИНГА ════════════════════ -->
+
+<nav class="topnav">
+  <div class="nav-logo">⬡ NET_ACADEMY</div>
+  <a class="nav-link" href="#mod1">Топология</a>
+  <a class="nav-link" href="#mod2">IP-адресация</a>
+  <a class="nav-link" href="#mod3">Маршрутизация</a>
+  <a class="nav-link" href="#mod4">DHCP</a>
+  <a class="nav-link" href="#mod5">Корп.сети</a>
+  <a class="nav-link" href="#mod6">Итоги</a>
+  <a class="nav-link" href="#mod7">Продвинутые</a>
+</nav>
+
+<header class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-badge">// Учебная платформа v2.0 // Network Simulators</div>
+  <h1>
+    <span class="line1">NetAcademy</span>
+    <span class="line2">Симуляторы</span>
+  </h1>
+  <p class="hero-sub">Интерактивный курс сетевых технологий — от базовой топологии до корпоративных сетей и продвинутых сценариев настройки сетевого оборудования.</p>
+  <div class="stats-row">
+    <div class="stat-item"><span class="stat-num">15</span><span class="stat-label">Лабораторных</span></div>
+    <div class="stat-item"><span class="stat-num">250</span><span class="stat-label">Игровых шагов</span></div>
+    <div class="stat-item"><span class="stat-num">80ч</span><span class="stat-label">Учебного времени</span></div>
+    <div class="stat-item"><span class="stat-num">7</span><span class="stat-label">Модулей</span></div>
+  </div>
+</header>
+
+<main class="content">
+
+  <section class="module mod-green" id="mod1">
+    <div class="module-header">
+      <span class="module-num">МОДУЛЬ 01</span>
+      <h2 class="module-title">Топология сети</h2>
+      <span class="module-badge">Базовый уровень</span>
+    </div>
+    <div class="sim-grid">
+      <div class="sim-card color-green" onclick="openSim(2)">
+        <div class="card-top"><span class="card-num">#01</span><span class="card-diff">🟢 BASIC</span></div>
+        <div class="card-title">Топология сети</div>
+        <div class="card-desc">Построение и анализ сетевой топологии. Изучение типов топологий: звезда, шина, кольцо, дерево. Визуализация маршрутов.</div>
+        <div class="card-footer"><span class="card-steps">ШАГОВ: <span>12</span></span><span class="card-actions"><button class="card-btn card-btn-alt" title="Открыть в новой вкладке" onclick="event.stopPropagation();openSim(2,true)">⧉</button><button class="card-btn">ЗАПУСТИТЬ →</button></span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="module mod-green" id="mod2">
+    <div class="module-header">
+      <span class="module-num">МОДУЛЬ 02</span>
+      <h2 class="module-title">IP-адресация</h2>
+      <span class="module-badge">Базовый уровень</span>
+    </div>
+    <div class="sim-grid">
+      <div class="sim-card color-green" onclick="openSim(3)">
+        <div class="card-top"><span class="card-num">#02</span><span class="card-diff">🟢 BASIC</span></div>
+        <div class="card-title">IP-адресация и подсети</div>
+        <div class="card-desc">Расчёт IP-адресов, масок подсети, CIDR-нотация. Определение сетевой и хостовой части адреса. VLSM.</div>
+        <div class="card-footer"><span class="card-steps">ШАГОВ: <span>14</span></span><span class="card-actions"><button class="card-btn card-btn-alt" title="Открыть в новой вкладке" onclick="event.stopPropagation();openSim(3,true)">⧉</button><button class="card-btn">ЗАПУСТИТЬ →</button></span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="module mod-yellow" id="mod3">
+    <div class="module-header">
+      <span class="module-num">МОДУЛЬ 03</span>
+      <h2 class="module-title">Маршрутизация</h2>
+      <span class="module-badge">Средний уровень</span>
+    </div>
+    <div class="sim-grid">
+      <div class="sim-card color-yellow" onclick="openSim(4)">
+        <div class="card-top"><span class="card-num">#03</span><span class="card-diff">🟡 MED</span></div>
+        <div class="card-title">Динамическая маршрутизация</div>
+        <div class="card-desc">Протоколы маршрутизации: RIP, OSPF, EIGRP. Построение таблиц маршрутизации. Выбор оптимального маршрута.</div>
+        <div class="card-footer"><span class="card-steps">ШАГОВ: <span>16</span></span><span class="card-actions"><button class="card-btn card-btn-alt" title="Открыть в новой вкладке" onclick="event.stopPropagation();openSim(4,true)">⧉</button><button class="card-btn">ЗАПУСТИТЬ →</button></span></div>
+      </div>
+      <div class="sim-card color-yellow" onclick="openSim(5)">
+        <div class="card-top"><span class="card-num">#04</span><span class="card-diff">🟡 MED</span></div>
+        <div class="card-title">Статическая маршрутизация</div>
+        <div class="card-desc">Настройка статических маршрутов, default route. Ручное управление таблицей маршрутизации. Отказоустойчивость.</div>
+        <div class="card-footer"><span class="card-steps">ШАГОВ: <span>13</span></span><span class="card-actions"><button class="card-btn card-btn-alt" title="Открыть в новой вкладке" onclick="event.stopPropagation();openSim(5,true)">⧉</button><button class="card-btn">ЗАПУСТИТЬ →</button></span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="module mod-orange" id="mod4">
+    <div class="module-header">
+      <span class="module-num">МОДУЛЬ 04</span>
+      <h2 class="module-title">DHCP-сервер</h2>
+      <span class="module-badge">Средний уровень</span>
+    </div>
+    <div class="sim-grid">
+      <div class="sim-card color-orange" onclick="openSim(6)">
+        <div class="card-top"><span class="card-num">#05</span><span class="card-diff">🟠 SIM</span></div>
+        <div class="card-title">DHCP Симулятор</div>
+        <div class="card-desc">Интерактивный симулятор DHCP: DORA-процесс, пулы адресов, аренда, опции. Настройка DHCP-сервера с нуля.</div>
+        <div class="card-footer"><span class="card-steps">ШАГОВ: <span>18</span></span><span class="card-actions"><button class="card-btn card-btn-alt" title="Открыть в новой вкладке" onclick="event.stopPropagation();openSim(6,true)">⧉</button><button class="card-btn">ЗАПУСТИТЬ →</button></span></div>
+      </div>
+      <div class="sim-card color-orange" onclick="openSim(7)">
+        <div class="card-top"><span class="card-num">#05.2</span><span class="card-diff">🟠 MED</span></div>
+        <div class="card-title">DHCP: Часть 2</div>
+        <div class="card-desc">Продвинутая настройка: relay agent, reservations, multiple scopes. Интеграция с DNS.</div>
+        <div class="card-footer"><span class="card-steps">ШАГОВ: <span>12</span></span><span class="card-actions"><button class="card-btn card-btn-alt" title="Открыть в новой вкладке" onclick="event.stopPropagation();openSim(7,true)">⧉</button><button class="card-btn">ЗАПУСТИТЬ →</button></span></div>
+      </div>
+      <div class="sim-card color-orange" onclick="openSim(8)">
+        <div class="card-top"><span class="card-num">#05.3</span><span class="card-diff">🟠 MED</span></div>
+        <div class="card-title">DHCP: Часть 3</div>
+        <div class="card-desc">Диагностика и устранение неполадок DHCP. Анализ пакетов, логи, мониторинг. Решение типичных проблем.</div>
+        <div class="card-footer"><span class="card-steps">ШАГОВ: <span>14</span></span><span class="card-actions"><button class="card-btn card-btn-alt" title="Открыть в новой вкладке" onclick="event.stopPropagation();openSim(8,true)">⧉</button><button class="card-btn">ЗАПУСТИТЬ →</button></span></div>
+      </div>
+      <div class="sim-card color-orange" onclick="openSim(9)">
+        <div class="card-top"><span class="card-num">#05.4</span><span class="card-diff">🟠 MED</span></div>
+        <div class="card-title">DHCP: Часть 4</div>
+        <div class="card-desc">Безопасность DHCP: DHCP snooping, dynamic ARP inspection. Защита от rogue-серверов и атак.</div>
+        <div class="card-footer"><span class="card-steps">ШАГОВ: <span>11</span></span><span class="card-actions"><button class="card-btn card-btn-alt" title="Открыть в новой вкладке" onclick="event.stopPropagation();openSim(9,true)">⧉</button><button class="card-btn">ЗАПУСТИТЬ →</button></span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="module mod-red" id="mod5">
+    <div class="module-header">
+      <span class="module-num">МОДУЛЬ 05</span>
+      <h2 class="module-title">Корпоративные сети</h2>
+      <span class="module-badge">Продвинутый</span>
+    </div>
+    <div class="sim-grid">
+      <div class="sim-card color-red" onclick="openSim(10)">
+        <div class="card-top"><span class="card-num">#06</span><span class="card-diff">🔴 SIM</span></div>
+        <div class="card-title">Корп. сеть: Симулятор</div>
+        <div class="card-desc">Построение корпоративной сети: VLAN, trunking, меж-VLAN маршрутизация. Проектирование сетевой инфраструктуры.</div>
+        <div class="card-footer"><span class="card-steps">ШАГОВ: <span>20</span></span><span class="card-actions"><button class="card-btn card-btn-alt" title="Открыть в новой вкладке" onclick="event.stopPropagation();openSim(10,true)">⧉</button><button class="card-btn">ЗАПУСТИТЬ →</button></span></div>
+      </div>
+      <div class="sim-card color-red" onclick="openSim(11)">
+        <div class="card-top"><span class="card-num">#06.2</span><span class="card-diff">🔴 HARD</span></div>
+        <div class="card-title">Корпоративная сеть: Часть 2</div>
+        <div class="card-desc">STP/RSTP, EtherChannel, LACP. Отказоустойчивость на канальном уровне. Агрегация каналов.</div>
+        <div class="card-footer"><span class="card-steps">ШАГОВ: <span>16</span></span><span class="card-actions"><button class="card-btn card-btn-alt" title="Открыть в новой вкладке" onclick="event.stopPropagation();openSim(11,true)">⧉</button><button class="card-btn">ЗАПУСТИТЬ →</button></span></div>
+      </div>
+      <div class="sim-card color-red" onclick="openSim(12)">
+        <div class="card-top"><span class="card-num">#06.3</span><span class="card-diff">🔴 HARD</span></div>
+        <div class="card-title">Корпоративная сеть: Часть 3</div>
+        <div class="card-desc">ACL, NAT, PAT. Контроль доступа и трансляция адресов. Настройка брандмауэров и политик безопасности.</div>
+        <div class="card-footer"><span class="card-steps">ШАГОВ: <span>15</span></span><span class="card-actions"><button class="card-btn card-btn-alt" title="Открыть в новой вкладке" onclick="event.stopPropagation();openSim(12,true)">⧉</button><button class="card-btn">ЗАПУСТИТЬ →</button></span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="module mod-purple" id="mod6">
+    <div class="module-header">
+      <span class="module-num">МОДУЛЬ 06</span>
+      <h2 class="module-title">Итоговое задание</h2>
+      <span class="module-badge">Финальный</span>
+    </div>
+    <div class="sim-grid">
+      <div class="sim-card color-purple" onclick="openSim(13)">
+        <div class="card-top"><span class="card-num">#07</span><span class="card-diff">🟣 FINAL</span></div>
+        <div class="card-title">Итоговый модуль</div>
+        <div class="card-desc">Комплексное задание: проектирование сети организации с нуля. Все знания курса в одном проекте.</div>
+        <div class="card-footer"><span class="card-steps">ШАГОВ: <span>25</span></span><span class="card-actions"><button class="card-btn card-btn-alt" title="Открыть в новой вкладке" onclick="event.stopPropagation();openSim(13,true)">⧉</button><button class="card-btn">ЗАПУСТИТЬ →</button></span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="module mod-red" id="mod7">
+    <div class="module-header">
+      <span class="module-num">МОДУЛЬ 07</span>
+      <h2 class="module-title">Продвинутые темы</h2>
+      <span class="module-badge">Экспертный</span>
+    </div>
+    <div class="special-module-bg">
+      <div class="disclaimer-box">
+        <strong>⚠ ПРОДВИНУТЫЙ УРОВЕНЬ</strong>
+        Данные модули требуют твёрдого понимания основ сетевых технологий. Рекомендуется пройти все предыдущие модули перед началом.
+      </div>
+      <div class="sim-grid">
+        <div class="sim-card color-cyan" onclick="openSim(1)">
+          <div class="card-top"><span class="card-num">#CMD</span><span class="card-diff">🟢 ADMIN</span></div>
+          <div class="card-title">💻 CMD администрирование</div>
+          <div class="card-desc">Командная строка Windows: основные команды, администрирование системы, диагностика сети. Практические задания с оценкой.</div>
+          <div class="card-footer"><span class="card-steps">ШАГОВ: <span>15</span></span><span class="card-actions"><button class="card-btn card-btn-alt" title="Открыть в новой вкладке" onclick="event.stopPropagation();openSim(1,true)">⧉</button><button class="card-btn">ЗАПУСТИТЬ →</button></span></div>
+        </div>
+        <div class="sim-card color-red" onclick="openSim(14)">
+          <div class="card-top"><span class="card-num">#08</span><span class="card-diff">🔴 EXPERT</span></div>
+          <div class="card-title">🔒 Сетевая безопасность</div>
+          <div class="card-desc">VPN, IPSec, firewall policies. Настройка защищённых каналов. Анализ угроз и защита сети.</div>
+          <div class="card-footer"><span class="card-steps">ШАГОВ: <span>22</span></span><span class="card-actions"><button class="card-btn card-btn-alt" title="Открыть в новой вкладке" onclick="event.stopPropagation();openSim(14,true)">⧉</button><button class="card-btn">ЗАПУСТИТЬ →</button></span></div>
+        </div>
+        <div class="sim-card color-red" onclick="openSim(15)">
+          <div class="card-top"><span class="card-num">#09</span><span class="card-diff">🔴 EXPERT</span></div>
+          <div class="card-title">🏆 Финальный проект</div>
+          <div class="card-desc">Проектирование и построение сети предприятия: от требований до внедрения. Командный проект.</div>
+          <div class="card-footer"><span class="card-steps">ШАГОВ: <span>30</span></span><span class="card-actions"><button class="card-btn card-btn-alt" title="Открыть в новой вкладке" onclick="event.stopPropagation();openSim(15,true)">⧉</button><button class="card-btn">ЗАПУСТИТЬ →</button></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div>// NET_ACADEMY &nbsp;·&nbsp; NETWORK SIMULATORS v2.0 &nbsp;·&nbsp; 15 LABS &nbsp;·&nbsp; 250 STEPS //</div>
+  <div class="foot-tools">
+    <span class="foot-tag" id="foot-dir">ФАЙЛЫ СИМУЛЯТОРОВ: ./sim/</span>
+    <button class="foot-btn" onclick="checkAll()">ПРОВЕРИТЬ ФАЙЛЫ</button>
+  </div>
+</footer>
+
+<script>
+/* ─────────────────────────────────────────────────────────────────
+   ПАПКА С СИМУЛЯТОРАМИ.
+   Хочешь переименовать папку или положить файлы в другое место —
+   задай window.NA_SIM_DIR = 'моя_папка/' ВЫШЕ этой строки,
+   в отдельном теге script перед блоком с SIMS.
+   ───────────────────────────────────────────────────────────────── */
+window.NA_SIM_DIR = window.NA_SIM_DIR || 'sim/';
+
+/* ─────────────────────────────────────────────────────────────────
+   РЕЕСТР СИМУЛЯТОРОВ  ← ЕДИНСТВЕННЫЙ ИСТОЧНИК ПРАВДЫ
+   file — имя файла в папке ./sim/
+   alt  — запасные варианты имени (пробел перед .html, .htm и т.п.);
+          проверяются по очереди, если основного файла нет
+   ───────────────────────────────────────────────────────────────── */
+var SIMS = {
+  1:  {num:'#CMD', title:'CMD администрирование',            file:'cmd-quest-v3-fixed.html',           steps:15, color:'#00bcd4', icon:'💻'},
+  2:  {num:'#01',  title:'Топология сети',                   file:'lab1_topology.html',                steps:12, color:'#00d68f', icon:'🌐'},
+  3:  {num:'#02',  title:'IP-адресация и подсети',           file:'lab2_ip.html',                      steps:14, color:'#00d68f', icon:'🔢'},
+  4:  {num:'#03',  title:'Динамическая маршрутизация',       file:'lab3_marshrutization.html',         steps:16, color:'#ffaa00', icon:'🔀'},
+  5:  {num:'#04',  title:'Статическая маршрутизация',        file:'lab4_static.html',                  steps:13, color:'#ffaa00', icon:'📡'},
+  6:  {num:'#05',  title:'DHCP Симулятор',                   file:'lab5_1_dhcp_simulator.html',        steps:18, color:'#ff9800', icon:'⚙️'},
+  7:  {num:'#05.2',title:'DHCP: Часть 2',                    file:'lab5_2_dhcp.html',                  steps:12, color:'#ff9800', icon:'🔧'},
+  8:  {num:'#05.3',title:'DHCP: Часть 3',                    file:'lab5_3_dhcp.html',                  steps:14, color:'#ff9800', icon:'🔍'},
+  9:  {num:'#05.4',title:'DHCP: Часть 4',                    file:'lab5_4_dhcp.html',                  steps:11, color:'#ff9800', icon:'🛡️'},
+  10: {num:'#06',  title:'Корп. сеть: Симулятор',            file:'lab6_1_corp_network_simulator.html',steps:20, color:'#ff5a5a', icon:'🏢'},
+  11: {num:'#06.2',title:'Корпоративная сеть: Часть 2',      file:'lab6_2_corporate.html',             steps:16, color:'#ff5a5a', icon:'🔗'},
+  12: {num:'#06.3',title:'Корпоративная сеть: Часть 3',      file:'lab6_3corp-fixed.html',             steps:15, color:'#ff5a5a', icon:'🚧'},
+  13: {num:'#07',  title:'Итоговый модуль',                  file:'lab7_summary.html',                 steps:25, color:'#b388ff', icon:'🎯'},
+  14: {num:'#08',  title:'Сетевая безопасность',             file:'network-security-simulator-fixed.html', alt:['network-security-simulator-fixed. html','network-security-simulator.html'], steps:22, color:'#ff5a5a', icon:'🔒'},
+  15: {num:'#09',  title:'Финальный проект',                 file:'Финал_для_сетей.html',              alt:['Финал_для_сетей. html','Финал_для_сетей.htm'], steps:30, color:'#ff5a5a', icon:'🏆'}
+};
+
+/* ─────────────────────────────────────────────────────────────────
+   КАК ЭТО РАБОТАЕТ (v2 — файловая версия)
+   Симулятор лежит отдельным файлом в ./sim/ и открывается обычным
+   переходом location.href. Никаких Blob, iframe и <template>.
+
+   ✓ Браузер грузит файл как обычный документ с нормальным origin
+   ✓ Никакие CSS/JS/переменные симулятора не попадают на лендинг
+   ✓ Файл можно открыть напрямую из проводника, отдать ученику,
+     закоммитить в git — это просто .html
+   ✓ Кнопка «Назад» браузера (Alt+←) возвращает на лендинг
+   ✓ Своё состояние симулятор хранит в localStorage/sessionStorage
+     независимо от лендинга
+   ───────────────────────────────────────────────────────────────── */
+
+/* ── Утилиты ─────────────────────────────────────────────────── */
+
+function simDir() {
+  var d = window.NA_SIM_DIR || 'sim/';
+  if (d.charAt(d.length - 1) !== '/') d += '/';
+  return d;
+}
+
+/* Все подходящие пути для симулятора: sim/<file>, sim/<alt>… */
+function simPaths(id) {
+  var s = SIMS[id];
+  if (!s) return [];
+  var names = [s.file].concat(s.alt || []);
+  return names.map(function (n) { return simDir() + n; });
+}
+
+/* encodeURI, а не encodeURIComponent: кодирует кириллицу и пробелы,
+   но сохраняет «/» в пути. */
+function toUrl(path) { return encodeURI(path); }
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
+/* ── Проверка существования файла ───────────────────────────────
+   По http(s) делаем HEAD-запрос и перебираем варианты имени.
+   По file:// fetch заблокирован политикой CORS — там проверять
+   нечем, поэтому просто открываем первый вариант.
+   ───────────────────────────────────────────────────────────────── */
+function resolveSim(id, cb) {
+  var paths = simPaths(id);
+  if (!paths.length) return cb(null);
+
+  if (location.protocol === 'file:') return cb(paths[0]);   // file:// — без проверки
+
+  var i = 0;
+  (function next() {
+    if (i >= paths.length) return cb(null);
+    var p = paths[i++];
+    var ctl = null, timer = null;
+    var done = function (ok) {
+      if (timer) clearTimeout(timer);
+      if (ctl) { try { ctl.abort(); } catch (e) {} }
+      ok ? cb(p) : next();
+    };
+    try {
+      ctl = new AbortController();
+      timer = setTimeout(function () { done(false); }, 4000);   // страховка от «висящего» сервера
+      fetch(toUrl(p), { method: 'HEAD', cache: 'no-store', signal: ctl.signal })
+        .then(function (r) { done(r.ok); })
+        .catch(function () { done(false); });
+    } catch (e) {
+      done(false);
+    }
+  })();
+}
+
+/* ── Блокировка карточек на время проверки ───────────────────── */
+function setBusy(on) {
+  var cards = document.querySelectorAll('.sim-card');
+  for (var i = 0; i < cards.length; i++) cards[i].classList.toggle('loading', !!on);
+}
+
+/* ── Оверлей: файл не найден ─────────────────────────────────── */
+function showMissing(id, paths) {
+  var sim = SIMS[id];
+  document.getElementById('ph-ico').textContent = '⚠';
+  document.getElementById('ph-ttl').textContent = sim.num + ' — файл не найден';
+  document.getElementById('ph-msg').innerHTML =
+    'Симулятор должен лежать в папке <strong style="color:#4fc3f7">' + escapeHtml(simDir()) +
+    '</strong> рядом с этим файлом.<br>Браузер искал:' +
+    paths.map(function (p) { return '<code class="ph-code">' + escapeHtml(p) + '</code>'; }).join('') +
+    'Положи нужный файл в папку <strong style="color:#4fc3f7">' + escapeHtml(simDir()) + '</strong> — и кнопка заработает сразу. Имя должно совпадать с указанным выше.';
+  document.getElementById('ph-tag').textContent = '// ШАГОВ: ' + sim.steps + ' | ФАЙЛ НЕ НАЙДЕН //';
+  document.getElementById('ph-overlay').classList.add('on');
+}
+
+/* ── ГЛАВНАЯ ФУНКЦИЯ: открыть симулятор файлом ───────────────── */
+var openLock = false;
+
+function openSim(id, newTab) {
+  var sim = SIMS[id];
+  if (!sim || openLock) return;
+
+  var launch = function (path) {
+    var url = toUrl(path);
+    try { sessionStorage.setItem('na:lastSim', JSON.stringify({ id: id, file: path, t: Date.now() })); }
+    catch (e) { /* приватный режим — не страшно */ }
+    if (newTab) {
+      var w = window.open(url, '_blank');
+      if (!w) location.href = url;          // поп-ап блокирован — открываем в текущей вкладке
+    } else {
+      location.href = url;                  // обычный переход: Alt+← вернёт на лендинг
+    }
+  };
+
+  openLock = true;
+  setBusy(true);
+  resolveSim(id, function (found) {
+    openLock = false;
+    setBusy(false);
+    if (found) { launch(found); }
+    else { showMissing(id, simPaths(id)); }
+  });
+}
+
+/* ── Проверка всех файлов разом (кнопка в футере) ────────────── */
+function checkAll() {
+  var ids = Object.keys(SIMS).map(Number).sort(function (a, b) { return a - b; });
+  var rows = '', done = 0, okCount = 0;
+
+  if (location.protocol === 'file:') {
+    document.getElementById('ph-ico').textContent = '📁';
+    document.getElementById('ph-ttl').textContent = 'Проверка недоступна на file://';
+    document.getElementById('ph-msg').innerHTML =
+      'Браузер запрещает проверять файлы при открытии двойным кликом (<code class="ph-code">file://</code>).<br>' +
+      'Это нормально — кнопки всё равно работают.<br><br>' +
+      'Чтобы включить проверку, запусти локальный сервер в папке с index.html:<br>' +
+      '<code class="ph-code">python -m http.server 8000</code>' +
+      'и открой <strong style="color:#4fc3f7">http://localhost:8000/</strong>';
+    document.getElementById('ph-tag').textContent = '// ОЖИДАЕМЫЕ ФАЙЛЫ: ' + ids.length + ' //';
+    document.getElementById('ph-overlay').classList.add('on');
+    return;
+  }
+
+  document.getElementById('ph-ico').textContent = '🔍';
+  document.getElementById('ph-ttl').textContent = 'Проверяю файлы в ' + simDir();
+  document.getElementById('ph-msg').innerHTML = '<div id="chk-list"></div>';
+  document.getElementById('ph-tag').textContent = '// ПРОВЕРКА… //';
+  document.getElementById('ph-overlay').classList.add('on');
+
+  ids.forEach(function (id) {
+    var sim = SIMS[id];
+    var row = document.createElement('div');
+    row.className = 'chk-row';
+    row.innerHTML = '<span class="n">' + escapeHtml(sim.num) + '</span><span class="p">' + escapeHtml(simDir() + sim.file) + '</span>';
+    document.getElementById('chk-list').appendChild(row);
+
+    resolveSim(id, function (found) {
+      done++;
+      if (found) { okCount++; row.className = 'chk-row ok'; }
+      else { row.className = 'chk-row err'; row.querySelector('.p').textContent += '  ✕'; }
+      if (done === ids.length) {
+        document.getElementById('ph-ttl').textContent = okCount === ids.length
+          ? 'Все файлы на месте'
+          : 'Отсутствует: ' + (ids.length - okCount);
+        document.getElementById('ph-tag').textContent = '// ' + okCount + ' / ' + ids.length + ' ГОТОВО //';
+      }
+    });
+  });
+}
+
+/* ── Управление оверлеем ─────────────────────────────────────── */
+function closePh() {
+  document.getElementById('ph-overlay').classList.remove('on');
+}
+
+document.getElementById('ph-overlay').addEventListener('click', function (e) {
+  if (e.target === this) closePh();
+});
+
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') closePh();
+});
+
+/* ── Автоподстановка папки в футере ───────────────────────────── */
+document.getElementById('foot-dir').textContent = 'ФАЙЛЫ СИМУЛЯТОРОВ: ./' + simDir();
+
+/* ── Глубокая ссылка: index.html#sim=5 открывает нужный файл ─── */
+(function deepLink() {
+  var m = /[#?&]sim=(\d+)/.exec(location.hash + location.search);
+  if (m) setTimeout(function () { openSim(parseInt(m[1], 10)); }, 60);
+})();
+</script>
+</body>
+</html>

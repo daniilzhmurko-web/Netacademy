@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Симулятор 6 — Корпоративная сеть</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=IBM+Plex+Mono:wght@300;400;600&family=Barlow+Condensed:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #08070c;
+  --bg2: #0e0d15;
+  --panel: #11101a;
+  --panel2: #161520;
+  --border: #2a2640;
+  --border2: #3d3860;
+  --amber: #f5a623;
+  --amber2: #ffd166;
+  --cyan: #06d6e0;
+  --green: #2affa0;
+  --red: #ff4757;
+  --violet: #a78bfa;
+  --text: #d4cfe8;
+  --muted: #5e5880;
+  --font-head: 'Orbitron', monospace;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --font-ui: 'Barlow Condensed', sans-serif;
+  /* Поля ответа — всегда тёмные ("терминал"), независимо от темы */
+  --term-bg: #0a0912;
+  --term-text: #2affa0;
+  --term-muted: #5e5880;
+  --term-opt-bg: #11101a;
+  --term-opt-text: #d4cfe8;
+}
+/* ─── ДНЕВНАЯ ТЕМА (включена по умолчанию классом .day на <body>) ─── */
+body.day {
+  --bg: #f5f3fa;
+  --bg2: #ffffff;
+  --panel: #ffffff;
+  --panel2: #f0eef8;
+  --border: #ddd7ea;
+  --border2: #c7bfe0;
+  --amber: #c9740a;
+  --amber2: #a8650a;
+  --cyan: #00838f;
+  --green: #1a9868;
+  --red: #d32f3f;
+  --violet: #7c5cd6;
+  --text: #241f38;
+  --muted: #6a6485;
+}
+body.day .prog-track{background:rgba(20,10,40,.06);}
+body.day .t-item:hover{background:rgba(201,116,10,.06);}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:var(--font-ui);min-height:100vh;overflow-x:hidden;}
+
+/* animated bg grid */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(245,166,35,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(245,166,35,0.03) 1px, transparent 1px);
+  background-size:40px 40px;
+  pointer-events:none;z-index:0;
+}
+body::after{
+  content:'';position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse 70% 50% at 15% 5%, rgba(245,166,35,0.07) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 40% at 85% 95%, rgba(6,214,224,0.05) 0%, transparent 50%);
+  pointer-events:none;z-index:0;
+}
+
+.wrap{position:relative;z-index:2;max-width:1440px;margin:0 auto;padding:16px 20px;}
+
+/* ====== HEADER ====== */
+header{
+  display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
+  padding:16px 28px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-bottom:2px solid var(--amber);
+  margin-bottom:20px;
+  position:relative;overflow:hidden;
+}
+header::before{
+  content:'CORP-NET';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  font-family:var(--font-head);font-size:100px;font-weight:900;
+  color:rgba(245,166,35,0.03);pointer-events:none;white-space:nowrap;letter-spacing:10px;
+}
+.hdr-brand{display:flex;flex-direction:column;gap:4px;}
+.hdr-sim{font-family:var(--font-head);font-size:10px;letter-spacing:4px;color:var(--amber);opacity:.7;}
+.hdr-title{font-family:var(--font-head);font-size:17px;font-weight:900;letter-spacing:2px;color:var(--text);
+  text-shadow:0 0 20px rgba(245,166,35,.4);}
+.hdr-sub{font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:1px;margin-top:2px;}
+
+.hdr-center{text-align:center;}
+.hexagon{
+  width:72px;height:72px;
+  background:rgba(245,166,35,.08);
+  border:2px solid var(--amber);
+  clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+  display:flex;align-items:center;justify-content:center;
+  font-size:28px;margin:0 auto;
+  box-shadow:0 0 30px rgba(245,166,35,.25);
+  animation:hexPulse 3s ease-in-out infinite;
+}
+@keyframes hexPulse{0%,100%{box-shadow:0 0 20px rgba(245,166,35,.2);}50%{box-shadow:0 0 40px rgba(245,166,35,.5);}}
+
+.hdr-stats{display:flex;gap:24px;justify-content:flex-end;align-items:center;}
+.stat-item{text-align:center;}
+#theme-toggle{display:flex;align-items:center;gap:6px;background:var(--panel2);border:1px solid var(--border);color:var(--muted);font-family:var(--font-mono);font-size:10px;letter-spacing:1px;padding:6px 12px;border-radius:2px;cursor:pointer;transition:all .2s;}
+#theme-toggle:hover{background:rgba(245,166,35,.08);border-color:var(--amber);color:var(--amber);}
+#theme-icon{font-size:12px;line-height:1;}
+.stat-num{font-family:var(--font-head);font-size:26px;font-weight:900;line-height:1;}
+.stat-num.amber{color:var(--amber);text-shadow:0 0 12px rgba(245,166,35,.5);}
+.stat-num.cyan{color:var(--cyan);text-shadow:0 0 12px rgba(6,214,224,.4);}
+.stat-lbl{font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-top:2px;}
+
+.prog-wrap{width:160px;}
+.prog-track{height:4px;background:rgba(255,255,255,.04);border-radius:2px;overflow:hidden;margin-bottom:5px;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--amber),var(--amber2));
+  border-radius:2px;transition:width .5s ease;width:0%;
+  box-shadow:0 0 8px rgba(245,166,35,.6);}
+.prog-txt{font-family:var(--font-mono);font-size:10px;color:var(--muted);text-align:right;}
+
+/* ====== LAYOUT ====== */
+.layout{display:flex;align-items:stretch;min-height:calc(100vh - 120px);}.main-col-wrap{flex:1;min-width:0;padding:16px 20px;display:flex;flex-direction:column;gap:14px;}
+
+/* ====== SIDEBAR ====== */
+.sidebar-wrap{
+  position:sticky;top:0;
+  height:100vh;
+  overflow-y:auto;
+  background:var(--bg2);
+  border-right:2px solid var(--border);
+  flex-shrink:0;
+}
+.sidebar-wrap::-webkit-scrollbar{width:4px;}
+.sidebar-wrap::-webkit-scrollbar-track{background:var(--bg);}
+.sidebar-wrap::-webkit-scrollbar-thumb{background:var(--border2);}
+.sidebar{display:flex;flex-direction:column;gap:0;}
+
+.mod-card{
+  background:transparent;
+  border-bottom:1px solid rgba(42,38,64,.8);
+}
+.mod-card:last-child{border-bottom:none;}
+
+.mod-hdr{
+  display:flex;align-items:center;gap:8px;
+  padding:9px 12px 9px 10px;
+  background:rgba(22,21,32,.95);
+  border-left:3px solid transparent;
+  cursor:default;user-select:none;
+  position:sticky;top:0;z-index:2;
+}
+.mod-hdr.active-mod{border-left-color:var(--amber);}
+.mod-icon{font-size:12px;width:16px;text-align:center;flex-shrink:0;}
+.mod-name{
+  flex:1;min-width:0;
+  font-size:9px;font-weight:700;
+  letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--amber);
+}
+.mod-prog{
+  font-family:var(--font-mono);font-size:9px;
+  color:var(--muted);flex-shrink:0;
+  background:rgba(0,0,0,.3);
+  padding:1px 5px;
+}
+.mod-all-done .mod-name{color:var(--green);}
+.mod-all-done .mod-prog{color:var(--green);}
+
+.task-list{display:block !important;}
+.t-item{
+  display:flex;align-items:center;gap:6px;
+  padding:5px 10px 5px 14px;
+  cursor:pointer;
+  transition:background .12s;
+  border-left:3px solid transparent;
+  box-sizing:border-box;width:100%;
+}
+.t-item:hover{background:rgba(245,166,35,.06);}
+.t-item.active{
+  background:rgba(245,166,35,.12);
+  border-left-color:var(--amber);
+}
+.t-item.done{background:rgba(42,255,160,.02);}
+.t-item.done .t-name{color:var(--muted);}
+.t-item.done .t-id{color:var(--green);}
+.t-chk{
+  width:13px;height:13px;
+  border:1px solid rgba(94,88,128,.6);
+  flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:8px;font-weight:700;
+  transition:all .2s;
+}
+.t-item.done .t-chk{
+  background:var(--green);border-color:var(--green);color:#000;
+}
+.t-item.active .t-chk{border-color:var(--amber);}
+.t-id{
+  font-family:var(--font-mono);font-size:9px;
+  color:var(--muted);width:18px;flex-shrink:0;
+  line-height:1;
+}
+.t-name{
+  font-size:10px;color:rgba(212,207,232,.8);
+  line-height:1.35;
+  flex:1;min-width:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.t-item.active .t-name{color:var(--text);}
+
+/* ====== MAIN ====== */
+.main-col-wrap{display:flex;flex-direction:column;gap:14px;}
+
+/* ====== TASK CARD ====== */
+.task-card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  padding:26px 30px;
+  flex:1;
+}
+.tc-top{display:flex;gap:16px;align-items:flex-start;margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--border);}
+.tc-badge{
+  min-width:64px;height:64px;
+  background:rgba(245,166,35,.08);
+  border:1px solid var(--amber);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-head);font-size:18px;font-weight:900;color:var(--amber);flex-shrink:0;
+}
+.tc-meta{flex:1;}
+.tc-module{font-size:10px;letter-spacing:2px;color:var(--amber);text-transform:uppercase;margin-bottom:6px;}
+.tc-title{font-size:21px;font-weight:700;color:var(--text);font-family:var(--font-ui);line-height:1.25;margin-bottom:8px;}
+.tc-tags{display:flex;gap:6px;flex-wrap:wrap;}
+.badge{
+  display:inline-block;padding:2px 8px;font-size:9px;font-weight:700;
+  letter-spacing:1.5px;text-transform:uppercase;
+}
+.b-net{background:rgba(6,214,224,.12);color:var(--cyan);}
+.b-sec{background:rgba(255,71,87,.12);color:var(--red);}
+.b-cfg{background:rgba(245,166,35,.12);color:var(--amber);}
+.b-dhcp{background:rgba(42,255,160,.12);color:var(--green);}
+.b-dns{background:rgba(167,139,250,.12);color:var(--violet);}
+.b-adv{background:rgba(255,209,102,.12);color:var(--amber2);}
+.b-rt{background:rgba(6,214,224,.12);color:var(--cyan);}
+
+.tc-desc{font-size:14px;line-height:1.85;color:var(--text);margin-bottom:18px;}
+.tc-desc strong{color:var(--amber2);}
+.tc-desc code{font-family:var(--font-mono);font-size:12px;color:var(--cyan);background:rgba(6,214,224,.07);padding:1px 5px;}
+
+.info-box{
+  background:rgba(245,166,35,.04);
+  border:1px solid rgba(245,166,35,.18);
+  border-left:3px solid var(--amber);
+  padding:12px 15px;margin-bottom:16px;
+  font-family:var(--font-mono);font-size:11px;line-height:1.8;color:var(--text);
+}
+.info-box .lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--amber);margin-bottom:5px;display:block;}
+
+.net-diagram{
+  background:var(--bg2);border:1px solid var(--border);padding:16px;
+  margin-bottom:16px;font-family:var(--font-mono);font-size:11px;line-height:2;
+  color:var(--cyan);white-space:pre;overflow-x:auto;
+}
+
+/* ====== INPUT AREA ====== */
+.inp-zone{background:var(--panel2);border:1px solid var(--border);padding:18px 20px;}
+.inp-question{font-size:12px;letter-spacing:.5px;color:var(--muted);margin-bottom:14px;font-family:var(--font-mono);}
+.inp-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
+.inp-lbl{font-family:var(--font-mono);font-size:11px;color:var(--amber);min-width:210px;flex-shrink:0;}
+.inp-field{
+  flex:1;min-width:180px;
+  background:var(--term-bg);
+  border:1px solid var(--border2);
+  color:var(--term-text);font-family:var(--font-mono);font-size:12px;
+  padding:7px 11px;outline:none;
+  transition:border .2s,box-shadow .2s;
+}
+.inp-field:focus{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber),0 0 12px rgba(245,166,35,.15);}
+.inp-field::placeholder{color:var(--term-muted);}
+select.inp-field option{background:var(--term-opt-bg);color:var(--term-opt-text);}
+
+.btn-row{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;}
+.btn{padding:8px 18px;font-family:var(--font-ui);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border:none;transition:all .2s;}
+.btn-check{background:var(--amber);color:#000;}
+.btn-check:hover{background:var(--amber2);box-shadow:0 0 20px rgba(245,166,35,.4);}
+.btn-hint{background:transparent;color:var(--cyan);border:1px solid var(--cyan);}
+.btn-hint:hover{background:rgba(6,214,224,.08);}
+.btn-done{background:var(--green);color:#000;cursor:default;}
+.btn-nav{background:transparent;color:var(--muted);border:1px solid var(--border2);font-size:10px;}
+.btn-nav:hover{color:var(--amber);border-color:var(--amber);}
+.btn-nav:disabled{opacity:.3;cursor:not-allowed;}
+
+.fb{padding:10px 14px;font-family:var(--font-mono);font-size:12px;border-left:3px solid;margin-top:12px;display:none;line-height:1.6;}
+.fb.show{display:block;animation:fadeSlide .25s ease;}
+.fb.ok{color:var(--green);border-color:var(--green);background:rgba(42,255,160,.04);}
+.fb.err{color:var(--red);border-color:var(--red);background:rgba(255,71,87,.04);}
+.fb.hint{color:var(--amber2);border-color:var(--amber);background:rgba(245,166,35,.04);}
+
+@keyframes fadeSlide{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:translateY(0);}}
+
+.task-nav{display:flex;justify-content:space-between;align-items:center;padding-top:16px;margin-top:16px;border-top:1px solid var(--border);}
+.task-pos{font-family:var(--font-mono);font-size:11px;color:var(--muted);}
+
+/* ====== TOPOLOGY PANEL ====== */
+.topo-panel{
+  background:var(--panel);border:1px solid var(--border);border-top:2px solid var(--cyan);
+  padding:0;
+}
+.topo-hdr{
+  display:flex;align-items:center;gap:8px;padding:9px 14px;
+  background:rgba(6,214,224,.04);border-bottom:1px solid var(--border);
+}
+.topo-dot{width:9px;height:9px;border-radius:50%;}
+.td-r{background:#ff5f56;}.td-y{background:#ffbd2e;}.td-g{background:#27c93f;}
+.topo-lbl{font-size:10px;color:var(--muted);letter-spacing:1px;margin-left:4px;font-family:var(--font-mono);}
+.topo-body{padding:12px 14px;font-family:var(--font-mono);font-size:11px;line-height:1.9;color:var(--cyan);}
+.topo-line{white-space:pre;overflow-x:auto;}
+.topo-line.amber{color:var(--amber);}
+.topo-line.green{color:var(--green);}
+.topo-line.red{color:var(--red);}
+.topo-line.muted{color:var(--muted);}
+.topo-line.violet{color:var(--violet);}
+
+/* ====== MODAL ====== */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center;z-index:200;}
+.modal.show{display:flex;}
+.modal-box{
+  background:var(--panel);border:2px solid var(--amber);
+  padding:48px;max-width:540px;width:90%;text-align:center;
+  box-shadow:0 0 80px rgba(245,166,35,.2);
+  animation:modalIn .4s ease;
+}
+@keyframes modalIn{from{transform:scale(.9);opacity:0;}to{transform:scale(1);opacity:1;}}
+.modal-icon{font-size:64px;margin-bottom:20px;}
+.modal-title{font-family:var(--font-head);font-size:22px;font-weight:900;color:var(--amber);letter-spacing:3px;margin-bottom:12px;}
+.modal-txt{color:var(--muted);font-size:14px;line-height:1.8;margin-bottom:28px;}
+.modal-score{
+  font-family:var(--font-head);font-size:48px;font-weight:900;
+  color:var(--amber2);text-shadow:0 0 30px rgba(245,166,35,.6);
+  margin:16px 0;
+}
+
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border2);}
+</style>
+</head>
+<body class="day">
+<div class="wrap">
+
+<!-- HEADER -->
+<header>
+  <div class="hdr-brand">
+    <div class="hdr-sim">Simulator 6</div>
+    <div class="hdr-title">Корпоративная сеть</div>
+    <div class="hdr-sub">Final Project &bull; Всё вместе &bull; Enterprise Infrastructure</div>
+  </div>
+  <div class="hdr-center">
+    <div class="hexagon">&#127968;</div>
+  </div>
+  <div class="hdr-stats">
+    <div class="stat-item">
+      <div class="stat-num amber" id="cnt-done">0</div>
+      <div class="stat-lbl">Выполнено</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num cyan" id="cnt-total">44</div>
+      <div class="stat-lbl">Всего</div>
+    </div>
+    <div class="prog-wrap">
+      <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+      <div class="prog-txt" id="prog-txt">0 / 44</div>
+    </div>
+    <button id="theme-toggle" onclick="toggleTheme()" title="Переключить день/ночь">
+      <span id="theme-icon">☀</span><span id="theme-label">День</span>
+    </button>
+  </div>
+</header>
+
+<!-- LAYOUT -->
+<div class="layout" style="margin:-16px -20px 0;min-height:calc(100vh - 120px);">
+  <!-- SIDEBAR -->
+  <div class="sidebar-wrap"><aside class="sidebar" id="sidebar"></aside></div>
+  <!-- MAIN -->
+  <main class="main-col-wrap">
+    <div class="task-card" id="task-card"></div>
+    <!-- NETWORK TOPOLOGY TERMINAL -->
+    <div class="topo-panel">
+      <div class="topo-hdr">
+        <div class="topo-dot td-r"></div><div class="topo-dot td-y"></div><div class="topo-dot td-g"></div>
+        <span class="topo-lbl">CORP-NET TOPOLOGY MONITOR &bull; live event log</span>
+      </div>
+      <div class="topo-body" id="topo-body"></div>
+    </div>
+  </main>
+</div>
+</div>
+
+<!-- MODAL -->
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <div class="modal-icon">&#127881;</div>
+    <div class="modal-title">ПРОЕКТ ЗАВЕРШЁН!</div>
+    <div class="modal-score" id="modal-score">44/44</div>
+    <div class="modal-txt">
+      Поздравляем! Вы успешно спроектировали и настроили корпоративную сеть.<br>
+      Освоены: IP-планирование, VLAN, маршрутизация, DHCP, DNS, Firewall, VPN, мониторинг и безопасность.
+    </div>
+    <button class="btn btn-check" onclick="resetAll()">&#8635; НАЧАТЬ ЗАНОВО</button>
+  </div>
+</div>
+
+<script>
+// ========================================
+// SIMULATOR 6 — Corporate Network
+// ========================================
+function loadSavedProgress(){
+  try{ return new Set(JSON.parse(localStorage.getItem('sim6_done')||'[]')); }
+  catch(e){ return new Set(); }
+}
+const S = {
+  done: loadSavedProgress(),
+  cur: 1,
+};
+
+// ========================================
+// MODULES & TASKS (44 total)
+// ========================================
+const MODULES = [
+{icon:'&#127760;', name:'IP-планирование', tasks:[
+  {id:1, title:'IP-адресация предприятия', tags:['b-net'],
+   desc:'Корпоративная сеть использует <strong>RFC 1918</strong> — стандарт приватных IP-адресов. Три диапазона: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16. Для крупных корпораций обычно выбирают 10.x.x.x как наиболее ёмкий.',
+   ref:'10.0.0.0/8 вмещает ~16 млн адресов; 172.16.0.0/12 — ~1 млн; 192.168.0.0/16 — ~65 тыс.',
+   q:'Какой RFC-1918 диапазон вмещает наибольшее количество адресов?',
+   inputs:[{t:'sel',lbl:'Диапазон:',k:'a',opts:['-- выбрать --','10.0.0.0/8 (~16 млн)','172.16.0.0/12 (~1 млн)','192.168.0.0/16 (~65 тыс)']}],
+   chk(v){return v.a==='10.0.0.0/8 (~16 млн)'?{ok:1,m:'✓ Верно! /8 означает 24 бита для хостов = 2²⁴ = 16 777 216 адресов.'}:{ok:0,m:'✗ Сравните маски: /8 оставляет 24 бита для хостов — самый большой диапазон.'}}},
+
+  {id:2, title:'Разбивка сети на отделы', tags:['b-net'],
+   desc:'Корпоративная сеть 10.10.0.0/16 делится на <strong>подсети по отделам</strong>. Каждому отделу выделяется /24 (254 хоста). Стандартное распределение: .1 — серверы, .2 — IT, .3 — бухгалтерия, .4 — управление...',
+   ref:'10.10.1.0/24 — Servers, 10.10.2.0/24 — IT, 10.10.3.0/24 — Finance',
+   q:'Сколько хостов вмещает подсеть /24?',
+   inputs:[{t:'txt',lbl:'Количество хостов:',k:'h',ph:'XXX'}],
+   chk(v){const n=parseInt(v.h.trim());return n===254?{ok:1,m:'✓ Правильно! /24 = 256 адресов − 2 (сеть и broadcast) = 254 хоста.'}:{ok:0,m:'✗ /24: 2⁸ = 256 адресов, минус адрес сети и broadcast = 254 хоста.'}}},
+
+  {id:3, title:'VLSM — разные маски', tags:['b-net'],
+   desc:'<strong>VLSM</strong> (Variable Length Subnet Masking) позволяет использовать разные маски для разных подсетей, оптимизируя использование адресного пространства. Для WAN-линков достаточно /30 (2 хоста), для крупных отделов — /22 (1022 хоста).',
+   ref:'/30 = 4 адреса, 2 хоста | /29 = 8 адресов, 6 хостов | /28 = 16 адресов, 14 хостов',
+   q:'Какая маска оптимальна для WAN point-to-point линка (нужно ровно 2 хоста)?',
+   inputs:[{t:'sel',lbl:'Маска подсети:',k:'m',opts:['-- выбрать --','/30 (2 хоста)','/29 (6 хостов)','/28 (14 хостов)','/27 (30 хостов)']}],
+   chk(v){return v.m==='/30 (2 хоста)'?{ok:1,m:'✓ Верно! /30 идеально для p2p-линков: 2 адреса под хосты, минимум потерь.'}:{ok:0,m:'✗ /30 = 4 адреса: 1 сеть, 2 хоста, 1 broadcast — минимально для p2p.'}}},
+
+  {id:4, title:'Шлюз и broadcast', tags:['b-net'],
+   desc:'В каждой подсети первый адрес — <strong>адрес сети</strong>, последний — <strong>broadcast</strong>. Шлюз по умолчанию — обычно первый или последний хостовый адрес (соглашение).',
+   ref:'Сеть: 10.10.5.0 | Первый хост: 10.10.5.1 | Последний хост: 10.10.5.254 | Broadcast: 10.10.5.255',
+   q:'Для сети 10.10.5.0/24, укажите broadcast-адрес:',
+   inputs:[{t:'txt',lbl:'Broadcast:',k:'b',ph:'10.10.5.???'}],
+   chk(v){return v.b.trim()==='10.10.5.255'?{ok:1,m:'✓ Правильно! Последний адрес /24 = .255 = broadcast.'}:{ok:0,m:'✗ Broadcast /24 = последний адрес = 10.10.5.255'}}},
+]},
+
+{icon:'&#128268;', name:'VLAN и коммутация', tasks:[
+  {id:5, title:'Зачем нужны VLAN?', tags:['b-net'],
+   desc:'<strong>VLAN</strong> (Virtual LAN) позволяет логически сегментировать физическую сеть. Устройства в разных VLAN не видят друг друга на L2, даже если подключены к одному коммутатору. Это повышает безопасность и снижает broadcast-трафик.',
+   ref:'Без VLAN: все в одном broadcast-домене. С VLAN: каждый отдел изолирован.',
+   q:'Что изолируют VLAN-ы на уровне L2?',
+   inputs:[{t:'sel',lbl:'Что изолируется:',k:'a',opts:['-- выбрать --','Broadcast-домены (широковещательные домены)','IP-маршруты','MAC-таблицы коммутатора','Порты физически']}],
+   chk(v){return v.a==='Broadcast-домены (широковещательные домены)'?{ok:1,m:'✓ Верно! VLAN разбивает один большой broadcast-домен на несколько изолированных.'}:{ok:0,m:'✗ VLAN изолируют broadcast-домены на канальном уровне (L2).'}}},
+
+  {id:6, title:'Назначение VLAN ID', tags:['b-cfg'],
+   desc:'Корпоративная схема VLAN: <code>VLAN 10</code> — Управление, <code>VLAN 20</code> — IT, <code>VLAN 30</code> — Бухгалтерия, <code>VLAN 40</code> — Производство, <code>VLAN 99</code> — Серверный сегмент, <code>VLAN 100</code> — DMZ.',
+   ref:'Cisco IOS: vlan 10 → name MANAGEMENT',
+   q:'Введите команду Cisco для создания VLAN 20 с именем IT:',
+   inputs:[
+     {t:'txt',lbl:'SW(config)# создать VLAN:',k:'v',ph:'vlan 20'},
+     {t:'txt',lbl:'SW(config-vlan)# имя:',k:'n',ph:'name IT'},
+   ],
+   chk(v){
+     const vc=/^vlan\s+20$/.test(v.v.trim().replace(/\s+/g,' '));
+     const nc=/^name\s+IT$/.test(v.n.trim().replace(/\s+/g,' '));
+     if(vc&&nc)return{ok:1,m:'✓ VLAN 20 (IT) создан!'};
+     if(!vc)return{ok:0,m:'✗ Строка 1: vlan 20'};
+     return{ok:0,m:'✗ Строка 2: name IT'};
+   }},
+
+  {id:7, title:'Access и Trunk порты', tags:['b-cfg'],
+   desc:'<strong>Access-порт</strong> принадлежит одному VLAN — к нему подключается конечное устройство. <strong>Trunk-порт</strong> передаёт трафик нескольких VLAN одновременно — используется между коммутаторами или к маршрутизатору. Метка 802.1Q добавляется в заголовок кадра.',
+   ref:'Cisco: switchport mode access | switchport mode trunk',
+   q:'Настройте порт Gi0/1 как trunk (IEEE 802.1Q) на Cisco:',
+   inputs:[
+     {t:'txt',lbl:'SW(config-if)# режим:',k:'m',ph:'switchport mode ...'},
+     {t:'txt',lbl:'SW(config-if)# протокол:',k:'e',ph:'switchport trunk encapsulation ...'},
+   ],
+   chk(v){
+     const m=/^switchport mode trunk$/.test(v.m.trim().replace(/\s+/g,' '));
+     const e=/^switchport trunk encapsulation dot1q$/.test(v.e.trim().replace(/\s+/g,' '));
+     if(m&&e)return{ok:1,m:'✓ Trunk с 802.1Q настроен! Порт будет передавать все VLAN.'};
+     if(!m)return{ok:0,m:'✗ Команда: switchport mode trunk'};
+     return{ok:0,m:'✗ Инкапсуляция: switchport trunk encapsulation dot1q'};
+   }},
+
+  {id:8, title:'Native VLAN', tags:['b-cfg'],
+   desc:'<strong>Native VLAN</strong> — VLAN, трафик которого передаётся по trunk-порту без 802.1Q-тега. По умолчанию — VLAN 1. Из соображений безопасности рекомендуется сменить native VLAN на неиспользуемый (например, VLAN 999).',
+   ref:'Cisco: switchport trunk native vlan 999',
+   q:'Установите Native VLAN 999 на trunk-порту:',
+   inputs:[{t:'txt',lbl:'SW(config-if)#',k:'n',ph:'switchport trunk native vlan ...'}],
+   chk(v){const ok=/^switchport trunk native vlan 999$/.test(v.n.trim().replace(/\s+/g,' '));
+     return ok?{ok:1,m:'✓ Native VLAN изменён на 999. Атаки VLAN hopping теперь сложнее.'}:{ok:0,m:'✗ Команда: switchport trunk native vlan 999'}}},
+
+  {id:9, title:'STP — Spanning Tree', tags:['b-net'],
+   desc:'<strong>STP</strong> (Spanning Tree Protocol) предотвращает петли на уровне L2. Выбирается <strong>Root Bridge</strong> с наименьшим Bridge ID (Priority + MAC). Порты переходят в состояния: Blocking → Listening → Learning → Forwarding.',
+   ref:'Default priority: 32768. Лучший BID = наименьший Priority, затем наименьший MAC.',
+   q:'Коммутатор с каким приоритетом станет Root Bridge: 32768 или 4096?',
+   inputs:[{t:'sel',lbl:'Root Bridge:',k:'r',opts:['-- выбрать --','32768 (меньший приоритет — лучше)','4096 (меньший приоритет — лучше)','Зависит от MAC-адреса','Выбирается случайно']}],
+   chk(v){return v.r==='4096 (меньший приоритет — лучше)'?{ok:1,m:'✓ Правильно! Меньший Bridge Priority = лучший кандидат в Root Bridge. 4096 < 32768.'}:{ok:0,m:'✗ В STP меньший приоритет = лучше. 4096 выиграет у 32768.'}}},
+]},
+
+{icon:'&#128736;', name:'Маршрутизация', tasks:[
+  {id:10, title:'Статическая маршрутизация', tags:['b-rt'],
+   desc:'<strong>Статический маршрут</strong> задаётся вручную и не изменяется автоматически. Подходит для небольших сетей или для маршрутов по умолчанию. Синтаксис Cisco: <code>ip route СЕТЬ МАСКА СЛЕДУЮЩИЙ_ХОП</code>.',
+   ref:'ip route 0.0.0.0 0.0.0.0 10.0.0.1 — маршрут по умолчанию',
+   q:'Добавьте статический маршрут к сети 192.168.50.0/24 через шлюз 10.10.1.1:',
+   inputs:[{t:'txt',lbl:'R(config)#',k:'r',ph:'ip route ...'}],
+   chk(v){const ok=/^ip route 192\.168\.50\.0 255\.255\.255\.0 10\.10\.1\.1$/.test(v.r.trim().replace(/\s+/g,' '));
+     return ok?{ok:1,m:'✓ Статический маршрут добавлен! Пакеты к 192.168.50.0/24 пойдут через 10.10.1.1.'}:{ok:0,m:'✗ Формат: ip route 192.168.50.0 255.255.255.0 10.10.1.1'}}},
+
+  {id:11, title:'OSPF — объявление сети', tags:['b-rt'],
+   desc:'<strong>OSPF</strong> (Open Shortest Path First) — протокол маршрутизации на основе состояния каналов. Использует алгоритм Дейкстры. Работает внутри одной AS. Конфигурируется через <code>router ospf PROCESS-ID</code>.',
+   ref:'router ospf 1 → network 10.10.0.0 0.0.255.255 area 0',
+   q:'Объявите сеть 10.10.0.0/16 в OSPF Area 0 (wildcard mask):',
+   inputs:[
+     {t:'txt',lbl:'R(config)# запуск OSPF:',k:'o',ph:'router ospf ...'},
+     {t:'txt',lbl:'R(config-router)# сеть:',k:'n',ph:'network ...'},
+   ],
+   chk(v){
+     const o=/^router ospf \d+$/.test(v.o.trim().replace(/\s+/g,' '));
+     const n=/^network 10\.10\.0\.0 0\.0\.255\.255 area 0$/.test(v.n.trim().replace(/\s+/g,' '));
+     if(o&&n)return{ok:1,m:'✓ OSPF настроен! Сеть 10.10.0.0/16 объявлена в Area 0.'};
+     if(!o)return{ok:0,m:'✗ Строка 1: router ospf 1 (или любой process-id)'};
+     return{ok:0,m:'✗ Строка 2: network 10.10.0.0 0.0.255.255 area 0 (wildcard = инвертированная маска)'};
+   }},
+
+  {id:12, title:'OSPF — Router ID', tags:['b-rt'],
+   desc:'<strong>Router ID</strong> — уникальный идентификатор маршрутизатора в OSPF. Выбирается автоматически (наибольший Loopback IP), но рекомендуется задавать явно для предсказуемости. Формат — IPv4-адрес.',
+   ref:'router-id 1.1.1.1 — назначает статичный RID маршрутизатору',
+   q:'Установите Router ID = 10.0.0.1 для OSPF:',
+   inputs:[{t:'txt',lbl:'R(config-router)#',k:'rid',ph:'router-id ...'}],
+   chk(v){const ok=/^router-id 10\.0\.0\.1$/.test(v.rid.trim().replace(/\s+/g,' '));
+     return ok?{ok:1,m:'✓ Router ID 10.0.0.1 назначен. Используйте clear ip ospf process для применения.'}:{ok:0,m:'✗ Команда: router-id 10.0.0.1'}}},
+
+  {id:13, title:'Inter-VLAN Routing (Router-on-a-Stick)', tags:['b-rt','b-cfg'],
+   desc:'Для маршрутизации между VLAN используется метод <strong>Router-on-a-Stick</strong>: один физический интерфейс делится на <strong>субинтерфейсы</strong> — по одному на каждый VLAN.',
+   ref:'interface Gi0/0.10 → encapsulation dot1Q 10 → ip address 10.10.10.1 255.255.255.0',
+   q:'Настройте субинтерфейс для VLAN 30 с адресом 10.10.30.1/24:',
+   inputs:[
+     {t:'txt',lbl:'R(config)# субинтерфейс:',k:'i',ph:'interface ...'},
+     {t:'txt',lbl:'R(config-subif)# VLAN-метка:',k:'e',ph:'encapsulation ...'},
+     {t:'txt',lbl:'R(config-subif)# IP:',k:'ip',ph:'ip address ...'},
+   ],
+   chk(v){
+     const i=/^interface (gi|gig|gigabitethernet)?0\/0\.30$/i.test(v.i.trim().replace(/\s+/g,' '));
+     const e=/^encapsulation dot1q 30$/.test(v.e.trim().replace(/\s+/g,' ').toLowerCase());
+     const ip=/^ip address 10\.10\.30\.1 255\.255\.255\.0$/.test(v.ip.trim().replace(/\s+/g,' '));
+     if(i&&e&&ip)return{ok:1,m:'✓ Субинтерфейс для VLAN 30 настроен! Router-on-a-Stick работает.'};
+     if(!i)return{ok:0,m:'✗ Строка 1: interface Gi0/0.30'};
+     if(!e)return{ok:0,m:'✗ Строка 2: encapsulation dot1Q 30'};
+     return{ok:0,m:'✗ Строка 3: ip address 10.10.30.1 255.255.255.0'};
+   }},
+]},
+
+{icon:'&#127970;', name:'DHCP-сервер', tasks:[
+  {id:14, title:'DHCP для отдела IT (VLAN 20)', tags:['b-dhcp'],
+   desc:'Каждый VLAN требует отдельного DHCP-пула. Для VLAN 20 (IT-отдел, сеть 10.10.20.0/24) нужно настроить пул с диапазоном .100–.200, шлюзом .1 и DNS-серверами.',
+   ref:'subnet 10.10.20.0 netmask 255.255.255.0 { range ...; option routers ...; }',
+   q:'Настройте DHCP-пул для IT: диапазон 10.10.20.100–200, шлюз 10.10.20.1:',
+   inputs:[
+     {t:'txt',lbl:'Объявление подсети:',k:'s',ph:'subnet 10.10.20.0 netmask ...'},
+     {t:'txt',lbl:'Диапазон:',k:'r',ph:'range ...'},
+     {t:'txt',lbl:'Шлюз:',k:'g',ph:'option routers ...'},
+   ],
+   chk(v){
+     const s=/subnet 10\.10\.20\.0 netmask 255\.255\.255\.0\s*\{?/.test(v.s.trim());
+     const r=/range 10\.10\.20\.100 10\.10\.20\.200;?$/.test(v.r.trim().replace(/\s+/g,' '));
+     const g=/option routers 10\.10\.20\.1;?$/.test(v.g.trim().replace(/\s+/g,' '));
+     if(s&&r&&g)return{ok:1,m:'✓ DHCP-пул для VLAN 20 (IT) настроен. 101 адрес в диапазоне.'};
+     if(!s)return{ok:0,m:'✗ Строка 1: subnet 10.10.20.0 netmask 255.255.255.0 {'};
+     if(!r)return{ok:0,m:'✗ Строка 2: range 10.10.20.100 10.10.20.200;'};
+     return{ok:0,m:'✗ Строка 3: option routers 10.10.20.1;'};
+   }},
+
+  {id:15, title:'Резервирование IP для сервера', tags:['b-dhcp'],
+   desc:'Серверам нужны <strong>постоянные IP-адреса</strong>. В DHCP это реализуется через статическое резервирование по MAC-адресу. Сервер всегда получит один и тот же IP.',
+   ref:'host fileserver { hardware ethernet ...; fixed-address 10.10.99.10; }',
+   q:'Зарезервируйте 10.10.99.10 для MAC 00:50:56:AA:BB:CC (хост: fileserver):',
+   inputs:[
+     {t:'txt',lbl:'Блок host:',k:'h',ph:'host fileserver {'},
+     {t:'txt',lbl:'  MAC:',k:'m',ph:'hardware ethernet ...'},
+     {t:'txt',lbl:'  IP:',k:'ip',ph:'fixed-address ...'},
+   ],
+   chk(v){
+     const h=/^host fileserver\s*\{$/.test(v.h.trim());
+     const m=/^hardware ethernet 00:50:56:aa:bb:cc;?$/i.test(v.m.trim().replace(/\s+/g,' '));
+     const ip=/^fixed-address 10\.10\.99\.10;?$/.test(v.ip.trim().replace(/\s+/g,' '));
+     if(h&&m&&ip)return{ok:1,m:'✓ Резервирование настроено! fileserver всегда получит 10.10.99.10.'};
+     if(!h)return{ok:0,m:'✗ Строка 1: host fileserver {'};
+     if(!m)return{ok:0,m:'✗ Строка 2: hardware ethernet 00:50:56:AA:BB:CC;'};
+     return{ok:0,m:'✗ Строка 3: fixed-address 10.10.99.10;'};
+   }},
+
+  {id:16, title:'Время аренды и домен', tags:['b-dhcp'],
+   desc:'В корпоративной среде стандартное время аренды — 8 часов (рабочий день). Максимум — 24 часа. Также передаётся доменное имя для DNS-суффикса.',
+   ref:'default-lease-time 28800; max-lease-time 86400; option domain-name "corp.local";',
+   q:'Установите default lease 8ч, max lease 24ч, домен corp.local:',
+   inputs:[
+     {t:'txt',lbl:'Default lease (8ч):',k:'dl',ph:'default-lease-time ...'},
+     {t:'txt',lbl:'Max lease (24ч):',k:'ml',ph:'max-lease-time ...'},
+     {t:'txt',lbl:'Домен:',k:'dn',ph:'option domain-name ...'},
+   ],
+   chk(v){
+     const dl=/^default-lease-time 28800;?$/.test(v.dl.trim().replace(/\s+/g,' '));
+     const ml=/^max-lease-time 86400;?$/.test(v.ml.trim().replace(/\s+/g,' '));
+     const dn=/^option domain-name ['"]corp\.local['"];?$/.test(v.dn.trim().replace(/\s+/g,' '));
+     if(dl&&ml&&dn)return{ok:1,m:'✓ Время аренды: 8ч по умолчанию, 24ч максимум. Домен corp.local передан.'};
+     const e=[];
+     if(!dl)e.push('default-lease-time 28800 (8ч=28800с)');
+     if(!ml)e.push('max-lease-time 86400 (24ч=86400с)');
+     if(!dn)e.push('option domain-name "corp.local"');
+     return{ok:0,m:'✗ Ошибки: '+e.join('; ')};
+   }},
+]},
+
+{icon:'&#127760;', name:'DNS-сервер', tasks:[
+  {id:17, title:'Зоны DNS — Forward и Reverse', tags:['b-dns'],
+   desc:'DNS-сервер обслуживает <strong>прямые зоны</strong> (имя → IP) и <strong>обратные зоны</strong> (IP → имя). Для сети 10.10.0.0/16 обратная зона называется <code>10.10.in-addr.arpa</code>.',
+   ref:'Forward: corp.local → IP. Reverse: 10.10.in-addr.arpa → имя',
+   q:'Как называется обратная DNS-зона для сети 10.10.99.0/24?',
+   inputs:[{t:'txt',lbl:'Имя зоны:',k:'z',ph:'XX.XX.XX.in-addr.arpa'}],
+   chk(v){const ok=v.z.trim().toLowerCase()==='99.10.10.in-addr.arpa';
+     return ok?{ok:1,m:'✓ Правильно! Обратная зона записывается в обратном порядке октетов.'}:{ok:0,m:'✗ Обратная зона: октеты сети в обратном порядке + .in-addr.arpa = 99.10.10.in-addr.arpa'}}},
+
+  {id:18, title:'A-запись и PTR-запись', tags:['b-dns'],
+   desc:'<strong>A-запись</strong> (Address) связывает имя хоста с IPv4-адресом. <strong>PTR-запись</strong> (Pointer) — обратная: IP → имя. Обе используются для взаимной проверки (FCrDNS).',
+   ref:'fileserver IN A 10.10.99.10 | 10 IN PTR fileserver.corp.local.',
+   q:'Запишите A-запись для fileserver.corp.local → 10.10.99.10:',
+   inputs:[{t:'txt',lbl:'A-запись (BIND):',k:'a',ph:'fileserver IN A ...'}],
+   chk(v){const ok=/^fileserver(\s+IN)?\s+A\s+10\.10\.99\.10\.?$/.test(v.a.trim().replace(/\s+/g,' '));
+     return ok?{ok:1,m:'✓ A-запись создана! fileserver.corp.local → 10.10.99.10.'}:{ok:0,m:'✗ Формат BIND: fileserver IN A 10.10.99.10'}}},
+
+  {id:19, title:'MX-запись', tags:['b-dns'],
+   desc:'<strong>MX-запись</strong> (Mail Exchanger) указывает, какой сервер принимает почту для домена. Имеет числовой <strong>приоритет</strong> (меньше = выше приоритет). Обычно задаётся несколько MX с разными приоритетами.',
+   ref:'corp.local. IN MX 10 mail.corp.local.',
+   q:'Создайте MX-запись: домен corp.local, приоритет 10, сервер mail.corp.local:',
+   inputs:[{t:'txt',lbl:'MX-запись:',k:'m',ph:'corp.local. IN MX ...'}],
+   chk(v){const ok=/^corp\.local\.?\s+IN\s+MX\s+10\s+mail\.corp\.local\.?$/.test(v.m.trim().replace(/\s+/g,' '));
+     return ok?{ok:1,m:'✓ MX-запись создана! Почта для corp.local пойдёт через mail.corp.local.'}:{ok:0,m:'✗ Формат: corp.local. IN MX 10 mail.corp.local.'}}},
+
+  {id:20, title:'DNS-форвардинг', tags:['b-dns'],
+   desc:'<strong>Форвардинг</strong> (forwarding) — пересылка DNS-запросов на вышестоящий сервер, если локальный сервер не знает ответа. В корпоративной сети внутренние запросы решаются локально, внешние — пересылаются на публичный DNS.',
+   ref:'forwarders { 8.8.8.8; 8.8.4.4; }; forward only;',
+   q:'В BIND9 укажите форвардеры Google DNS (8.8.8.8 и 8.8.4.4):',
+   inputs:[{t:'txt',lbl:'Директива forwarders:',k:'f',ph:'forwarders { ...; };'}],
+   chk(v){
+     const s=v.f.trim().replace(/\s+/g,' ');
+     const ok=/forwarders\s*\{\s*8\.8\.8\.8;\s*8\.8\.4\.4;\s*\}/.test(s)||
+               /forwarders\s*\{\s*8\.8\.4\.4;\s*8\.8\.8\.8;\s*\}/.test(s);
+     return ok?{ok:1,m:'✓ Форвардеры настроены! Внешние запросы пойдут на Google DNS.'}:{ok:0,m:'✗ Формат: forwarders { 8.8.8.8; 8.8.4.4; };'};
+   }},
+]},
+
+{icon:'&#128274;', name:'Firewall и ACL', tasks:[
+  {id:21, title:'ACL — базовый принцип', tags:['b-sec'],
+   desc:'<strong>ACL</strong> (Access Control List) фильтрует трафик на основе правил. Cisco поддерживает два типа: <strong>Standard ACL</strong> (1–99, фильтр только по источнику) и <strong>Extended ACL</strong> (100–199, по источнику, назначению, порту, протоколу).',
+   ref:'Extended ACL позволяет: permit tcp 10.10.20.0 0.0.0.255 any eq 80',
+   q:'Какой тип ACL фильтрует по источнику И назначению И порту?',
+   inputs:[{t:'sel',lbl:'Тип ACL:',k:'t',opts:['-- выбрать --','Extended ACL (100-199)','Standard ACL (1-99)','Named ACL без номера','ACLv6 только']}],
+   chk(v){return v.t==='Extended ACL (100-199)'?{ok:1,m:'✓ Верно! Extended ACL позволяет фильтровать по src, dst, протоколу, порту.'}:{ok:0,m:'✗ Extended ACL (номера 100-199) — полный контроль трафика.'}}},
+
+  {id:22, title:'Запрет доступа в бухгалтерию', tags:['b-sec','b-cfg'],
+   desc:'Сеть Бухгалтерии (VLAN 30, 10.10.30.0/24) должна быть изолирована от других отделов. Создадим ACL, запрещающий доступ с любого IP в сеть бухгалтерии, кроме серверного сегмента.',
+   ref:'access-list 110 deny ip 10.10.20.0 0.0.0.255 10.10.30.0 0.0.0.255',
+   q:'Создайте правило ACL 110: запретить IT-отделу (10.10.20.0/24) доступ в бухгалтерию (10.10.30.0/24):',
+   inputs:[{t:'txt',lbl:'R(config)# ACL:',k:'a',ph:'access-list 110 ...'}],
+   chk(v){const ok=/^access-list 110 deny ip 10\.10\.20\.0 0\.0\.0\.255 10\.10\.30\.0 0\.0\.0\.255$/.test(v.a.trim().replace(/\s+/g,' '));
+     return ok?{ok:1,m:'✓ ACL 110 создан! IT-отдел не сможет обращаться к серверам бухгалтерии.'}:{ok:0,m:'✗ Формат: access-list 110 deny ip 10.10.20.0 0.0.0.255 10.10.30.0 0.0.0.255'}}},
+
+  {id:23, title:'Разрешить HTTP/HTTPS', tags:['b-sec','b-cfg'],
+   desc:'После запрещающих правил нужно разрешить нужный трафик. Правило <strong>permit</strong> разрешает доступ к Web-серверу в DMZ (10.10.100.10) по портам 80 и 443.',
+   ref:'access-list 120 permit tcp any host 10.10.100.10 eq 443',
+   q:'ACL 120: разрешить любому источнику TCP на DMZ-сервер 10.10.100.10 порт 443:',
+   inputs:[{t:'txt',lbl:'R(config)#',k:'a',ph:'access-list 120 ...'}],
+   chk(v){const ok=/^access-list 120 permit tcp any host 10\.10\.100\.10 eq 443$/.test(v.a.trim().replace(/\s+/g,' '));
+     return ok?{ok:1,m:'✓ HTTPS к DMZ-серверу разрешён для всех источников!'}:{ok:0,m:'✗ Формат: access-list 120 permit tcp any host 10.10.100.10 eq 443'}}},
+
+  {id:24, title:'Применение ACL на интерфейс', tags:['b-sec','b-cfg'],
+   desc:'ACL должен быть <strong>применён к интерфейсу</strong> в направлении <code>in</code> (входящий трафик) или <code>out</code> (исходящий). Правило "ближе к источнику" — Extended ACL ставят на вход.',
+   ref:'interface Gi0/1 → ip access-group 110 in',
+   q:'Примените ACL 110 на входящий трафик интерфейса Gi0/1:',
+   inputs:[{t:'txt',lbl:'R(config-if)#',k:'a',ph:'ip access-group ...'}],
+   chk(v){const ok=/^ip access-group 110 in$/.test(v.a.trim().replace(/\s+/g,' '));
+     return ok?{ok:1,m:'✓ ACL 110 применён на вход Gi0/1. Трафик фильтруется при входе в интерфейс.'}:{ok:0,m:'✗ Команда: ip access-group 110 in'}}},
+
+  {id:25, title:'iptables — базовые правила', tags:['b-sec'],
+   desc:'На Linux-серверах брандмауэр настраивается через <strong>iptables</strong>. Основные цепочки: INPUT (входящий), OUTPUT (исходящий), FORWARD (транзитный). Политика по умолчанию — DROP для безопасности.',
+   ref:'iptables -A INPUT -p tcp --dport 22 -j ACCEPT',
+   q:'Разрешите входящий SSH (порт 22) через iptables:',
+   inputs:[{t:'txt',lbl:'#',k:'i',ph:'iptables -A INPUT ...'}],
+   chk(v){
+     const s=v.i.trim().replace(/\s+/g,' ');
+     const ok=/^iptables -A INPUT -p tcp --dport 22 -j ACCEPT$/.test(s)||
+               /^iptables -A INPUT -p tcp -m tcp --dport 22 -j ACCEPT$/.test(s);
+     return ok?{ok:1,m:'✓ SSH разрешён! Входящий TCP на порт 22 принимается.'}:{ok:0,m:'✗ Команда: iptables -A INPUT -p tcp --dport 22 -j ACCEPT'};
+   }},
+]},
+
+{icon:'&#128279;', name:'VPN и туннели', tasks:[
+  {id:26, title:'Типы VPN', tags:['b-sec'],
+   desc:'В корпоративных сетях используют два основных типа VPN: <strong>Site-to-Site</strong> (офис ↔ офис, постоянный туннель) и <strong>Remote Access</strong> (сотрудники из дома). Популярные протоколы: IPSec, SSL/TLS, OpenVPN, WireGuard.',
+   ref:'Site-to-Site: IPSec IKEv2. Remote Access: SSL VPN, OpenVPN, WireGuard.',
+   q:'Какой тип VPN используется для постоянного подключения двух офисов?',
+   inputs:[{t:'sel',lbl:'Тип VPN:',k:'t',opts:['-- выбрать --','Site-to-Site VPN (IPSec)','Remote Access VPN (SSL)','MPLS L3VPN','GRE без шифрования']}],
+   chk(v){return v.t==='Site-to-Site VPN (IPSec)'?{ok:1,m:'✓ Верно! Site-to-Site IPSec создаёт постоянный зашифрованный туннель между двумя офисами.'}:{ok:0,m:'✗ Site-to-Site VPN — для постоянного межофисного соединения.'}}},
+
+  {id:27, title:'IPSec — фазы IKE', tags:['b-sec'],
+   desc:'<strong>IPSec IKEv1</strong> работает в двух фазах: <strong>Phase 1</strong> — аутентификация и создание защищённого канала (ISAKMP SA), <strong>Phase 2</strong> — согласование параметров туннеля данных (IPSec SA). IKEv2 объединяет это в 2 обмена.',
+   ref:'Phase 1: ISAKMP/IKE SA → Phase 2: IPSec SA (ESP/AH)',
+   q:'На какой фазе IKEv1 происходит аутентификация сторон и обмен ключами?',
+   inputs:[{t:'sel',lbl:'Фаза:',k:'p',opts:['-- выбрать --','Phase 1 (ISAKMP SA)','Phase 2 (IPSec SA)','Phase 0 (Pre-negotiation)','Phase 3 (Data transfer)']}],
+   chk(v){return v.p==='Phase 1 (ISAKMP SA)'?{ok:1,m:'✓ Правильно! Phase 1 — аутентификация и Diffie-Hellman обмен для создания защищённого канала.'}:{ok:0,m:'✗ Phase 1 устанавливает защищённый канал управления (ISAKMP SA).'}}},
+
+  {id:28, title:'GRE-туннель', tags:['b-cfg'],
+   desc:'<strong>GRE</strong> (Generic Routing Encapsulation) — протокол туннелирования без шифрования. Часто используется совместно с IPSec (GRE over IPSec). Позволяет передавать многокастовый трафик (OSPF, EIGRP) через туннель.',
+   ref:'interface Tunnel0 → tunnel source Gi0/0 → tunnel destination 203.0.113.2',
+   q:'Настройте GRE-туннель: источник 198.51.100.1, назначение 203.0.113.2:',
+   inputs:[
+     {t:'txt',lbl:'R(config)# интерфейс:',k:'i',ph:'interface Tunnel0'},
+     {t:'txt',lbl:'R(config-if)# источник:',k:'s',ph:'tunnel source ...'},
+     {t:'txt',lbl:'R(config-if)# назначение:',k:'d',ph:'tunnel destination ...'},
+   ],
+   chk(v){
+     const i=/^interface tunnel0$/i.test(v.i.trim().replace(/\s+/g,' '));
+     const s=/^tunnel source 198\.51\.100\.1$/.test(v.s.trim().replace(/\s+/g,' '));
+     const d=/^tunnel destination 203\.0\.113\.2$/.test(v.d.trim().replace(/\s+/g,' '));
+     if(i&&s&&d)return{ok:1,m:'✓ GRE-туннель настроен между 198.51.100.1 и 203.0.113.2!'};
+     if(!i)return{ok:0,m:'✗ Строка 1: interface Tunnel0'};
+     if(!s)return{ok:0,m:'✗ Строка 2: tunnel source 198.51.100.1'};
+     return{ok:0,m:'✗ Строка 3: tunnel destination 203.0.113.2'};
+   }},
+]},
+
+{icon:'&#128202;', name:'Мониторинг сети', tasks:[
+  {id:29, title:'SNMP — протокол мониторинга', tags:['b-net'],
+   desc:'<strong>SNMP</strong> (Simple Network Management Protocol) позволяет удалённо мониторить и управлять сетевыми устройствами. Версии: SNMPv1/v2c (community string, небезопасно), SNMPv3 (аутентификация + шифрование).',
+   ref:'SNMPv3: authPriv — с аутентификацией и шифрованием трафика.',
+   q:'Какая версия SNMP обеспечивает аутентификацию И шифрование?',
+   inputs:[{t:'sel',lbl:'Версия SNMP:',k:'v',opts:['-- выбрать --','SNMPv3 (authPriv)','SNMPv2c (community)','SNMPv1','Все версии одинаково безопасны']}],
+   chk(v){return v.v==='SNMPv3 (authPriv)'?{ok:1,m:'✓ Правильно! SNMPv3 authPriv — аутентификация (auth) + шифрование (priv). Единственный безопасный вариант.'}:{ok:0,m:'✗ Только SNMPv3 поддерживает и аутентификацию, и шифрование.'}}},
+
+  {id:30, title:'Syslog — централизованные логи', tags:['b-net'],
+   desc:'<strong>Syslog</strong> — стандарт передачи системных сообщений. Имеет 8 уровней серьёзности (0–7): 0=Emergency, 1=Alert, 2=Critical, 3=Error, 4=Warning, 5=Notice, 6=Informational, 7=Debug.',
+   ref:'Cisco: logging 10.10.1.100 → logging trap informational',
+   q:'Какой уровень Syslog соответствует критическим системным ошибкам (уровень 2)?',
+   inputs:[{t:'sel',lbl:'Уровень 2:',k:'l',opts:['-- выбрать --','Critical (2)','Error (3)','Warning (4)','Alert (1)']}],
+   chk(v){return v.l==='Critical (2)'?{ok:1,m:'✓ Верно! Syslog уровни: 0=Emerg, 1=Alert, 2=Critical, 3=Error, 4=Warning...'}:{ok:0,m:'✗ Уровень 2 = Critical. Уровень 1 = Alert, уровень 3 = Error.'}}},
+
+  {id:31, title:'Настройка Syslog на Cisco', tags:['b-cfg'],
+   desc:'На Cisco IOS логи отправляются на Syslog-сервер командой <code>logging</code>. Важно установить уровень логирования — чем ниже цифра, тем серьёзнее события.',
+   ref:'logging 10.10.1.100 → logging trap warnings → service timestamps log datetime msec',
+   q:'Укажите команду для отправки логов на Syslog-сервер 10.10.1.100:',
+   inputs:[{t:'txt',lbl:'R(config)#',k:'l',ph:'logging ...'}],
+   chk(v){const ok=/^logging 10\.10\.1\.100$/.test(v.l.trim().replace(/\s+/g,' '));
+     return ok?{ok:1,m:'✓ Логи Cisco будут отправляться на 10.10.1.100 (Syslog-сервер).'}:{ok:0,m:'✗ Команда: logging 10.10.1.100'}}},
+
+  {id:32, title:'NTP синхронизация', tags:['b-cfg'],
+   desc:'<strong>NTP</strong> (Network Time Protocol) синхронизирует часы всех устройств сети. Корректное время критично для логов, сертификатов, Kerberos-аутентификации. Внутренний NTP-сервер снижает зависимость от интернета.',
+   ref:'Cisco: ntp server 10.10.1.5 | Linux: ntpdate 10.10.1.5',
+   q:'Настройте NTP-сервер 10.10.1.5 на Cisco-маршрутизаторе:',
+   inputs:[{t:'txt',lbl:'R(config)#',k:'n',ph:'ntp server ...'}],
+   chk(v){const ok=/^ntp server 10\.10\.1\.5$/.test(v.n.trim().replace(/\s+/g,' '));
+     return ok?{ok:1,m:'✓ NTP настроен! Маршрутизатор синхронизирует время с 10.10.1.5.'}:{ok:0,m:'✗ Команда: ntp server 10.10.1.5'}}},
+]},
+
+{icon:'&#128272;', name:'Безопасность сети', tasks:[
+  {id:33, title:'802.1X — аутентификация портов', tags:['b-sec'],
+   desc:'<strong>802.1X</strong> — стандарт аутентификации на уровне порта коммутатора. Устройство (Supplicant) не получит доступ к сети, пока не аутентифицируется через RADIUS-сервер (Authentication Server). Коммутатор — Authenticator.',
+   ref:'Три роли: Supplicant (клиент), Authenticator (коммутатор), AS (RADIUS)',
+   q:'Какую роль выполняет коммутатор в схеме 802.1X?',
+   inputs:[{t:'sel',lbl:'Роль:',k:'r',opts:['-- выбрать --','Authenticator (посредник между клиентом и RADIUS)','Supplicant (запрашивает доступ)','Authentication Server (проверяет учётные данные)','Нет роли — пассивный участник']}],
+   chk(v){return v.r==='Authenticator (посредник между клиентом и RADIUS)'?{ok:1,m:'✓ Верно! Коммутатор (Authenticator) пропускает только EAP-трафик до прохождения аутентификации.'}:{ok:0,m:'✗ Коммутатор = Authenticator. Он стоит между клиентом и RADIUS-сервером.'}}},
+
+  {id:34, title:'Port Security', tags:['b-sec','b-cfg'],
+   desc:'<strong>Port Security</strong> ограничивает количество MAC-адресов на порту коммутатора. Защищает от MAC flooding и DHCP starvation атак. Нарушение может вызвать shutdown порта или restrict/protect режим.',
+   ref:'switchport port-security maximum 2 | switchport port-security violation shutdown',
+   q:'Ограничьте порт до 1 MAC-адреса с действием shutdown при нарушении:',
+   inputs:[
+     {t:'txt',lbl:'SW(config-if)# включить:',k:'ps',ph:'switchport port-security'},
+     {t:'txt',lbl:'SW(config-if)# максимум:',k:'mx',ph:'switchport port-security maximum ...'},
+     {t:'txt',lbl:'SW(config-if)# нарушение:',k:'vi',ph:'switchport port-security violation ...'},
+   ],
+   chk(v){
+     const ps=/^switchport port-security$/.test(v.ps.trim());
+     const mx=/^switchport port-security maximum 1$/.test(v.mx.trim().replace(/\s+/g,' '));
+     const vi=/^switchport port-security violation shutdown$/.test(v.vi.trim().replace(/\s+/g,' '));
+     if(ps&&mx&&vi)return{ok:1,m:'✓ Port Security настроен! При подключении второго устройства порт уйдёт в err-disabled.'};
+     if(!ps)return{ok:0,m:'✗ Строка 1: switchport port-security'};
+     if(!mx)return{ok:0,m:'✗ Строка 2: switchport port-security maximum 1'};
+     return{ok:0,m:'✗ Строка 3: switchport port-security violation shutdown'};
+   }},
+
+  {id:35, title:'SSH вместо Telnet', tags:['b-sec','b-cfg'],
+   desc:'<strong>Telnet</strong> передаёт данные в открытом виде — небезопасно. В корпоративной сети обязателен <strong>SSH v2</strong>. Для Cisco нужно: hostname, domain-name, crypto key generate rsa, transport input ssh.',
+   ref:'ip ssh version 2 | line vty 0 4 → transport input ssh',
+   q:'Отключите Telnet, оставив только SSH на VTY-линиях:',
+   inputs:[{t:'txt',lbl:'R(config-line)#',k:'t',ph:'transport input ...'}],
+   chk(v){const ok=/^transport input ssh$/.test(v.t.trim().replace(/\s+/g,' '));
+     return ok?{ok:1,m:'✓ Только SSH! Telnet отключён. Все удалённые подключения зашифрованы.'}:{ok:0,m:'✗ Команда: transport input ssh'}}},
+
+  {id:36, title:'Парольная политика', tags:['b-sec'],
+   desc:'Базовые требования к паролям в корпоративной среде: минимальная длина 12 символов, сложность (буквы + цифры + спецсимволы), ротация каждые 90 дней, запрет повторного использования последних 10 паролей.',
+   ref:'Cisco: security passwords min-length 12 | service password-encryption',
+   q:'Установите минимальную длину пароля 12 символов на Cisco:',
+   inputs:[{t:'txt',lbl:'R(config)#',k:'p',ph:'security passwords ...'}],
+   chk(v){const ok=/^security passwords min-length 12$/.test(v.p.trim().replace(/\s+/g,' '));
+     return ok?{ok:1,m:'✓ Минимальная длина пароля 12 символов установлена.'}:{ok:0,m:'✗ Команда: security passwords min-length 12'}}},
+]},
+
+{icon:'&#128295;', name:'Диагностика и устранение неполадок', tasks:[
+  {id:37, title:'ping и traceroute', tags:['b-net'],
+   desc:'<strong>ping</strong> проверяет доступность хоста (ICMP Echo). <strong>traceroute</strong> показывает путь пакета через сеть (TTL-декремент). В Windows — tracert, в Linux/Cisco — traceroute.',
+   ref:'ping 10.10.20.5 | traceroute 8.8.8.8',
+   q:'Какую команду использовать для просмотра пути пакета на Linux?',
+   inputs:[{t:'txt',lbl:'$',k:'t',ph:'traceroute ...'}],
+   chk(v){const s=v.t.trim().toLowerCase();
+     const ok=s.startsWith('traceroute')||s.startsWith('tracepath')||s.startsWith('mtr');
+     return ok?{ok:1,m:'✓ Правильно! traceroute показывает каждый хоп на пути к цели.'}:{ok:0,m:'✗ На Linux: traceroute (или tracepath, mtr). На Windows: tracert.'}}},
+
+  {id:38, title:'show ip route — анализ таблицы', tags:['b-net'],
+   desc:'Команда <code>show ip route</code> показывает таблицу маршрутизации Cisco. Префиксы кодируются: <strong>C</strong> = connected, <strong>S</strong> = static, <strong>O</strong> = OSPF, <strong>R</strong> = RIP, <strong>D</strong> = EIGRP, <strong>B</strong> = BGP.',
+   ref:'O 10.10.30.0/24 [110/2] via 10.10.1.2, 00:05:30, Gi0/1',
+   q:'Какой префикс в show ip route означает маршрут, изученный по OSPF?',
+   inputs:[{t:'txt',lbl:'Код маршрута:',k:'c',ph:'X'}],
+   chk(v){return v.c.trim().toUpperCase()==='O'?{ok:1,m:'✓ Правильно! O = OSPF. Дополнительно: OE1/OE2 = внешние OSPF-маршруты.'}:{ok:0,m:'✗ OSPF-маршруты обозначаются буквой O в таблице маршрутизации.'}}},
+
+  {id:39, title:'show interfaces — анализ статуса', tags:['b-net'],
+   desc:'Статус интерфейса Cisco: <strong>up/up</strong> — работает, <strong>up/down</strong> — физика есть, протокол упал (encapsulation?), <strong>down/down</strong> — физически нет сигнала, <strong>administratively down</strong> — выключен командой shutdown.',
+   ref:'"GigabitEthernet0/0 is up, line protocol is up"',
+   q:'Интерфейс показывает "up, line protocol is down" — в чём причина?',
+   inputs:[{t:'sel',lbl:'Причина:',k:'r',opts:['-- выбрать --','Проблема с протоколом (инкапсуляция, keepalive, PPP/HDLC)','Кабель отключён физически','Порт заблокирован STP','ACL блокирует трафик']}],
+   chk(v){return v.r==='Проблема с протоколом (инкапсуляция, keepalive, PPP/HDLC)'?{ok:1,m:'✓ Верно! up/down = физический уровень ОК, но L2-протокол не согласован.'}:{ok:0,m:'✗ up/down: физика есть (up), но L2-протокол не поднялся (down). Проверьте encapsulation, keepalives.'}}},
+
+  {id:40, title:'Диагностика DHCP', tags:['b-dhcp'],
+   desc:'Проблема: клиент не получает IP по DHCP. Порядок диагностики: 1) Проверить, запущен ли dhcpd, 2) Проверить конфиг, 3) Проверить, что DHCP relay настроен (если клиент в другой VLAN), 4) Захватить трафик tcpdump.',
+   ref:'systemctl status isc-dhcp-server | journalctl -u isc-dhcp-server | tcpdump -i eth0 port 67',
+   q:'Какой порт слушает DHCP-сервер? (Для правил tcpdump/iptables)',
+   inputs:[{t:'txt',lbl:'UDP-порт:',k:'p',ph:'XX'}],
+   chk(v){return v.p.trim()==='67'?{ok:1,m:'✓ UDP/67 — порт DHCP-сервера. Клиент использует UDP/68. tcpdump -i eth0 port 67'}:{ok:0,m:'✗ DHCP-сервер слушает UDP/67.'}}},
+]},
+
+{icon:'&#127942;', name:'Финальный проект', tasks:[
+  {id:41, title:'Топология корпоративной сети', tags:['b-adv'],
+   desc:'Итоговая архитектура: <strong>Core Layer</strong> (L3-коммутаторы/маршрутизаторы, OSPF), <strong>Distribution Layer</strong> (агрегация, inter-VLAN), <strong>Access Layer</strong> (подключение конечных устройств, port security). DMZ изолирована брандмауэром.',
+   ref:'3-tier: Core → Distribution → Access. DMZ за отдельным интерфейсом FW.',
+   q:'В трёхуровневой модели какой уровень обеспечивает подключение конечных пользователей?',
+   inputs:[{t:'sel',lbl:'Уровень:',k:'l',opts:['-- выбрать --','Access Layer (уровень доступа)','Distribution Layer (уровень распределения)','Core Layer (уровень ядра)','DMZ Layer']}],
+   chk(v){return v.l==='Access Layer (уровень доступа)'?{ok:1,m:'✓ Верно! Access Layer — точки подключения ПК, IP-телефонов, принтеров. Здесь настраивают VLAN, Port Security, 802.1X.'}:{ok:0,m:'✗ Access Layer — нижний уровень, подключает конечных пользователей.'}}},
+
+  {id:42, title:'QoS — приоритизация трафика', tags:['b-adv'],
+   desc:'<strong>QoS</strong> (Quality of Service) гарантирует полосу пропускания для приоритетных приложений. В корпоративной сети VoIP-трафик (UDP, низкая задержка) должен иметь наивысший приоритет над обычными данными.',
+   ref:'DSCP EF (46) — Express Forwarding для VoIP. DSCP AF — Assured Forwarding для данных.',
+   q:'Какой DSCP-класс используется для VoIP (голосового трафика) с наивысшим приоритетом?',
+   inputs:[{t:'sel',lbl:'DSCP класс:',k:'q',opts:['-- выбрать --','EF (Expedited Forwarding, DSCP 46)','AF41 (Assured Forwarding)','BE (Best Effort, DSCP 0)','CS7 (Network Control)']}],
+   chk(v){return v.q==='EF (Expedited Forwarding, DSCP 46)'?{ok:1,m:'✓ Правильно! DSCP EF (46) — максимальный приоритет для real-time трафика: VoIP, видеоконференции.'}:{ok:0,m:'✗ VoIP использует DSCP EF (Expedited Forwarding = 46) для минимальной задержки.'}}},
+
+  {id:43, title:'Резервирование и отказоустойчивость', tags:['b-adv'],
+   desc:'Для отказоустойчивости шлюза используется <strong>HSRP</strong> (Cisco) или <strong>VRRP</strong> (стандарт). Два роутера делят один виртуальный IP — клиенты используют его как шлюз. При отказе активного роутера резервный принимает трафик.',
+   ref:'HSRP: standby 1 ip 10.10.1.254 | standby 1 priority 110 | standby 1 preempt',
+   q:'Какой протокол является открытым стандартом (не Cisco) для резервирования шлюза?',
+   inputs:[{t:'sel',lbl:'Протокол:',k:'p',opts:['-- выбрать --','VRRP (Virtual Router Redundancy Protocol, RFC 5798)','HSRP (Hot Standby Router Protocol, Cisco)','GLBP (Gateway Load Balancing Protocol, Cisco)','STP (Spanning Tree Protocol)']}],
+   chk(v){return v.p==='VRRP (Virtual Router Redundancy Protocol, RFC 5798)'?{ok:1,m:'✓ Верно! VRRP (RFC 5798) — открытый стандарт. HSRP и GLBP — проприетарные протоколы Cisco.'}:{ok:0,m:'✗ VRRP (RFC 5798) — открытый стандарт для First Hop Redundancy.'}}},
+
+  {id:44, title:'Итоговая проверка знаний', tags:['b-adv'],
+   desc:'Финальное задание: проверьте понимание всей корпоративной архитектуры. В описанной сети: Core-маршрутизатор с OSPF, 4 VLAN, DHCP-сервер, DNS с зоной corp.local, Firewall с ACL, Site-to-Site VPN до удалённого офиса, Syslog на 10.10.1.100.',
+   ref:'Полная архитектура: Routing+Switching+DHCP+DNS+Security+VPN+Monitoring',
+   q:'Выберите ВСЕ корректные утверждения о построенной сети:',
+   inputs:[
+     {t:'sel',lbl:'Маршрутизация между VLAN:',k:'a',opts:['-- выбрать --','Router-on-a-Stick или L3-коммутатор — оба верны','Только физические маршрутизаторы','VLAN маршрутизируются автоматически','Нужен отдельный сервер']},
+     {t:'sel',lbl:'DNS-зона corp.local — тип:',k:'b',opts:['-- выбрать --','Внутренняя (split-horizon DNS) — правильно','Публичная зона, видна из интернета','Зона только для reverse lookup','Зона не нужна с DHCP']},
+     {t:'sel',lbl:'DHCP Relay нужен когда:',k:'c',opts:['-- выбрать --','Клиент и сервер в разных подсетях/VLAN — верно','Только если нет физических кабелей','При использовании статических IP','Relay не нужен никогда']},
+   ],
+   chk(v){
+     const a=v.a==='Router-on-a-Stick или L3-коммутатор — оба верны';
+     const b=v.b==='Внутренняя (split-horizon DNS) — правильно';
+     const c=v.c==='Клиент и сервер в разных подсетях/VLAN — верно';
+     if(a&&b&&c)return{ok:1,m:'🏆 ФИНАЛ ПРОЙДЕН! Вы знаете все ключевые компоненты корпоративной сети!'};
+     const e=[];
+     if(!a)e.push('Маршрутизация: Router-on-a-Stick и L3-sw оба корректны');
+     if(!b)e.push('corp.local — внутренняя зона (split-horizon)');
+     if(!c)e.push('Relay нужен когда клиент и DHCP-сервер в разных подсетях');
+     return{ok:0,m:'✗ '+e.join('; ')};
+   }},
+]},
+];
+
+// flatten
+const ALL=[];
+MODULES.forEach(m=>m.tasks.forEach(t=>{t.mod=m.name;ALL.push(t);}));
+
+// ========================================
+// LOG
+// ========================================
+function log(msg,cls=''){
+  const b=document.getElementById('topo-body');
+  const ts=new Date().toTimeString().slice(0,8);
+  const d=document.createElement('div');
+  d.className='topo-line'+(cls?' '+cls:'');
+  d.textContent='['+ts+'] '+msg;
+  b.appendChild(d);
+  b.scrollTop=b.scrollHeight;
+  if(b.children.length>50)b.removeChild(b.firstChild);
+}
+
+// ========================================
+// STATS
+// ========================================
+function upStats(){
+  const n=S.done.size;
+  const total=ALL.length;
+  document.getElementById('cnt-done').textContent=n;
+  document.getElementById('cnt-total').textContent=total;
+  document.getElementById('prog-fill').style.width=(n/total*100)+'%';
+  document.getElementById('prog-txt').textContent=n+' / '+total;
+}
+function save(){try{localStorage.setItem('sim6_done',JSON.stringify([...S.done]));}catch(e){}}
+
+// ========================================
+// SIDEBAR
+// ========================================
+function renderSidebar(){
+  const sb=document.getElementById('sidebar');
+  sb.innerHTML='';
+  MODULES.forEach(mod=>{
+    const dc=mod.tasks.filter(t=>S.done.has(t.id)).length;
+    const allDone=dc===mod.tasks.length;
+    const card=document.createElement('div');
+    card.className='mod-card';
+    const hdr=document.createElement('div');
+    hdr.className='mod-hdr'+(allDone?' mod-all-done':'')+(mod.tasks.some(t=>t.id===S.cur)?' active-mod':'');
+    hdr.innerHTML=`<span class="mod-icon">${mod.icon}</span><span class="mod-name">${mod.name}</span><span class="mod-prog">${dc}/${mod.tasks.length}</span>`;
+    const list=document.createElement('div');
+    list.className='task-list';
+    mod.tasks.forEach(t=>{
+      const item=document.createElement('div');
+      item.className='t-item'+(S.done.has(t.id)?' done':'')+(S.cur===t.id?' active':'');
+      item.innerHTML=`<div class="t-chk">${S.done.has(t.id)?'✓':''}</div><div class="t-id">${String(t.id).padStart(2,'0')}</div><div class="t-name">${t.title}</div>`;
+      item.onclick=()=>loadTask(t.id);
+      list.appendChild(item);
+    });
+    // Always show all tasks — no accordion
+    list.style.display='block';
+    card.appendChild(hdr);card.appendChild(list);
+    sb.appendChild(card);
+  });
+}
+
+// ========================================
+// RENDER TASK
+// ========================================
+function loadTask(id){
+  S.cur=id;
+  renderSidebar();
+  const task=ALL.find(t=>t.id===id);
+  if(!task)return;
+  const card=document.getElementById('task-card');
+
+  const tagHtml=(task.tags||[]).map(c=>`<span class="badge ${c}">${c.replace('b-','').toUpperCase()}</span>`).join('');
+  const prev=id>1?id-1:null;
+  const next=id<ALL.length?id+1:null;
+
+  const inpHtml=(task.inputs||[]).map(inp=>{
+    if(inp.t==='sel'){
+      const opts=inp.opts.map(o=>`<option value="${o}">${o}</option>`).join('');
+      return `<div class="inp-row"><div class="inp-lbl">${inp.lbl}</div><select class="inp-field" id="f_${inp.k}">${opts}</select></div>`;
+    }
+    return `<div class="inp-row"><div class="inp-lbl">${inp.lbl}</div><input class="inp-field" id="f_${inp.k}" placeholder="${inp.ph||''}" autocomplete="off" spellcheck="false"></div>`;
+  }).join('');
+
+  card.innerHTML=`
+    <div class="tc-top">
+      <div class="tc-badge">${String(id).padStart(2,'0')}</div>
+      <div class="tc-meta">
+        <div class="tc-module">${task.mod}</div>
+        <div class="tc-title">${task.title}</div>
+        <div class="tc-tags">${tagHtml}</div>
+      </div>
+    </div>
+    <div class="tc-desc">${task.desc}</div>
+    ${task.ref?`<div class="info-box"><span class="lbl">&#128161; Справочник</span>${task.ref}</div>`:''}
+    <div class="inp-zone">
+      <div class="inp-question">&#9654; ${task.q}</div>
+      ${inpHtml}
+      <div class="btn-row">
+        <button class="btn btn-check" onclick="checkTask(${id})">✓ ПРОВЕРИТЬ</button>
+        <button class="btn btn-hint" onclick="showHint(${id})">? ПОДСКАЗКА</button>
+        ${S.done.has(id)?'<button class="btn btn-done" disabled>✓ ВЫПОЛНЕНО</button>':''}
+      </div>
+      <div class="fb" id="fb_${id}"></div>
+    </div>
+    <div class="task-nav">
+      <button class="btn btn-nav" ${!prev?'disabled':''} onclick="${prev?`loadTask(${prev})`:''}">&larr; НАЗАД</button>
+      <span class="task-pos">${id} / ${ALL.length}</span>
+      <button class="btn btn-nav" ${!next?'disabled':''} onclick="${next?`loadTask(${next})`:''}">&nbsp;ВПЕРЁД &rarr;</button>
+    </div>
+  `;
+
+  const first=card.querySelector('input.inp-field, select.inp-field');
+  if(first)setTimeout(()=>first.focus(),50);
+  card.querySelectorAll('input.inp-field').forEach(el=>{
+    el.addEventListener('keydown',e=>{if(e.key==='Enter')checkTask(id);});
+  });
+  // Для select: Enter тоже проверяет ответ (после выбора значения)
+  card.querySelectorAll('select.inp-field').forEach(el=>{
+    el.addEventListener('keydown',e=>{if(e.key==='Enter')checkTask(id);});
+  });
+}
+
+function getVals(task){
+  const v={};
+  (task.inputs||[]).forEach(i=>{const el=document.getElementById('f_'+i.k);v[i.k]=el?el.value:'';});
+  return v;
+}
+
+function checkTask(id){
+  const task=ALL.find(t=>t.id===id);
+  if(!task)return;
+  const total=ALL.length;
+  const res=task.chk(getVals(task));
+  const fb=document.getElementById('fb_'+id);
+  fb.className='fb show '+(res.ok?'ok':'err');
+  fb.innerHTML=res.m;
+  if(res.ok&&!S.done.has(id)){
+    S.done.add(id);save();upStats();renderSidebar();
+    log('TASK-'+String(id).padStart(2,'0')+' COMPLETED: '+task.title,'green');
+    log('Progress: '+S.done.size+'/'+total+' ('+Math.round(S.done.size/total*100)+'%)','');
+    setTimeout(()=>loadTask(id),350);
+    if(S.done.size===total)setTimeout(()=>{
+      document.getElementById('modal-score').textContent=total+'/'+total;
+      document.getElementById('modal').classList.add('show');
+    },800);
+  } else if(!res.ok){
+    log('TASK-'+String(id).padStart(2,'0')+' FAILED — check input','red');
+  }
+}
+
+function showHint(id){
+  const task=ALL.find(t=>t.id===id);
+  const fb=document.getElementById('fb_'+id);
+  fb.className='fb show hint';
+  fb.innerHTML='&#128161; '+task.ref;
+  log('Hint shown for task '+id,'amber');
+}
+
+function resetAll(){
+  if(!confirm('Сбросить весь прогресс? Это действие необратимо.'))return;
+  S.done.clear();try{localStorage.removeItem('sim6_done');}catch(e){}
+  upStats();document.getElementById('modal').classList.remove('show');
+  loadTask(1);log('=== SIMULATOR RESET ===','red');
+}
+
+// INIT
+// ===== ТЕМА: ДЕНЬ / НОЧЬ (по умолчанию — день) =====
+function toggleTheme(){
+  const isDay=document.body.classList.toggle('day');
+  document.getElementById('theme-icon').textContent=isDay?'☀':'☾';
+  document.getElementById('theme-label').textContent=isDay?'День':'Ночь';
+}
+
+function init(){
+  upStats();loadTask(1);
+  log('=== CORP-NET SIMULATOR v6.0 INITIALIZED ===','green');
+  log('Modules: '+MODULES.length+' | Tasks: '+ALL.length+' | Topics: IP/VLAN/Routing/DHCP/DNS/FW/VPN/Monitor/Security','');
+  log('Network: 10.10.0.0/16 | Domain: corp.local | AS: 65001','');
+  if(S.done.size>0)log('Restored: '+S.done.size+'/'+ALL.length+' tasks completed','amber');
+}
+init();
+</script>
+</body>
+</html>

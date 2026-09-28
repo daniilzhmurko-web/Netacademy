@@ -1,0 +1,1159 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NetSim Pro — Лаб. 5: DHCP-сервер</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Exo+2:wght@300;400;600;700&display=swap');
+:root{
+  --bg0:#07090f;--bg1:#0d0f18;--bg2:#111420;--bg3:#161929;--bg4:#1c2035;
+  --bgh:#1f2540;
+  --c-cyan:#00c8ff;--c-green:#00e676;--c-orange:#ff9100;--c-red:#ff3d3d;
+  --c-yellow:#ffd600;--c-teal:#00bcd4;--c-blue:#0d6efd;--c-purple:#7b1fa2;
+  --dev-pc:#2e7d32;--dev-sw:#1565c0;--dev-srv:#006064;--dev-rt:#e65100;
+  --t1:#ccd8f0;--t2:#6e80a0;--t3:#323d5a;--t4:#1e2438;
+  --bd:#1a1f35;--bd2:#222840;--bd3:#2c3558;
+  --grid-line:rgba(255,255,255,.018);
+  /* Консоль всегда тёмная ("терминал"), независимо от темы */
+  --con-bg:#0a0d18;--con-text:#ccd8f0;--con-muted:#323d5a;
+  --con-teal:#00bcd4;--con-green:#00e676;--con-red:#ff3d3d;--con-orange:#ff9100;
+}
+/* ─── ДНЕВНАЯ ТЕМА (включена по умолчанию классом .day на <body>) ─── */
+body.day{
+  --bg0:#f3f5fa;--bg1:#ffffff;--bg2:#eef1f8;--bg3:#e6e9f4;--bg4:#dbe0ee;
+  --bgh:#e9edf9;
+  --c-cyan:#0077aa;--c-green:#198754;--c-orange:#d9600b;--c-red:#dc2626;
+  --c-yellow:#b98900;--c-teal:#00838f;--c-blue:#0d6efd;--c-purple:#7b1fa2;
+  --t1:#1b2033;--t2:#5a6685;--t3:#98a2c2;--t4:#c4cbe2;
+  --bd:#dde1ee;--bd2:#ccd2e6;--bd3:#b7bfd9;
+  --grid-line:rgba(20,30,60,.05);
+}
+body.day .hmb:hover{background:rgba(20,30,60,.05);}
+body.day .tghdr:hover{background:rgba(20,30,60,.04);}
+body.day .titem:hover{background:rgba(20,30,60,.035);}
+body.day .titem{border-bottom-color:rgba(20,30,60,.07);}
+body.day .prow{border-bottom-color:rgba(20,30,60,.07);}
+body.day .dnode:hover .dnbody{filter:brightness(1.08);}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Exo 2',sans-serif;background:var(--bg0);color:var(--t1);display:flex;flex-direction:column;user-select:none;}
+
+/* HEADER */
+#hdr{height:38px;flex-shrink:0;background:linear-gradient(180deg,#0c0f1c,#0a0d19);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 14px;z-index:50;}
+.logo{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:var(--c-teal);letter-spacing:3px;display:flex;align-items:center;gap:8px;margin-right:20px;}
+.logo-gem{width:22px;height:22px;background:linear-gradient(135deg,#006064,#00bcd4);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#fff;}
+.hmenu{display:flex;gap:2px;}
+.hmb{background:none;border:none;color:var(--t2);font-family:'Exo 2',sans-serif;font-size:11px;font-weight:600;padding:4px 10px;cursor:pointer;letter-spacing:.5px;text-transform:uppercase;transition:color .15s;border-radius:2px;}
+.hmb:hover{color:var(--t1);background:rgba(255,255,255,.04);}
+.hdr-r{margin-left:auto;display:flex;align-items:center;gap:12px;}
+.lab-badge{font-family:'Rajdhani',sans-serif;font-size:10px;font-weight:700;color:var(--c-teal);letter-spacing:2px;padding:3px 12px;border:1px solid rgba(0,188,212,.4);background:rgba(0,188,212,.06);}
+.pmini{display:flex;align-items:center;gap:8px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--t2);}
+.pmini span{color:var(--c-green);font-weight:700;}
+#hdots{display:flex;gap:3px;}
+.hdot{width:7px;height:7px;border-radius:50%;background:var(--bg4);border:1px solid var(--bd2);transition:all .3s;}
+.hdot.on{background:var(--c-teal);border-color:var(--c-teal);box-shadow:0 0 5px var(--c-teal);}
+.hdot.done{background:var(--c-blue);border-color:var(--c-blue);}
+#theme-toggle{display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--bd2);color:var(--t2);font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;padding:4px 10px;border-radius:2px;cursor:pointer;transition:all .2s;}
+#theme-toggle:hover{background:var(--bgh);border-color:var(--bd3);color:var(--t1);}
+#theme-icon{font-size:11px;line-height:1;}
+
+/* TOOLBAR */
+#tlb{height:40px;flex-shrink:0;background:var(--bg2);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 12px;gap:2px;}
+.tlbl{font-size:9px;font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--t3);letter-spacing:2px;padding:0 8px;text-transform:uppercase;}
+.tbtn{width:34px;height:30px;background:transparent;border:1px solid transparent;color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:3px;transition:all .15s;position:relative;flex-shrink:0;}
+.tbtn:hover{background:var(--bgh);border-color:var(--bd2);color:var(--t1);}
+.tbtn.on{background:rgba(0,188,212,.15);border-color:var(--c-teal);color:var(--c-teal);}
+.tbtn:hover::after{content:attr(data-tip);position:absolute;bottom:-26px;left:50%;transform:translateX(-50%);white-space:nowrap;background:#111827;border:1px solid var(--bd2);color:var(--con-text);font-size:10px;padding:2px 8px;z-index:200;pointer-events:none;}
+.tsep{width:1px;height:22px;background:var(--bd2);margin:0 5px;}
+.kbd{display:inline-block;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--t3);border:1px solid var(--bd2);background:var(--bg3);padding:0 4px;border-radius:2px;margin-left:3px;}
+#mode-pill{margin-left:auto;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--c-green);padding:3px 10px;border:1px solid rgba(0,230,118,.25);background:rgba(0,230,118,.04);}
+
+/* CABLE STATUS */
+#csbar{display:none;height:26px;flex-shrink:0;background:rgba(0,230,118,.07);border-bottom:2px solid rgba(0,230,118,.35);align-items:center;padding:0 14px;gap:10px;}
+#csbar.on{display:flex;}
+#cstxt{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--c-green);}
+
+/* MAIN */
+#main{flex:1;display:flex;overflow:hidden;min-height:0;}
+
+/* LEFT PANEL */
+#devp{width:130px;flex-shrink:0;background:var(--bg1);border-right:1px solid var(--bd);display:flex;flex-direction:column;overflow-y:auto;}
+.dp-head{padding:7px 10px 5px;font-family:'Rajdhani',sans-serif;font-size:9px;font-weight:700;color:var(--t3);letter-spacing:2px;text-transform:uppercase;border-bottom:1px solid var(--bd);background:rgba(0,0,0,.2);}
+.dp-cat{border-bottom:1px solid var(--bd);padding:5px 0 3px;}
+.dp-cat-lbl{font-size:8px;font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--t3);letter-spacing:1.5px;padding:0 10px 4px;text-transform:uppercase;display:block;opacity:.75;}
+.ditem{display:flex;flex-direction:column;align-items:center;padding:6px 8px 5px;cursor:grab;gap:4px;transition:background .15s;border-left:2px solid transparent;}
+.ditem:hover{background:var(--bgh);}
+.ditem[data-type="pc"]:hover{border-left-color:var(--dev-pc);}
+.ditem[data-type="switch"]:hover{border-left-color:var(--dev-sw);}
+.ditem[data-type="server"]:hover{border-left-color:var(--dev-srv);}
+.ditem[data-type="router"]:hover{border-left-color:var(--dev-rt);}
+.ditem-icon{width:50px;height:40px;display:flex;align-items:center;justify-content:center;}
+.ditem-lbl{font-size:9px;font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--t2);text-align:center;}
+.ditem:hover .ditem-lbl{color:var(--t1);}
+.ditem-desc{font-size:7.5px;color:var(--t3);text-align:center;display:none;}
+.ditem:hover .ditem-desc{display:block;}
+
+/* CANVAS */
+#cvw{flex:1;position:relative;overflow:hidden;background-color:var(--bg0);
+  background-image:radial-gradient(ellipse at 60% 30%,rgba(0,188,212,.04) 0%,transparent 55%),
+    linear-gradient(var(--grid-line) 1px,transparent 1px),
+    linear-gradient(90deg,var(--grid-line) 1px,transparent 1px);
+  background-size:auto,26px 26px,26px 26px;}
+#cvw.tool-cable{cursor:crosshair;}
+#cvw.tool-delete{cursor:cell;}
+#conn-svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1;}
+.cline{stroke:#0d6efd;stroke-width:3;stroke-linecap:round;pointer-events:visibleStroke;cursor:pointer;filter:drop-shadow(0 0 4px rgba(13,110,253,.5));transition:stroke .2s;}
+.cline:hover{stroke:var(--c-red);filter:drop-shadow(0 0 5px rgba(255,60,60,.5));}
+.cline.active{stroke:var(--c-green);filter:drop-shadow(0 0 5px rgba(0,230,118,.6));}
+#prev-line{stroke:rgba(0,230,118,.65);stroke-width:2.5;stroke-dasharray:9 5;pointer-events:none;display:none;}
+#canvas-nodes{position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;}
+.dnode{position:absolute;display:flex;flex-direction:column;align-items:center;gap:3px;transform:translate(-50%,-50%);cursor:move;z-index:10;}
+.dnode:hover .dnbody{filter:brightness(1.22);}
+.dnode.sel .dnbody{box-shadow:0 0 0 2px var(--c-teal),0 0 14px rgba(0,200,255,.3);}
+.dnode.cable-src .dnbody{box-shadow:0 0 0 3px var(--c-green),0 0 20px rgba(0,230,118,.5);animation:pg .7s ease-in-out infinite alternate;}
+@keyframes pg{from{box-shadow:0 0 0 2px var(--c-green),0 0 10px rgba(0,230,118,.3);}to{box-shadow:0 0 0 3px var(--c-green),0 0 20px rgba(0,230,118,.6);}}
+.dnbody{display:flex;align-items:center;justify-content:center;border-radius:4px;padding:3px;transition:box-shadow .2s,filter .15s;}
+.dnname{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--t1);text-align:center;background:rgba(7,9,15,.9);padding:1px 5px;border:1px solid var(--bd2);}
+.dnname.ren{border-color:rgba(0,200,255,.35);color:var(--c-teal);}
+.dnip{font-family:'Share Tech Mono',monospace;font-size:8px;text-align:center;padding:1px 4px;border:1px solid transparent;border-radius:1px;min-width:86px;}
+.dnip.has{color:var(--c-cyan);background:rgba(0,200,255,.07);border-color:rgba(0,200,255,.2);}
+.dnip.dhcp{color:var(--c-green);background:rgba(0,230,118,.07);border-color:rgba(0,230,118,.25);}
+.dnip.empty{color:var(--t3);}
+
+/* RIGHT PANEL */
+#rp{width:285px;flex-shrink:0;background:var(--bg1);border-left:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden;}
+#prop-strip{background:var(--bg2);border-bottom:1px solid var(--bd);flex-shrink:0;}
+.prop-hdr{display:flex;align-items:center;padding:5px 10px;cursor:pointer;}
+.prop-hdr-t{font-family:'Rajdhani',sans-serif;font-size:9px;font-weight:700;color:var(--t3);letter-spacing:2px;text-transform:uppercase;flex:1;}
+#prop-body{padding:5px 10px 7px;display:none;}
+#prop-body.open{display:block;}
+.prow{display:flex;justify-content:space-between;align-items:center;padding:2px 0;border-bottom:1px solid rgba(255,255,255,.03);}
+.pk{font-size:8.5px;font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--t3);}
+.pv{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--t1);}
+.pv.ok{color:var(--c-green);}.pv.warn{color:var(--c-orange);}.pv.ip{color:var(--c-cyan);}.pv.dhcp{color:var(--c-teal);}
+.open-cfg-btn{width:100%;margin-top:6px;padding:5px;background:rgba(0,188,212,.1);border:1px solid rgba(0,188,212,.4);color:var(--c-teal);font-family:'Rajdhani',sans-serif;font-weight:700;font-size:10px;letter-spacing:1px;cursor:pointer;}
+.open-cfg-btn:hover{background:rgba(0,188,212,.22);}
+
+/* TASKS */
+#taskp{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;}
+#th{padding:8px 10px 6px;flex-shrink:0;background:var(--bg2);border-bottom:1px solid var(--bd);}
+.th-lab{font-family:'Rajdhani',sans-serif;font-size:9px;font-weight:700;color:var(--c-teal);letter-spacing:2px;text-transform:uppercase;}
+.th-title{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;color:var(--t1);margin:2px 0 5px;}
+.th-sub{font-size:9px;color:var(--t2);font-family:'Share Tech Mono',monospace;margin-bottom:6px;}
+.prog-bar{height:5px;background:var(--bg4);border-radius:1px;overflow:hidden;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--c-teal),var(--c-green));border-radius:1px;transition:width .5s;}
+.prog-text{display:flex;justify-content:space-between;margin-top:3px;font-family:'Rajdhani',sans-serif;font-size:9px;font-weight:700;}
+.pd{color:var(--c-green);}.pt{color:var(--t3);}
+#tscroll{flex:1;overflow-y:auto;overflow-x:hidden;}
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:3px;}
+.tgroup{border-bottom:1px solid var(--bd);}
+.tghdr{display:flex;align-items:center;gap:6px;padding:5px 10px;cursor:pointer;background:rgba(0,0,0,.2);transition:background .15s;}
+.tghdr:hover{background:rgba(255,255,255,.025);}
+.tgico{font-size:10px;color:var(--t3);}
+.tgname{font-family:'Rajdhani',sans-serif;font-size:10px;font-weight:700;color:var(--t2);letter-spacing:1px;text-transform:uppercase;flex:1;}
+.tgscore{font-family:'Share Tech Mono',monospace;font-size:9px;padding:1px 6px;border-radius:10px;background:var(--bg3);color:var(--t3);border:1px solid var(--bd2);}
+.tgscore.full{background:rgba(0,230,118,.1);color:var(--c-green);border-color:rgba(0,230,118,.3);}
+.titem{display:flex;gap:0;align-items:flex-start;padding:5px 10px 5px 8px;border-bottom:1px solid rgba(255,255,255,.022);transition:background .2s;}
+.titem:hover{background:rgba(255,255,255,.022);}
+.titem.done{background:rgba(0,230,118,.035);}
+.tnum{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--t4);width:18px;flex-shrink:0;padding-top:2px;text-align:right;margin-right:6px;}
+.tnum.dn{color:var(--c-green);}
+.tchk{width:14px;height:14px;border-radius:2px;border:1px solid var(--bd2);background:var(--bg3);flex-shrink:0;margin-top:2px;margin-right:6px;display:flex;align-items:center;justify-content:center;font-size:9px;transition:all .25s;}
+.titem.done .tchk{background:var(--c-green);border-color:var(--c-green);color:#000;font-weight:900;}
+.tcont{flex:1;min-width:0;}
+.tmain{font-size:10px;color:var(--t2);line-height:1.35;}
+.titem.done .tmain{color:var(--t1);}
+.thint{font-size:9px;color:var(--t3);line-height:1.3;margin-top:3px;font-style:italic;display:flex;gap:4px;}
+.titem.done .thint{display:none;}
+.thint::before{content:'→';flex-shrink:0;color:var(--c-teal);opacity:.7;}
+#tfooter{flex-shrink:0;padding:7px 10px;border-top:1px solid var(--bd);background:var(--bg2);display:flex;flex-direction:column;gap:5px;}
+.btn-check{padding:7px;border:1px solid var(--c-green);background:rgba(0,230,118,.07);color:var(--c-green);font-family:'Rajdhani',sans-serif;font-weight:700;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:all .15s;}
+.btn-check:hover{background:rgba(0,230,118,.2);}
+.btn-next{padding:6px;border:1px solid rgba(0,188,212,.35);background:rgba(0,188,212,.05);color:var(--t2);font-family:'Rajdhani',sans-serif;font-weight:700;font-size:10px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .15s;}
+.btn-next:hover,.btn-next.rdy{border-color:var(--c-teal);color:var(--c-teal);background:rgba(0,188,212,.1);}
+
+/* CONSOLE */
+#con{height:168px;flex-shrink:0;background:var(--con-bg);border-top:2px solid var(--bd);display:flex;flex-direction:column;}
+#conbar{height:27px;background:#0d1120;border-bottom:1px solid #171c2e;display:flex;align-items:center;padding:0 12px;gap:10px;flex-shrink:0;}
+.con-title{font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;color:var(--con-muted);letter-spacing:2px;text-transform:uppercase;}
+.con-hint{font-size:9px;color:var(--con-muted);font-family:'Share Tech Mono',monospace;flex:1;}
+.con-cl{background:none;border:1px solid #222840;color:var(--con-muted);font-family:'Share Tech Mono',monospace;font-size:9px;padding:1px 8px;cursor:pointer;border-radius:2px;}
+.con-cl:hover{color:var(--con-text);border-color:var(--con-muted);}
+#cout{flex:1;overflow-y:auto;padding:3px 12px;font-family:'Share Tech Mono',monospace;font-size:11px;line-height:1.7;}
+#cin-row{height:25px;display:flex;align-items:center;padding:0 12px;border-top:1px solid var(--bd);flex-shrink:0;}
+.cprompt{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--con-orange);margin-right:6px;white-space:nowrap;}
+#cin{flex:1;background:none;border:none;color:var(--con-text);font-family:'Share Tech Mono',monospace;font-size:11px;outline:none;}
+.cl.cmd{color:var(--con-teal);}.cl.ok{color:var(--con-green);}.cl.er{color:var(--con-red);}
+.cl.wn{color:var(--con-orange);}.cl.in{color:var(--con-text);}.cl.sy{color:var(--con-muted);}.cl.dhcp{color:var(--con-teal);}
+
+/* MODAL */
+.overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.72);z-index:500;display:flex;align-items:center;justify-content:center;}
+.overlay.hid{display:none;}
+.mbox{background:var(--bg2);border:1px solid var(--bd2);border-radius:4px;width:520px;max-width:96vw;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.7);}
+.m-hdr{display:flex;align-items:center;padding:11px 16px;border-bottom:1px solid var(--bd);gap:10px;flex-shrink:0;}
+.m-type{font-family:'Rajdhani',sans-serif;font-size:9px;font-weight:700;letter-spacing:2px;padding:2px 8px;border:1px solid;border-radius:2px;}
+.m-type.pc{color:var(--dev-pc);border-color:var(--dev-pc);background:rgba(46,125,50,.1);}
+.m-type.server{color:var(--c-teal);border-color:var(--c-teal);background:rgba(0,188,212,.1);}
+.m-type.switch{color:var(--c-blue);border-color:var(--c-blue);background:rgba(13,110,253,.1);}
+.m-type.router{color:var(--dev-rt);border-color:var(--dev-rt);background:rgba(230,81,0,.1);}
+.m-title{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;color:var(--t1);flex:1;}
+.m-close{background:none;border:none;color:var(--t3);font-size:14px;cursor:pointer;padding:0 4px;}
+.m-close:hover{color:var(--c-red);}
+.m-body{padding:16px;overflow-y:auto;flex:1;max-height:420px;}
+.m-sec{margin-bottom:16px;}
+.m-sec-t{font-family:'Rajdhani',sans-serif;font-size:10px;font-weight:700;color:var(--c-teal);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;padding-bottom:5px;border-bottom:1px solid var(--bd);}
+.m-sec-t.dhcp-s{color:#00bcd4;}
+.frow{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.flbl{font-family:'Rajdhani',sans-serif;font-size:10px;font-weight:700;color:var(--t2);width:145px;flex-shrink:0;}
+.finp{flex:1;background:var(--bg3);border:1px solid var(--bd2);color:var(--t1);font-family:'Share Tech Mono',monospace;font-size:11px;padding:5px 8px;border-radius:2px;outline:none;transition:border-color .15s;}
+.finp:focus{border-color:var(--c-teal);}
+.fsel{flex:1;background:var(--bg3);border:1px solid var(--bd2);color:var(--t1);font-family:'Share Tech Mono',monospace;font-size:11px;padding:5px 8px;border-radius:2px;outline:none;cursor:pointer;}
+.fhint{font-size:9px;color:var(--t3);margin-top:3px;}
+.ftoggle{display:flex;align-items:center;gap:10px;cursor:pointer;}
+.tbtn2{width:36px;height:20px;background:var(--bg4);border:1px solid var(--bd2);border-radius:10px;position:relative;transition:background .2s;flex-shrink:0;}
+.tbtn2.active{background:rgba(0,188,212,.3);border-color:#00bcd4;}
+.tdot{width:14px;height:14px;background:var(--t3);border-radius:50%;position:absolute;top:2px;left:2px;transition:all .2s;}
+.tbtn2.active .tdot{left:18px;background:#00bcd4;}
+.tlbl2{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--t2);}
+.tbtn2.active+.tlbl2{color:#00bcd4;}
+.dhcp-badge{display:inline-block;padding:1px 7px;background:rgba(0,188,212,.15);border:1px solid rgba(0,188,212,.4);color:#00bcd4;font-family:'Share Tech Mono',monospace;font-size:9px;border-radius:2px;margin-left:8px;}
+.m-ftr{display:flex;justify-content:flex-end;gap:8px;padding:11px 16px;border-top:1px solid var(--bd);flex-shrink:0;}
+.btn-cn{padding:7px 18px;background:none;border:1px solid var(--bd2);color:var(--t2);font-family:'Rajdhani',sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;cursor:pointer;}
+.btn-cn:hover{border-color:var(--t2);color:var(--t1);}
+.btn-sv{padding:7px 18px;background:rgba(0,188,212,.15);border:1px solid var(--c-teal);color:var(--c-teal);font-family:'Rajdhani',sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;cursor:pointer;}
+.btn-sv:hover{background:rgba(0,188,212,.3);}
+
+/* SUCCESS */
+.s-ico{font-size:48px;margin:12px 0 8px;}
+.s-ttl{font-family:'Rajdhani',sans-serif;font-size:28px;font-weight:700;color:var(--c-green);letter-spacing:4px;margin-bottom:4px;}
+.s-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:14px 0;padding:0 8px;}
+.s-stat{background:var(--bg3);border:1px solid var(--bd2);padding:8px;border-radius:3px;text-align:center;}
+.s-stat-n{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--c-teal);}
+.s-stat-l{font-size:9px;color:var(--t3);font-family:'Exo 2',sans-serif;margin-top:2px;}
+.s-dsc{font-size:12px;color:var(--t2);line-height:1.7;max-width:400px;margin:0 auto;padding:0 12px;}
+
+/* GHOST */
+#ghost{position:fixed;pointer-events:none;z-index:9999;opacity:.65;transform:translate(-50%,-50%);display:none;}
+/* ═══════════════════════════════════════════════ FIX: RIGHT PANEL VISIBLE ═══════════════════════════════════════════════ */
+#taskp {
+  position: relative;
+  z-index: 1001 !important;
+}
+
+.overlay {
+  right: 286px !important;
+  width: auto !important;
+  left: 0 !important;
+}
+
+/* Адаптация для маленьких экранов */
+@media (max-width: 1200px) {
+  .overlay {
+    right: 0 !important;
+  }
+  #taskp {
+    z-index: 1000 !important;
+  }
+}
+</style>
+</head>
+<body class="day">
+
+<div id="hdr">
+  <div class="logo"><div class="logo-gem">N</div>NETSIM PRO</div>
+  <div class="hmenu">
+    <button class="hmb">Файл</button>
+    <button class="hmb">Правка</button>
+    <button class="hmb">Вид</button>
+    <button class="hmb" onclick="showHelp()">Справка</button>
+  </div>
+  <div class="hdr-r">
+    <div class="pmini">Прогресс: <span id="h-done">0</span>/<span id="h-total">56</span></div>
+    <div id="hdots">
+      <div class="hdot done" title="Лаб.1 Топология"></div>
+      <div class="hdot done" title="Лаб.2 IP-адресация"></div>
+      <div class="hdot done" title="Лаб.3 Маршрутизатор"></div>
+      <div class="hdot done" title="Лаб.4 Маршрутизация"></div>
+      <div class="hdot on"   title="Лаб.5 DHCP-сервер"></div>
+      <div class="hdot"      title="Лаб.6 Финальный проект"></div>
+    </div>
+    <div class="lab-badge">ЛАБ. 5 / 6 — DHCP</div>
+    <button id="theme-toggle" onclick="toggleTheme()" title="Переключить день/ночь">
+      <span id="theme-icon">☀</span><span id="theme-label">День</span>
+    </button>
+  </div>
+</div>
+
+<div id="tlb">
+  <span class="tlbl">Инструменты</span>
+  <button class="tbtn on" id="t-sel" data-tip="Выбор (V)" onclick="setTool('select')" onmouseenter="G.ht.add('tool-select')">
+    <svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 2 L3 13 L6.5 9.5 L9 14 L10.5 13.2 L8 8 L12.5 8 Z" fill="currentColor"/></svg>
+  </button>
+  <button class="tbtn" id="t-cbl" data-tip="Кабель (C)" onclick="setTool('cable')" onmouseenter="G.ht.add('tool-cable')">
+    <svg width="16" height="16" viewBox="0 0 16 16"><line x1="2" y1="14" x2="14" y2="2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="2" cy="14" r="2" fill="currentColor"/><circle cx="14" cy="2" r="2" fill="currentColor"/></svg>
+  </button>
+  <button class="tbtn" id="t-del" data-tip="Удалить (D)" onclick="setTool('delete')" onmouseenter="G.ht.add('tool-delete')">
+    <svg width="16" height="16" viewBox="0 0 16 16"><line x1="3" y1="3" x2="13" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="13" y1="3" x2="3" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+  </button>
+  <div class="tsep"></div>
+  <span class="tlbl">Клавиши:</span>
+  <span class="kbd">V</span><span style="font-size:9px;color:var(--t3);margin:0 2px;">выбор</span>
+  <span class="kbd">C</span><span style="font-size:9px;color:var(--t3);margin:0 2px;">кабель</span>
+  <span class="kbd">D</span><span style="font-size:9px;color:var(--t3);margin:0 2px;">удалить</span>
+  <span class="kbd">Enter</span><span style="font-size:9px;color:var(--t3);margin:0 2px;">настроить</span>
+  <div id="mode-pill">● ВЫБОР</div>
+</div>
+
+<div id="csbar"><span style="font-size:13px">🔌</span><span id="cstxt">Кликните на первое устройство</span><span style="margin-left:auto;font-size:10px;color:var(--t3);">ESC — отмена</span></div>
+
+<div id="main">
+  <div id="devp">
+    <div class="dp-head">Устройства</div>
+    <div class="dp-cat">
+      <span class="dp-cat-lbl">Конечные узлы</span>
+      <div class="ditem" data-type="pc" onmouseenter="G.hp.add('panel-pc')" onmousedown="startDrag(event,'pc')">
+        <div class="ditem-icon">
+          <svg width="50" height="40" viewBox="0 0 50 40"><rect x="3" y="2" width="44" height="29" rx="2.5" fill="#0b1a0b" stroke="#2e7d32" stroke-width="1.5"/><rect x="5" y="4" width="40" height="25" rx="1" fill="#050e05"/><text x="25" y="20" text-anchor="middle" fill="#2e7d32" font-size="11" font-family="monospace">&gt;_</text><rect x="18" y="32" width="14" height="4" rx="1" fill="#1a3a1a"/><rect x="10" y="36" width="30" height="3" rx="1" fill="#0b1a0b" stroke="#2e7d32" stroke-width="1"/><circle cx="44" cy="7" r="2.5" fill="#00e676"/></svg>
+        </div>
+        <div class="ditem-lbl">ПК</div>
+        <div class="ditem-desc">Рабочая станция</div>
+      </div>
+      <div class="ditem" data-type="server" onmouseenter="G.hp.add('panel-server')" onmousedown="startDrag(event,'server')">
+        <div class="ditem-icon">
+          <svg width="36" height="46" viewBox="0 0 36 46"><rect x="3" y="1" width="30" height="44" rx="2.5" fill="#0f0622" stroke="#00bcd4" stroke-width="1.5"/><rect x="5" y="5" width="26" height="9" rx="1" fill="#070314" stroke="#00bcd4" stroke-width=".7"/><rect x="5" y="17" width="26" height="9" rx="1" fill="#070314" stroke="#00bcd4" stroke-width=".7"/><rect x="5" y="29" width="26" height="9" rx="1" fill="#070314" stroke="#00bcd4" stroke-width=".7"/><circle cx="27" cy="9.5" r="2" fill="#00e676"/><circle cx="27" cy="21.5" r="2" fill="#00bcd4"/><circle cx="27" cy="33.5" r="2" fill="#ffd600"/><text x="10" y="24" fill="#00bcd4" font-size="5" font-family="monospace">DHCP</text></svg>
+        </div>
+        <div class="ditem-lbl">DHCP-Сервер</div>
+        <div class="ditem-desc">Сервер адресов</div>
+      </div>
+    </div>
+    <div class="dp-cat">
+      <span class="dp-cat-lbl">Сетевые</span>
+      <div class="ditem" data-type="switch" onmouseenter="G.hp.add('panel-switch')" onmousedown="startDrag(event,'switch')">
+        <div class="ditem-icon">
+          <svg width="56" height="30" viewBox="0 0 56 30"><rect x="1" y="7" width="54" height="16" rx="2.5" fill="#040d1e" stroke="#1565c0" stroke-width="1.5"/><rect x="3" y="9" width="50" height="12" rx="1" fill="#020810"/><path d="M6 16 L10 12 L16 16 L20 12 L26 16 L30 12 L36 16 L40 12 L46 16 L50 12" stroke="#1565c0" fill="none" stroke-width="1.5" stroke-linecap="round"/><circle cx="7" cy="4" r="2.5" fill="#00c8ff"/><circle cx="16" cy="4" r="2.5" fill="#00e676"/><circle cx="25" cy="4" r="2.5" fill="#00e676"/><circle cx="43" cy="4" r="2.5" fill="#2196f3"/></svg>
+        </div>
+        <div class="ditem-lbl">Коммутатор</div>
+        <div class="ditem-desc">Switch L2</div>
+      </div>
+      <div class="ditem" data-type="router" onmouseenter="G.hp.add('panel-router')" onmousedown="startDrag(event,'router')">
+        <div class="ditem-icon">
+          <svg width="50" height="50" viewBox="0 0 50 50"><circle cx="25" cy="25" r="22" fill="#160a00" stroke="#e65100" stroke-width="1.5"/><circle cx="25" cy="25" r="14" fill="#0d0600" stroke="#e65100" stroke-width=".8" stroke-dasharray="3.5 3"/><circle cx="25" cy="25" r="4" fill="#e65100"/></svg>
+        </div>
+        <div class="ditem-lbl">Роутер</div>
+        <div class="ditem-desc">Router L3</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="cvw" onmousemove="onCvwMove(event)" onmouseup="onCvwUp(event)" onclick="onCvwClick(event)">
+    <svg id="conn-svg"><line id="prev-line" x1="0" y1="0" x2="0" y2="0"/></svg>
+    <div id="canvas-nodes"></div>
+  </div>
+
+  <div id="rp">
+    <div id="prop-strip">
+      <div class="prop-hdr" onclick="toggleProp()">
+        <span class="prop-hdr-t">▸ Свойства</span>
+        <span id="prop-arr" style="color:var(--t3);font-size:11px;">▶</span>
+      </div>
+      <div id="prop-body">
+        <div id="prop-nosel" style="font-size:10px;color:var(--t3);font-family:'Share Tech Mono',monospace;padding:2px 0;">Выберите устройство</div>
+        <div id="prop-data" style="display:none"></div>
+      </div>
+    </div>
+    <div id="taskp">
+      <div id="th">
+        <div class="th-lab">Лабораторная 5 / 6</div>
+        <div class="th-title">DHCP-сервер</div>
+        <div class="th-sub">Авто-назначение IP, настройка пула адресов</div>
+        <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+        <div class="prog-text"><span class="pd" id="prog-done">0 выполнено</span><span class="pt" id="prog-total">из 56 заданий</span></div>
+      </div>
+      <div id="tscroll"></div>
+      <div id="tfooter">
+        <button class="btn-check" onclick="manualCheck()">✓ Проверить прогресс</button>
+        <button class="btn-next" id="btn-next">→ Перейти к Лабораторной 6</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="con">
+  <div id="conbar">
+    <span class="con-title">■ Консоль</span>
+    <span class="con-hint">help | devices | select &lt;имя&gt; | ipconfig /all | ping &lt;IP&gt; | arp -a | dhcp status | dhcp lease | dhcp pool | route print</span>
+    <button class="con-cl" onclick="clearCon()">cls</button>
+  </div>
+  <div id="cout"></div>
+  <div id="cin-row">
+    <span class="cprompt" id="cprompt">NetSim&gt;</span>
+    <input id="cin" type="text" placeholder="Введите команду..." autocomplete="off" spellcheck="false" onkeydown="onConKey(event)">
+  </div>
+</div>
+
+<!-- CONFIG MODAL -->
+<div class="overlay hid" id="cfg-modal">
+  <div class="mbox">
+    <div class="m-hdr">
+      <span class="m-type" id="m-badge">PC</span>
+      <span class="m-title" id="m-title">Конфигурация</span>
+      <button class="m-close" onclick="closeModal('cfg-modal')">✕</button>
+    </div>
+    <div class="m-body" id="m-body"></div>
+    <div class="m-ftr">
+      <button class="btn-cn" onclick="closeModal('cfg-modal')">Отмена</button>
+      <button class="btn-sv" onclick="saveCfg()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- SUCCESS MODAL -->
+<div class="overlay hid" id="smod">
+  <div class="mbox">
+    <div class="m-hdr"><span class="m-title">🎯 Лабораторная завершена!</span><button class="m-close" onclick="closeModal('smod')">✕</button></div>
+    <div class="m-body" style="text-align:center">
+      <div class="s-ico">🎉</div>
+      <div class="s-ttl">ОТЛИЧНО!</div>
+      <div class="s-stats">
+        <div class="s-stat"><div class="s-stat-n" id="s-devs">0</div><div class="s-stat-l">Устройств</div></div>
+        <div class="s-stat"><div class="s-stat-n" id="s-leases">0</div><div class="s-stat-l">DHCP-аренд</div></div>
+        <div class="s-stat"><div class="s-stat-n" id="s-tasks">56</div><div class="s-stat-l">Заданий</div></div>
+      </div>
+      <div class="s-dsc">Вы успешно настроили DHCP-сервер! В <b style="color:var(--c-teal)">Лаб. 6</b> — корпоративная сеть: топология + IP + маршрутизация + DHCP.</div>
+    </div>
+    <div class="m-ftr" style="justify-content:center">
+      <button class="btn-sv" onclick="closeModal('smod')">Продолжить</button>
+    </div>
+  </div>
+</div>
+
+<div id="ghost"></div>
+
+<script>
+'use strict';
+// ─── STATE ───
+const G = {
+  devices:[], connections:[], nextId:1,
+  tool:'select', dragging:null, dragOff:{x:0,y:0},
+  cableFrom:null, selected:null, cfgDevice:null, conDev:null,
+  // tracking
+  ht: new Set(), hp: new Set(),
+  toolsOn: new Set(['select']),
+  openedCfg: new Set(),
+  deletedCable: false, movedDev: false,
+  // dhcp
+  leaseTable: [],
+  // console
+  ipcfgRan: new Set(), arpRan: new Set(), pingOK: new Set(),
+  dhcpStatusRan: false, dhcpLeaseRan: false, dhcpPoolRan: false,
+  routeRan: false,
+  // tasks
+  taskDone: {}, labDone: false,
+};
+let panelDragType=null, cmdHist=[], cmdHistIdx=-1;
+let pcCnt=0, swCnt=0, srvCnt=0, rtCnt=0;
+
+// ─── TASK DATA ───
+const GROUPS = [
+  {name:'Подготовка',icon:'📚',tasks:[
+    {id:'t01',text:'Наведите курсор на кнопку «Выбор» в панели инструментов',hint:'Первая кнопка (иконка стрелки) — прочитайте подсказку',ck:()=>G.ht.has('tool-select')},
+    {id:'t02',text:'Наведите курсор на кнопку «Кабель»',hint:'Вторая кнопка в панели инструментов',ck:()=>G.ht.has('tool-cable')},
+    {id:'t03',text:'Наведите курсор на «DHCP-Сервер» в левой панели',hint:'Перейдите в секцию «Конечные узлы» слева — найдите значок сервера',ck:()=>G.hp.has('panel-server')},
+    {id:'t04',text:'Введите команду help в консоли',hint:'Кликните на поле ввода внизу и наберите: help',ck:()=>G.taskDone['t04']},
+    {id:'t05',text:'Введите команду devices в консоли',hint:'→ devices (покажет список устройств)',ck:()=>G.taskDone['t05']},
+    {id:'t06',text:'Изучите ПК в левой панели (наведите курсор)',hint:'Наведите на значок «ПК»',ck:()=>G.hp.has('panel-pc')},
+  ]},
+  {name:'Построение топологии',icon:'🖧',tasks:[
+    {id:'t07',text:'Перетащите 1-й ПК на холст',hint:'Нажмите и перетащите значок «ПК» из левой панели',ck:()=>pcs().length>=1},
+    {id:'t08',text:'Добавьте 2-й ПК',hint:'Разместите рядом с первым',ck:()=>pcs().length>=2},
+    {id:'t09',text:'Добавьте 3-й ПК',ck:()=>pcs().length>=3},
+    {id:'t10',text:'Добавьте 4-й ПК',ck:()=>pcs().length>=4},
+    {id:'t11',text:'Добавьте коммутатор (Switch) в центр',hint:'Секция «Сетевые» → «Коммутатор»',ck:()=>switches().length>=1},
+    {id:'t12',text:'Добавьте DHCP-сервер на холст',hint:'Секция «Конечные узлы» → «DHCP-Сервер»',ck:()=>servers().length>=1},
+    {id:'t13',text:'✔ Всего 6 устройств (4 ПК + коммутатор + сервер)',hint:'Команда devices покажет список',ck:()=>G.devices.length>=6},
+  ]},
+  {name:'Именование',icon:'✏️',tasks:[
+    {id:'t14',text:'Переименуйте ПК1 (например: «Отдел-ПК1»)',hint:'Двойной клик → поле «Имя» → Сохранить',ck:()=>renPCs()>=1},
+    {id:'t15',text:'Переименуйте ПК2 (например: «Отдел-ПК2»)',ck:()=>renPCs()>=2},
+    {id:'t16',text:'Переименуйте ПК3',ck:()=>renPCs()>=3},
+    {id:'t17',text:'Переименуйте ПК4',ck:()=>renPCs()>=4},
+    {id:'t18',text:'Переименуйте коммутатор (например: «SW-Офис»)',hint:'Двойной клик по коммутатору',ck:()=>switches().some(d=>isRen(d,'switch'))},
+    {id:'t19',text:'Переименуйте DHCP-сервер (например: «DHCP-Server»)',hint:'Дайте имя отражающее роль устройства',ck:()=>servers().some(d=>isRen(d,'server'))},
+    {id:'t20',text:'✔ Все 6 устройств переименованы',hint:'Ни одно устройство не должно иметь имя по умолчанию',ck:()=>renPCs()>=4&&switches().some(d=>isRen(d,'switch'))&&servers().some(d=>isRen(d,'server'))},
+  ]},
+  {name:'Кабели',icon:'🔌',tasks:[
+    {id:'t21',text:'Активируйте инструмент «Кабель» (клавиша C)',hint:'Нажмите C или кнопку «Кабель» в панели инструментов',ck:()=>G.toolsOn.has('cable')},
+    {id:'t22',text:'Соедините ПК1 с коммутатором',hint:'Кабельный режим: кликните ПК1, затем коммутатор',ck:()=>pcToSw(0)},
+    {id:'t23',text:'Соедините ПК2 с коммутатором',ck:()=>pcToSw(1)},
+    {id:'t24',text:'Соедините ПК3 с коммутатором',ck:()=>pcToSw(2)},
+    {id:'t25',text:'Соедините ПК4 с коммутатором',ck:()=>pcToSw(3)},
+    {id:'t26',text:'Соедините DHCP-сервер с коммутатором',hint:'Сервер подключается к коммутатору как и ПК',ck:()=>srvToSw()},
+    {id:'t27',text:'Вернитесь к инструменту «Выбор» (клавиша V)',ck:()=>G.toolsOn.has('cable')&&G.tool==='select'},
+    {id:'t28',text:'✔ Все 5 кабелей проложены (4 ПК + 1 сервер → коммутатор)',ck:()=>swConns()>=5},
+  ]},
+  {name:'Настройка DHCP',icon:'⚙️',tasks:[
+    {id:'t29',text:'Откройте настройки DHCP-сервера (двойной клик)',hint:'Двойной клик по значку сервера',ck:()=>[...G.openedCfg].some(id=>{const d=G.devices.find(x=>x.id===id);return d&&d.type==='server';})},
+    {id:'t30',text:'Включите DHCP-сервис (переключатель «DHCP Включён»)',hint:'В разделе «DHCP-сервис» переключите — должен стать синим',ck:()=>!!dhcpSrv()?.dhcpEnabled},
+    {id:'t31',text:'Задайте имя DHCP-пула (например: «POOL_OFFICE»)',hint:'Поле «Имя пула» — латинские буквы',ck:()=>!!dhcpSrv()?.dhcpPool?.name},
+    {id:'t32',text:'Укажите начальный IP пула (например: 192.168.1.10)',hint:'Первый IP, который сервер выдаст клиенту',ck:()=>!!dhcpSrv()?.dhcpPool?.startIP},
+    {id:'t33',text:'Укажите конечный IP пула (например: 192.168.1.100)',hint:'Последний IP диапазона',ck:()=>!!dhcpSrv()?.dhcpPool?.endIP},
+    {id:'t34',text:'Задайте маску подсети (255.255.255.0)',hint:'Стандартная маска для /24 сети',ck:()=>!!dhcpSrv()?.dhcpPool?.netmask},
+    {id:'t35',text:'Укажите шлюз по умолчанию (например: 192.168.1.1)',hint:'IP маршрутизатора — DHCP передаёт его клиентам',ck:()=>!!dhcpSrv()?.dhcpPool?.gateway},
+    {id:'t36',text:'Укажите DNS-сервер (например: 8.8.8.8)',hint:'Google DNS: 8.8.8.8, Cloudflare: 1.1.1.1',ck:()=>!!dhcpSrv()?.dhcpPool?.dns},
+    {id:'t37',text:'Задайте время аренды (например: 86400 секунд = 24 ч)',hint:'3600=1ч, 86400=1 день, 604800=7 дней',ck:()=>+(dhcpSrv()?.dhcpPool?.leaseTime||0)>0},
+    {id:'t38',text:'Сохраните конфигурацию DHCP-сервера',hint:'Нажмите «Сохранить»',ck:()=>!!dhcpSrv()?._dhcpSaved},
+    {id:'t39',text:'✔ DHCP-сервер полностью настроен',hint:'dhcp pool — проверить конфигурацию',ck:()=>{const s=dhcpSrv();return !!s&&s.dhcpEnabled&&!!s.dhcpPool?.name&&!!s.dhcpPool?.startIP&&!!s.dhcpPool?.endIP&&!!s.dhcpPool?.netmask&&!!s.dhcpPool?.gateway&&!!s.dhcpPool?.dns&&+(s.dhcpPool?.leaseTime||0)>0;}},
+  ]},
+  {name:'Авто-IP на ПК',icon:'🖥',tasks:[
+    {id:'t40',text:'Откройте настройки ПК1 → режим «Получать IP (DHCP)»',hint:'Двойной клик ПК1 → режим DHCP → Сохранить',ck:()=>dhcpClients()>=1},
+    {id:'t41',text:'ПК1 получил IP-адрес от DHCP-сервера',hint:'После сохранения IP появится под значком',ck:()=>pcHasDHCP(0)},
+    {id:'t42',text:'Настройте ПК2 на DHCP',ck:()=>dhcpClients()>=2},
+    {id:'t43',text:'ПК2 получил IP',ck:()=>pcHasDHCP(1)},
+    {id:'t44',text:'Настройте ПК3 на DHCP',ck:()=>dhcpClients()>=3},
+    {id:'t45',text:'ПК3 получил IP',ck:()=>pcHasDHCP(2)},
+    {id:'t46',text:'Настройте ПК4 на DHCP',ck:()=>dhcpClients()>=4},
+    {id:'t47',text:'ПК4 получил IP',ck:()=>pcHasDHCP(3)},
+    {id:'t48',text:'✔ Все 4 ПК получили уникальные IP из пула DHCP',ck:()=>allDHCP()},
+  ]},
+  {name:'Диагностика',icon:'🔍',tasks:[
+    {id:'t49',text:'Выберите ПК1 командой: select [имя]',hint:'Введите: select Отдел-ПК1 (или своё имя)',ck:()=>G.taskDone['t49']},
+    {id:'t50',text:'Выполните: ipconfig /all (проверьте IP ПК1)',hint:'→ ipconfig /all',ck:()=>G.ipcfgRan.size>=1},
+    {id:'t51',text:'Ping до DHCP-сервера от ПК1',hint:'→ ping [IP_сервера]',ck:()=>{const s=servers()[0];return s&&[...G.pingOK].some(p=>p.includes(s.ip));}},
+    {id:'t52',text:'Ping от ПК1 до ПК2',hint:'→ ping [IP_ПК2]',ck:()=>G.pingOK.size>=2},
+    {id:'t53',text:'Команда: arp -a (ARP-таблица)',hint:'→ arp -a',ck:()=>G.arpRan.size>=1},
+    {id:'t54',text:'Команда: dhcp status',hint:'→ dhcp status',ck:()=>G.dhcpStatusRan},
+    {id:'t55',text:'Команда: dhcp lease (таблица аренды)',hint:'→ dhcp lease',ck:()=>G.dhcpLeaseRan},
+    {id:'t56',text:'Команда: dhcp pool (параметры пула)',hint:'→ dhcp pool',ck:()=>G.dhcpPoolRan},
+  ]},
+  {name:'Финальная проверка',icon:'🏁',live:true,tasks:[
+    {id:'t57',text:'Все 4 ПК в режиме DHCP (не статика)',ck:()=>allDHCP()&&dhcpClients()>=4},
+    {id:'t58',text:'Сервер выдал 4 аренды (одна на ПК)',hint:'→ dhcp lease — 4 записи',ck:()=>G.leaseTable.length>=4},
+    {id:'t59',text:'Все 4 IP-адреса уникальны',ck:()=>uniqIPs()},
+    {id:'t60',text:'Ping между ПК3 и ПК4',hint:'select ПК3 → ping [IP ПК4]',ck:()=>G.pingOK.size>=3},
+    {id:'t61',text:'Проверьте командой devices — у всех ПК есть IP',hint:'→ devices',ck:()=>G.taskDone['t61']},
+    {id:'t62',text:'🏆 DHCP-сеть полностью функционирует!',ck:()=>allDHCP()&&G.leaseTable.length>=4&&swConns()>=5&&!!dhcpSrv()?._dhcpSaved},
+  ]},
+];
+
+// ─── HELPERS ───
+const pcs      = ()=>G.devices.filter(d=>d.type==='pc');
+const switches = ()=>G.devices.filter(d=>d.type==='switch');
+const servers  = ()=>G.devices.filter(d=>d.type==='server');
+const dhcpSrv  = ()=>servers()[0];
+function isRen(d,t){const def={pc:'PC',switch:'SW',server:'SRV',router:'RT'};return d.name&&!d.name.match(new RegExp('^'+def[t]+'\\d*$','i'));}
+function renPCs(){return pcs().filter(d=>isRen(d,'pc')).length;}
+function isConn(a,b){return G.connections.some(c=>(c.from===a&&c.to===b)||(c.from===b&&c.to===a));}
+function pcToSw(i){const pc=pcs()[i],sw=switches()[0];return pc&&sw&&isConn(pc.id,sw.id);}
+function srvToSw(){const sw=switches()[0];return sw&&servers().some(s=>isConn(s.id,sw.id));}
+function swConns(){const sw=switches()[0];if(!sw)return 0;return G.connections.filter(c=>c.from===sw.id||c.to===sw.id).length;}
+function dhcpClients(){return pcs().filter(d=>d.ipMode==='dhcp').length;}
+function pcHasDHCP(i){const pc=pcs()[i];return pc&&pc.ipMode==='dhcp'&&!!pc.ip;}
+function allDHCP(){return pcs().every(p=>p.ipMode==='dhcp'&&p.ip);}
+function uniqIPs(){const ips=pcs().map(p=>p.ip).filter(Boolean);return ips.length>=4&&new Set(ips).size===ips.length;}
+function connVia(a,b){if(isConn(a,b))return true;const sw=switches()[0];return sw&&isConn(a,sw.id)&&isConn(b,sw.id);}
+function typeLabel(t){return{pc:'ПК / Рабочая станция',switch:'Коммутатор (Switch L2)',server:'DHCP-Сервер',router:'Маршрутизатор'}[t]||t;}
+function validIP(ip){return /^(\d{1,3}\.){3}\d{1,3}$/.test(ip)&&ip.split('.').every(o=>+o>=0&&+o<=255);}
+function validMask(m){return m==='255.255.255.0'||m==='255.255.0.0'||m==='255.0.0.0'||/^255\.255\.255\.(0|128|192|224|240|248|252)$/.test(m);}
+function ip2int(ip){return ip.split('.').reduce((a,o)=>(a<<8)+(+o),0)>>>0;}
+function int2ip(n){return [(n>>>24),(n>>>16&255),(n>>>8&255),(n&255)].join('.');}
+function genMAC(id){let h='00-50-56';const s=id.replace(/\D/g,'');for(let i=0;i<3;i++){const b=parseInt(s[i*2]||'0')+parseInt(s[i*2+1]||'A',16);h+='-'+('0'+((b*37+i*17)%256).toString(16)).slice(-2).toUpperCase();}return h;}
+
+// ─── DHCP ───
+function assignDHCP(pc){
+  const srv=servers()[0];
+  if(!srv||!srv.dhcpEnabled||!srv.dhcpPool)return;
+  const p=srv.dhcpPool;
+  if(!p.startIP||!p.endIP||!p.netmask)return;
+  const start=ip2int(p.startIP),end=ip2int(p.endIP);
+  const used=new Set(G.leaseTable.map(l=>ip2int(l.ip)));
+  pcs().forEach(q=>{if(q.ip&&q.ipMode==='dhcp'&&q.id!==pc.id)used.add(ip2int(q.ip));});
+  for(let i=start;i<=end;i++){
+    if(!used.has(i)){
+      const ip=int2ip(i);
+      pc.ip=ip;pc.mask=p.netmask;pc.gateway=p.gateway||'';pc.dns=p.dns||'';pc.assignedByDHCP=true;
+      const ex=G.leaseTable.find(l=>l.hostId===pc.id);
+      if(ex){ex.ip=ip;ex.hostname=pc.name;}
+      else G.leaseTable.push({ip,hostname:pc.name,mask:p.netmask,gateway:p.gateway||'',hostId:pc.id,expiry:'+'+Math.round((+p.leaseTime||86400)/3600)+'ч'});
+      renderNode(pc);drawLines();
+      clog('dhcp',`[DHCP] ${pc.name} → DISCOVER → OFFER ${ip} → ACK ✓`);
+      return;
+    }
+  }
+  clog('er','[DHCP] Пул адресов исчерпан!');
+}
+function releaseDHCP(pc){
+  if(pc.assignedByDHCP){
+    G.leaseTable=G.leaseTable.filter(l=>l.hostId!==pc.id);
+    pc.ip='';pc.mask='';pc.gateway='';pc.dns='';pc.assignedByDHCP=false;
+    renderNode(pc);drawLines();
+  }
+}
+
+// ─── ТЕМА: ДЕНЬ / НОЧЬ (по умолчанию — день) ───
+function toggleTheme(){
+  const isDay=document.body.classList.toggle('day');
+  document.getElementById('theme-icon').textContent=isDay?'☀':'☾';
+  document.getElementById('theme-label').textContent=isDay?'День':'Ночь';
+}
+
+// ─── TOOLS ───
+function setTool(t){
+  G.tool=t;G.toolsOn.add(t);
+  ['sel','cbl','del'].forEach((x,i)=>{
+    document.getElementById('t-'+x)?.classList.toggle('on',['select','cable','delete'][i]===t);
+  });
+  document.getElementById('mode-pill').textContent=t==='select'?'● ВЫБОР':t==='cable'?'● КАБЕЛЬ':'● УДАЛИТЬ';
+  const cw=document.getElementById('cvw');
+  cw.className=t==='cable'?'tool-cable':t==='delete'?'tool-delete':'';
+  const csbar=document.getElementById('csbar');
+  csbar.classList.toggle('on',t==='cable');
+  if(t!=='cable'){G.cableFrom=null;hidePrevLine();clearSrc();}
+  runChecks();
+}
+function clearSrc(){document.querySelectorAll('.dnode').forEach(n=>n.classList.remove('cable-src','sel'));}
+
+// ─── DEVICES ───
+function addDevice(type,x,y){
+  const id='d'+G.nextId++;
+  let name;
+  if(type==='pc')name='PC'+(++pcCnt);
+  else if(type==='switch')name='SW'+(++swCnt);
+  else if(type==='server')name='SRV'+(++srvCnt);
+  else name='RT'+(++rtCnt);
+  const d={id,type,name,x,y,ip:'',mask:'',gateway:'',dns:'',ipMode:'static',assignedByDHCP:false};
+  if(type==='server'){d.dhcpEnabled=false;d.dhcpPool={name:'',startIP:'',endIP:'',netmask:'',gateway:'',dns:'',leaseTime:'86400'};d.ip='192.168.1.1';d.mask='255.255.255.0';d._dhcpSaved=false;}
+  G.devices.push(d);
+  renderNode(d);runChecks();return d;
+}
+
+function devSVG(type){
+  if(type==='pc')return`<svg width="50" height="40" viewBox="0 0 50 40"><rect x="3" y="2" width="44" height="29" rx="2.5" fill="#0b1a0b" stroke="#2e7d32" stroke-width="1.5"/><rect x="5" y="4" width="40" height="25" rx="1" fill="#050e05"/><text x="25" y="20" text-anchor="middle" fill="#2e7d32" font-size="11" font-family="monospace">&gt;_</text><rect x="18" y="32" width="14" height="4" rx="1" fill="#1a3a1a"/><rect x="10" y="36" width="30" height="3" rx="1" fill="#0b1a0b" stroke="#2e7d32" stroke-width="1"/><circle cx="44" cy="7" r="2.5" fill="#00e676"/></svg>`;
+  if(type==='switch')return`<svg width="56" height="30" viewBox="0 0 56 30"><rect x="1" y="7" width="54" height="16" rx="2.5" fill="#040d1e" stroke="#1565c0" stroke-width="1.5"/><rect x="3" y="9" width="50" height="12" rx="1" fill="#020810"/><path d="M6 16 L10 12 L16 16 L20 12 L26 16 L30 12 L36 16 L40 12 L46 16 L50 12" stroke="#1565c0" fill="none" stroke-width="1.5" stroke-linecap="round"/><circle cx="7" cy="4" r="2.5" fill="#00c8ff"/><circle cx="25" cy="4" r="2.5" fill="#00e676"/><circle cx="43" cy="4" r="2.5" fill="#2196f3"/></svg>`;
+  if(type==='server')return`<svg width="36" height="46" viewBox="0 0 36 46"><rect x="3" y="1" width="30" height="44" rx="2.5" fill="#0f0622" stroke="#00bcd4" stroke-width="1.5"/><rect x="5" y="5" width="26" height="9" rx="1" fill="#070314" stroke="#00bcd4" stroke-width=".7"/><rect x="5" y="17" width="26" height="9" rx="1" fill="#070314" stroke="#00bcd4" stroke-width=".7"/><rect x="5" y="29" width="26" height="9" rx="1" fill="#070314" stroke="#00bcd4" stroke-width=".7"/><circle cx="27" cy="9.5" r="2" fill="#00e676"/><circle cx="27" cy="21.5" r="2" fill="#00bcd4"/><circle cx="27" cy="33.5" r="2" fill="#ffd600"/><text x="10" y="24" fill="#00bcd4" font-size="5" font-family="monospace">DHCP</text></svg>`;
+  return`<svg width="50" height="50" viewBox="0 0 50 50"><circle cx="25" cy="25" r="22" fill="#160a00" stroke="#e65100" stroke-width="1.5"/><circle cx="25" cy="25" r="14" fill="#0d0600" stroke="#e65100" stroke-width=".8" stroke-dasharray="3.5 3"/><circle cx="25" cy="25" r="4" fill="#e65100"/></svg>`;
+}
+
+function renderNode(d){
+  const nodes=document.getElementById('canvas-nodes');
+  let el=document.getElementById('nd-'+d.id);
+  if(!el){
+    el=document.createElement('div');el.id='nd-'+d.id;el.className='dnode';
+    el.innerHTML=`<div class="dnbody">${devSVG(d.type)}</div><div class="dnname" id="nn-${d.id}">${d.name}</div><div class="dnip empty" id="ni-${d.id}">—</div>`;
+    el.addEventListener('mousedown',e=>onNdDown(e,d.id));
+    el.addEventListener('dblclick',()=>openCfg(d.id));
+    el.addEventListener('click',e=>{e.stopPropagation();onNdClick(d.id);});
+    nodes.appendChild(el);
+  }
+  el.style.left=d.x+'px';el.style.top=d.y+'px';
+  const nm=document.getElementById('nn-'+d.id);if(nm){nm.textContent=d.name;nm.className='dnname'+(isRen(d,d.type)?' ren':'');}
+  const ip=document.getElementById('ni-'+d.id);
+  if(ip){
+    if(d.ip){ip.textContent=d.ip+(d.assignedByDHCP?' ⟵DHCP':'');ip.className='dnip'+(d.assignedByDHCP?' dhcp':' has');}
+    else{ip.textContent='—';ip.className='dnip empty';}
+  }
+}
+function rmNode(id){document.getElementById('nd-'+id)?.remove();}
+
+// ─── CABLES ───
+function drawLines(){
+  const svg=document.getElementById('conn-svg');
+  svg.querySelectorAll('.cline').forEach(e=>e.remove());
+  G.connections.forEach(c=>{
+    const a=G.devices.find(d=>d.id===c.from),b=G.devices.find(d=>d.id===c.to);if(!a||!b)return;
+    const ln=document.createElementNS('http://www.w3.org/2000/svg','line');
+    ln.setAttribute('x1',a.x);ln.setAttribute('y1',a.y);ln.setAttribute('x2',b.x);ln.setAttribute('y2',b.y);
+    const act=(a.type==='server'&&a.dhcpEnabled)||(b.type==='server'&&b.dhcpEnabled);
+    ln.setAttribute('class','cline'+(act?' active':''));
+    ln.addEventListener('click',e=>{if(G.tool==='delete'){e.stopPropagation();delConn(c.id);G.deletedCable=true;}});
+    svg.insertBefore(ln,svg.firstChild);
+  });
+}
+function delConn(cid){G.connections=G.connections.filter(c=>c.id!==cid);drawLines();runChecks();}
+function delDev(id){
+  G.connections=G.connections.filter(c=>c.from!==id&&c.to!==id);
+  G.devices=G.devices.filter(d=>d.id!==id);
+  rmNode(id);drawLines();
+  if(G.selected===id){G.selected=null;propPanel(null);}
+  if(G.conDev?.id===id){G.conDev=null;updPrompt();}
+  runChecks();
+}
+
+// ─── DRAG ───
+function startDrag(e,type){
+  e.preventDefault();panelDragType=type;
+  const gh=document.getElementById('ghost');
+  gh.innerHTML=devSVG(type);gh.style.display='block';
+  gh.style.left=e.clientX+'px';gh.style.top=e.clientY+'px';
+  const mv=ev=>{gh.style.left=ev.clientX+'px';gh.style.top=ev.clientY+'px';};
+  const up=()=>{gh.style.display='none';panelDragType=null;document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);};
+  document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);
+}
+function onNdDown(e,id){
+  if(G.tool==='cable')return;
+  if(G.tool==='delete'){e.stopPropagation();delDev(id);return;}
+  e.stopPropagation();
+  G.dragging=id;
+  const d=G.devices.find(x=>x.id===id);
+  const cw=document.getElementById('cvw').getBoundingClientRect();
+  G.dragOff={x:e.clientX-cw.left-d.x,y:e.clientY-cw.top-d.y};
+}
+function onCvwMove(e){
+  if(panelDragType){const gh=document.getElementById('ghost');gh.style.left=e.clientX+'px';gh.style.top=e.clientY+'px';}
+  if(G.dragging){
+    const d=G.devices.find(x=>x.id===G.dragging);
+    const cw=document.getElementById('cvw').getBoundingClientRect();
+    d.x=e.clientX-cw.left-G.dragOff.x;d.y=e.clientY-cw.top-G.dragOff.y;
+    renderNode(d);drawLines();G.movedDev=true;
+  }
+  if(G.tool==='cable'&&G.cableFrom){
+    const cw=document.getElementById('cvw').getBoundingClientRect();
+    const pr=document.getElementById('prev-line'),src=G.devices.find(d=>d.id===G.cableFrom);
+    if(src){pr.setAttribute('x1',src.x);pr.setAttribute('y1',src.y);pr.setAttribute('x2',e.clientX-cw.left);pr.setAttribute('y2',e.clientY-cw.top);pr.style.display='';}
+  }
+}
+function onCvwUp(e){
+  if(G.dragging){G.dragging=null;runChecks();}
+  if(panelDragType){
+    const cw=document.getElementById('cvw').getBoundingClientRect();
+    const x=e.clientX-cw.left,y=e.clientY-cw.top;
+    if(x>0&&y>0&&x<cw.width&&y<cw.height)addDevice(panelDragType,x,y);
+    panelDragType=null;document.getElementById('ghost').style.display='none';
+  }
+}
+function onCvwClick(e){if(G.tool==='cable'&&!G.cableFrom){G.selected=null;propPanel(null);}}
+function onNdClick(id){
+  const d=G.devices.find(x=>x.id===id);if(!d)return;
+  if(G.tool==='select'){
+    G.selected=id;G.conDev=d;updPrompt();
+    document.querySelectorAll('.dnode').forEach(n=>n.classList.remove('sel'));
+    document.getElementById('nd-'+id)?.classList.add('sel');
+    propPanel(d);
+  } else if(G.tool==='cable'){
+    if(!G.cableFrom){
+      G.cableFrom=id;
+      document.getElementById('nd-'+id)?.classList.add('cable-src');
+      document.getElementById('cstxt').textContent=`Выбрано ${d.name} → кликните на второе устройство`;
+    } else if(G.cableFrom===id){
+      G.cableFrom=null;hidePrevLine();clearSrc();
+      document.getElementById('cstxt').textContent='Кликните на первое устройство';
+    } else {
+      const exists=G.connections.some(c=>(c.from===G.cableFrom&&c.to===id)||(c.from===id&&c.to===G.cableFrom));
+      if(!exists){G.connections.push({id:'c'+G.nextId++,from:G.cableFrom,to:id});drawLines();clog('ok',`Кабель: ${G.devices.find(x=>x.id===G.cableFrom)?.name} ↔ ${d.name}`);}
+      else clog('wn','Эти устройства уже соединены');
+      G.cableFrom=null;hidePrevLine();clearSrc();
+      document.getElementById('cstxt').textContent='Кликните на первое устройство';
+      runChecks();
+    }
+  } else if(G.tool==='delete'){delDev(id);}
+}
+function hidePrevLine(){const pr=document.getElementById('prev-line');pr.setAttribute('x1',0);pr.setAttribute('y1',0);pr.setAttribute('x2',0);pr.setAttribute('y2',0);pr.style.display='none';}
+
+// ─── PROPS PANEL ───
+function toggleProp(){
+  const b=document.getElementById('prop-body'),a=document.getElementById('prop-arr');
+  const open=b.classList.contains('open');b.classList.toggle('open',!open);a.textContent=open?'▶':'▼';
+}
+function propPanel(d){
+  const ns=document.getElementById('prop-nosel'),pd=document.getElementById('prop-data');
+  if(!d){ns.style.display='';pd.style.display='none';return;}
+  ns.style.display='none';pd.style.display='';
+  let rows=`<div class="prow"><span class="pk">Имя</span><span class="pv">${d.name}</span></div>
+    <div class="prow"><span class="pk">Тип</span><span class="pv">${typeLabel(d.type)}</span></div>
+    <div class="prow"><span class="pk">IP</span><span class="pv ip">${d.ip||'—'}</span></div>`;
+  if(d.type==='pc')rows+=`<div class="prow"><span class="pk">Режим</span><span class="pv ${d.ipMode==='dhcp'?'dhcp':'warn'}">${d.ipMode==='dhcp'?'DHCP':'Статика'}</span></div>`;
+  if(d.type==='server')rows+=`<div class="prow"><span class="pk">DHCP</span><span class="pv ${d.dhcpEnabled?'ok':'warn'}">${d.dhcpEnabled?'Включён ✓':'Выключен'}</span></div><div class="prow"><span class="pk">Аренд</span><span class="pv ok">${G.leaseTable.length}</span></div>`;
+  const conns=G.connections.filter(c=>c.from===d.id||c.to===d.id).length;
+  rows+=`<div class="prow"><span class="pk">Соединений</span><span class="pv ${conns>0?'ok':'warn'}">${conns}</span></div>`;
+  pd.innerHTML=rows+`<button class="open-cfg-btn" onclick="openCfg('${d.id}')">⚙ Открыть настройки</button>`;
+  const b=document.getElementById('prop-body');if(!b.classList.contains('open')){b.classList.add('open');document.getElementById('prop-arr').textContent='▼';}
+}
+
+// ─── CONFIG MODAL ───
+function openCfg(id){
+  const d=G.devices.find(x=>x.id===id);if(!d)return;
+  G.cfgDevice=d;G.openedCfg.add(id);
+  const badge=document.getElementById('m-badge');
+  badge.textContent={pc:'PC',switch:'SWITCH',server:'DHCP SERVER',router:'ROUTER'}[d.type]||d.type.toUpperCase();
+  badge.className='m-type '+d.type;
+  document.getElementById('m-title').textContent=`Конфигурация: ${d.name}`;
+  document.getElementById('m-body').innerHTML=buildForm(d);
+  document.getElementById('cfg-modal').classList.remove('hid');
+  runChecks();
+}
+function buildForm(d){
+  let h=`<div class="m-sec"><div class="m-sec-t">Основные параметры</div>
+  <div class="frow"><span class="flbl">Имя устройства</span><input class="finp" id="fi-name" value="${d.name}"></div></div>`;
+  if(d.type==='pc'){
+    h+=`<div class="m-sec"><div class="m-sec-t">IP-конфигурация</div>
+    <div class="frow"><span class="flbl">Режим получения IP</span>
+      <select class="fsel" id="fi-ipmode" onchange="onModeChange()">
+        <option value="static" ${d.ipMode==='static'?'selected':''}>Статический (ручной)</option>
+        <option value="dhcp" ${d.ipMode==='dhcp'?'selected':''}>Получать автоматически (DHCP)</option>
+      </select>
+    </div>
+    <div id="sf" style="display:${d.ipMode==='dhcp'?'none':'block'}">
+      <div class="frow"><span class="flbl">IP-адрес</span><input class="finp" id="fi-ip" value="${d.ip}" placeholder="192.168.1.10"></div>
+      <div class="frow"><span class="flbl">Маска подсети</span><input class="finp" id="fi-mask" value="${d.mask}" placeholder="255.255.255.0"></div>
+      <div class="frow"><span class="flbl">Шлюз</span><input class="finp" id="fi-gw" value="${d.gateway}" placeholder="192.168.1.1"></div>
+    </div>
+    <div id="di" style="display:${d.ipMode==='dhcp'?'block':'none'}">
+      <div class="fhint" style="padding:8px;background:rgba(0,188,212,.06);border:1px solid rgba(0,188,212,.2);color:#00bcd4;font-size:10px;">
+        💡 Режим DHCP: IP, маска, шлюз и DNS выдаются сервером автоматически.${d.ip?`<br>Текущий IP: <b>${d.ip}</b>`:'<br>IP будет назначен при сохранении.'}
+      </div>
+    </div></div>`;
+  }
+  if(d.type==='switch'){
+    h+=`<div class="m-sec"><div class="m-sec-t">Коммутатор (L2)</div>
+    <div class="fhint" style="padding:8px;background:rgba(21,101,192,.06);border:1px solid rgba(21,101,192,.2);color:#64b5f6;font-size:10px;">
+    Коммутатор L2 — прозрачное устройство. IP для управления не требуется.</div></div>`;
+  }
+  if(d.type==='router'){
+    h+=`<div class="m-sec"><div class="m-sec-t">Интерфейс LAN</div>
+    <div class="frow"><span class="flbl">IP-адрес</span><input class="finp" id="fi-ip" value="${d.ip}" placeholder="192.168.1.1"></div>
+    <div class="frow"><span class="flbl">Маска</span><input class="finp" id="fi-mask" value="${d.mask}" placeholder="255.255.255.0"></div></div>`;
+  }
+  if(d.type==='server'){
+    const p=d.dhcpPool||{};
+    h+=`<div class="m-sec"><div class="m-sec-t">Статический IP сервера</div>
+    <div class="frow"><span class="flbl">IP-адрес сервера</span><input class="finp" id="fi-ip" value="${d.ip||'192.168.1.1'}" placeholder="192.168.1.1"></div>
+    <div class="frow"><span class="flbl">Маска</span><input class="finp" id="fi-mask" value="${d.mask||'255.255.255.0'}" placeholder="255.255.255.0"></div></div>
+    <div class="m-sec"><div class="m-sec-t dhcp-s">DHCP-сервис <span class="dhcp-badge">RFC 2131</span></div>
+    <div class="frow"><span class="flbl">Статус DHCP</span>
+      <div class="ftoggle" onclick="toggleDHCP()">
+        <div class="tbtn2 ${d.dhcpEnabled?'active':''}" id="dt"></div>
+        <span class="tlbl2" id="dtl">${d.dhcpEnabled?'ВКЛЮЧЁН':'ВЫКЛЮЧЕН'}</span>
+      </div>
+    </div></div>
+    <div class="m-sec"><div class="m-sec-t dhcp-s">Конфигурация пула адресов</div>
+    <div class="frow"><span class="flbl">Имя пула</span><input class="finp" id="fi-pn" value="${p.name||''}" placeholder="POOL_OFFICE"></div>
+    <div class="frow"><span class="flbl">Начальный IP пула</span><input class="finp" id="fi-si" value="${p.startIP||''}" placeholder="192.168.1.10"></div>
+    <div class="frow"><span class="flbl">Конечный IP пула</span><input class="finp" id="fi-ei" value="${p.endIP||''}" placeholder="192.168.1.100"></div>
+    <div class="frow"><span class="flbl">Маска подсети</span><input class="finp" id="fi-pm" value="${p.netmask||'255.255.255.0'}" placeholder="255.255.255.0"></div>
+    <div class="frow"><span class="flbl">Шлюз по умолчанию</span><input class="finp" id="fi-pg" value="${p.gateway||''}" placeholder="192.168.1.1"></div>
+    <div class="frow"><span class="flbl">DNS-сервер</span><input class="finp" id="fi-pd" value="${p.dns||''}" placeholder="8.8.8.8"></div>
+    <div class="frow"><span class="flbl">Время аренды (сек)</span><input class="finp" id="fi-lt" value="${p.leaseTime||'86400'}" placeholder="86400"></div>
+    <div class="fhint">3600 = 1 час &nbsp;|&nbsp; 86400 = 24 часа &nbsp;|&nbsp; 604800 = 7 дней</div></div>`;
+  }
+  return h;
+}
+function onModeChange(){
+  const m=document.getElementById('fi-ipmode')?.value;
+  document.getElementById('sf').style.display=m==='dhcp'?'none':'block';
+  document.getElementById('di').style.display=m==='dhcp'?'block':'none';
+}
+function toggleDHCP(){
+  const btn=document.getElementById('dt'),lbl=document.getElementById('dtl');
+  if(!btn||!G.cfgDevice)return;
+  G.cfgDevice.dhcpEnabled=!G.cfgDevice.dhcpEnabled;
+  btn.classList.toggle('active',G.cfgDevice.dhcpEnabled);
+  lbl.textContent=G.cfgDevice.dhcpEnabled?'ВКЛЮЧЁН':'ВЫКЛЮЧЕН';
+}
+function saveCfg(){
+  const d=G.cfgDevice;if(!d)return;
+  const nv=document.getElementById('fi-name');if(nv)d.name=nv.value.trim()||d.name;
+  if(d.type==='pc'){
+    const mode=document.getElementById('fi-ipmode')?.value||'static';
+    const was=d.ipMode;d.ipMode=mode;
+    if(mode==='static'){
+      if(d.assignedByDHCP)releaseDHCP(d);
+      const ip=document.getElementById('fi-ip')?.value.trim();
+      const mask=document.getElementById('fi-mask')?.value.trim();
+      const gw=document.getElementById('fi-gw')?.value.trim();
+      if(ip)d.ip=ip;if(mask)d.mask=mask;if(gw)d.gateway=gw;
+    } else {
+      if(was!=='dhcp'||!d.ip)assignDHCP(d);
+    }
+  }
+  if(d.type==='router'){
+    const ip=document.getElementById('fi-ip')?.value.trim();
+    const mask=document.getElementById('fi-mask')?.value.trim();
+    if(ip)d.ip=ip;if(mask)d.mask=mask;
+  }
+  if(d.type==='server'){
+    const ip=document.getElementById('fi-ip')?.value.trim(),mask=document.getElementById('fi-mask')?.value.trim();
+    if(ip)d.ip=ip;if(mask)d.mask=mask;
+    if(!d.dhcpPool)d.dhcpPool={};
+    const pn=document.getElementById('fi-pn')?.value.trim();
+    const si=document.getElementById('fi-si')?.value.trim();
+    const ei=document.getElementById('fi-ei')?.value.trim();
+    const pm=document.getElementById('fi-pm')?.value.trim();
+    const pg=document.getElementById('fi-pg')?.value.trim();
+    const pd=document.getElementById('fi-pd')?.value.trim();
+    const lt=document.getElementById('fi-lt')?.value.trim();
+    if(pn){d.dhcpPool.name=pn;}
+    if(si&&validIP(si)){d.dhcpPool.startIP=si;}
+    if(ei&&validIP(ei)){d.dhcpPool.endIP=ei;}
+    if(pm&&validMask(pm)){d.dhcpPool.netmask=pm;}
+    if(pg&&validIP(pg)){d.dhcpPool.gateway=pg;}
+    if(pd&&validIP(pd)){d.dhcpPool.dns=pd;}
+    if(lt&&parseInt(lt)>0){d.dhcpPool.leaseTime=lt;}
+    d._dhcpSaved=true;
+    pcs().filter(p=>p.ipMode==='dhcp').forEach(p=>{releaseDHCP(p);assignDHCP(p);});
+    drawLines();
+    clog('ok',`[DHCP] Конфигурация ${d.name} сохранена.`);
+    if(d.dhcpEnabled&&d.dhcpPool.startIP)clog('dhcp',`[DHCP] Пул активен: ${d.dhcpPool.startIP} — ${d.dhcpPool.endIP}`);
+  }
+  renderNode(d);propPanel(d);drawLines();closeModal('cfg-modal');runChecks();
+  clog('ok',`Конфигурация ${d.name} сохранена.`);
+}
+function closeModal(id){document.getElementById(id).classList.add('hid');}
+
+// ─── PROGRESS ───
+function runChecks(){
+  GROUPS.forEach(g=>g.tasks.forEach(t=>{
+    let result=false;
+    try{result=!!t.ck();}catch(e){result=false;}
+    // "Липкие" задания: раз выполненное — остаётся выполненным, даже если текущее
+    // состояние сети временно перестало ему соответствовать. Группа "Финальная
+    // проверка" помечена live:true — она всегда отражает актуальное состояние.
+    G.taskDone[t.id]=g.live?result:(G.taskDone[t.id]||result);
+  }));
+  const total=GROUPS.reduce((s,g)=>s+g.tasks.length,0);
+  const done=Object.values(G.taskDone).filter(Boolean).length;
+  const pct=Math.round(done/total*100);
+  document.getElementById('prog-fill').style.width=pct+'%';
+  document.getElementById('prog-done').textContent=done+' выполнено';
+  document.getElementById('prog-total').textContent='из '+total+' заданий';
+  document.getElementById('h-done').textContent=done;
+  document.getElementById('h-total').textContent=total;
+  document.getElementById('btn-next').classList.toggle('rdy',pct>=90);
+  if(done>=total&&!G.labDone){G.labDone=true;document.getElementById('s-devs').textContent=G.devices.length;document.getElementById('s-leases').textContent=G.leaseTable.length;document.getElementById('s-tasks').textContent=total;setTimeout(()=>document.getElementById('smod').classList.remove('hid'),700);}
+  renderTasks();
+}
+// Ручной выбор "свернуть/развернуть" по индексу группы. Хранится отдельно от
+// renderTasks(), т.к. renderTasks полностью пересоздаёт DOM при КАЖДОМ вызове
+// runChecks() — а он тикает автоматически раз в 1.5с и после почти любого действия.
+const taskGroupCollapsed={};
+function renderTasks(){
+  const sc=document.getElementById('tscroll');sc.innerHTML='';
+  let gn=0;
+  GROUPS.forEach((g,gi)=>{
+    const done=g.tasks.filter(t=>G.taskDone[t.id]).length;
+    const gEl=document.createElement('div');gEl.className='tgroup';
+    const hdr=document.createElement('div');hdr.className='tghdr';
+    hdr.innerHTML=`<span class="tgico">${taskGroupCollapsed[gi]?'▸':'▶'}</span><span class="tgname">${g.icon} ${g.name}</span><span class="tgscore ${done===g.tasks.length?'full':''}">${done}/${g.tasks.length}</span>`;
+    const body=document.createElement('div');body.id='gb-'+gi;
+    if(taskGroupCollapsed[gi])body.style.display='none';
+    hdr.onclick=()=>{
+      taskGroupCollapsed[gi]=!taskGroupCollapsed[gi];
+      body.style.display=taskGroupCollapsed[gi]?'none':'';
+      hdr.querySelector('.tgico').textContent=taskGroupCollapsed[gi]?'▸':'▶';
+    };
+    g.tasks.forEach(t=>{
+      gn++;
+      const d=G.taskDone[t.id];
+      const item=document.createElement('div');item.className='titem'+(d?' done':'');
+      item.innerHTML=`<span class="tnum${d?' dn':''}">${gn}</span><div class="tchk">${d?'✓':''}</div><div class="tcont"><div class="tmain">${t.text}</div>${!d&&t.hint?`<div class="thint">${t.hint}</div>`:''}</div>`;
+      body.appendChild(item);
+    });
+    gEl.appendChild(hdr);gEl.appendChild(body);sc.appendChild(gEl);
+  });
+}
+function manualCheck(){
+  runChecks();
+  const total=GROUPS.reduce((s,g)=>s+g.tasks.length,0);
+  const done=Object.values(G.taskDone).filter(Boolean).length;
+  const pct=Math.round(done/total*100);
+  clog(pct>=90?'ok':'in',`Прогресс: ${done}/${total} (${pct}%)`);
+  if(pct<90){const f=GROUPS.flatMap(g=>g.tasks).find(t=>!G.taskDone[t.id]);if(f)clog('wn','→ Следующее: '+f.text);}
+  else clog('ok','🏆 Отличная работа! Все задания выполнены!');
+}
+
+// ─── CONSOLE ───
+function clog(type,text){
+  const out=document.getElementById('cout');
+  const div=document.createElement('div');div.className='cl '+type;div.textContent=text;
+  out.appendChild(div);out.scrollTop=out.scrollHeight;
+}
+function clearCon(){document.getElementById('cout').innerHTML='';}
+function updPrompt(){const d=G.conDev||G.devices[0];document.getElementById('cprompt').textContent=(d?d.name:'NetSim')+'>';}
+function onConKey(e){
+  const inp=document.getElementById('cin');
+  if(e.key==='Enter'){const cmd=inp.value.trim();if(!cmd)return;clog('cmd','> '+cmd);cmdHist.unshift(cmd);cmdHistIdx=-1;inp.value='';execCmd(cmd);}
+  else if(e.key==='ArrowUp'){cmdHistIdx=Math.min(cmdHistIdx+1,cmdHist.length-1);inp.value=cmdHist[cmdHistIdx]||'';e.preventDefault();}
+  else if(e.key==='ArrowDown'){cmdHistIdx=Math.max(cmdHistIdx-1,-1);inp.value=cmdHistIdx>=0?cmdHist[cmdHistIdx]:'';e.preventDefault();}
+}
+function execCmd(raw){
+  const parts=raw.trim().split(/\s+/),v=parts[0].toLowerCase();
+  const src=G.conDev||(pcs()[0]);
+  if(v==='help'){
+    ['╔══════════════════════════════════════════════════════╗',
+     '║         NetSim Pro — Команды (Лаб. 5: DHCP)         ║',
+     '╠══════════════════════════════════════════════════════╣',
+     '║  devices              — список всех устройств        ║',
+     '║  select <имя>         — выбрать активное устройство  ║',
+     '║  ipconfig /all        — IP, маска, шлюз, DNS         ║',
+     '║  ping <IP>            — проверка связи               ║',
+     '║  arp -a               — таблица ARP-кэша             ║',
+     '║  dhcp status          — статус DHCP-сервера          ║',
+     '║  dhcp lease           — таблица аренды IP-адресов    ║',
+     '║  dhcp pool            — параметры DHCP-пула          ║',
+     '║  route print          — таблица маршрутизации        ║',
+     '║  clear                — очистить консоль             ║',
+     '╚══════════════════════════════════════════════════════╝',
+    ].forEach(l=>clog('in',l));
+    G.taskDone['t04']=true;runChecks();return;
+  }
+  if(v==='clear'){clearCon();return;}
+  if(v==='devices'){
+    G.taskDone['t05']=true;
+    if(!G.devices.length){clog('wn','Устройств нет.');return;}
+    clog('in','─── Устройства ──────────────────────────────────────────');
+    clog('in','  Имя                Тип                IP            Режим');
+    clog('in','  ──────────────────────────────────────────────────────');
+    G.devices.forEach(d=>{
+      const m=d.type==='pc'?(d.ipMode==='dhcp'?'DHCP':'Статич.'):'';
+      clog('in',`  ${d.name.padEnd(20)}${typeLabel(d.type).slice(0,18).padEnd(20)}${(d.ip||'—').padEnd(15)}${m}`);
+    });
+    clog('in',`  ─ ${G.devices.length} устройств, ${G.connections.length} кабелей, ${G.leaseTable.length} аренд`);
+    G.taskDone['t61']=pcs().every(p=>p.ip);runChecks();return;
+  }
+  if(v==='select'){
+    const nm=parts.slice(1).join(' ');if(!nm){clog('er','select <имя>');return;}
+    const dev=G.devices.find(d=>d.name.toLowerCase()===nm.toLowerCase());
+    if(dev){
+      G.conDev=dev;G.selected=dev.id;
+      document.querySelectorAll('.dnode').forEach(n=>n.classList.remove('sel'));
+      document.getElementById('nd-'+dev.id)?.classList.add('sel');
+      propPanel(dev);updPrompt();G.taskDone['t49']=true;
+      clog('ok',`Активное устройство: ${dev.name}`);
+      if(dev.ip)clog('in',`  IP: ${dev.ip}  Режим: ${dev.ipMode==='dhcp'?'DHCP':'Статический'}`);
+    } else clog('er',`"${nm}" не найдено. Введите devices.`);
+    runChecks();return;
+  }
+  if(v==='ipconfig'){
+    if(!src){clog('er','Выберите устройство: select <имя>');return;}
+    const all=parts[1]==='/all';G.ipcfgRan.add(src.id);
+    clog('in',`─── ipconfig${all?' /all':''} [${src.name}] ─────────────────────────`);
+    if(src.ip){
+      clog('in',`  IPv4-адрес . . : ${src.ip}`);
+      clog('in',`  Маска . . . . : ${src.mask||'255.255.255.0'}`);
+      clog('in',`  Шлюз . . . . : ${src.gateway||'не задан'}`);
+      if(all){
+        clog('in',`  DNS . . . . . : ${src.dns||'не задан'}`);
+        clog('dhcp',`  Получен от . . : ${src.assignedByDHCP?'DHCP-сервер '+servers()[0]?.ip:'вручную'}`);
+      }
+    } else {clog('wn',`  IP не назначен`);if(src.ipMode==='dhcp')clog('wn','  Режим DHCP — настройте сервер');}
+    runChecks();return;
+  }
+  if(v==='ping'){
+    const t=parts[1];if(!t){clog('er','ping <IP>');return;}
+    if(!src||!src.ip){clog('er','У устройства нет IP');return;}
+    if(!validIP(t)){clog('er','Неверный IP: '+t);return;}
+    const dst=G.devices.find(d=>d.ip===t);
+    const ok=dst&&connVia(src.id,dst.id);
+    clog('in',`Обмен пакетами с ${t}:`);
+    if(ok||dst?.ip===t){
+      ['64 байт от '+t+': время=1мс TTL=128','64 байт от '+t+': время=1мс TTL=128',
+       '64 байт от '+t+': время=2мс TTL=128','64 байт от '+t+': время=1мс TTL=128'].forEach(l=>clog('ok','  '+l));
+      clog('ok','  Отправлено=4, получено=4, потеряно=0 (0%)');
+      G.pingOK.add(src.ip+'→'+t);
+    } else {
+      for(let i=0;i<4;i++)clog('er','  Превышен интервал ожидания.');
+      clog('er','  Отправлено=4, получено=0, потеряно=4 (100%)');
+      if(!dst)clog('wn','  Устройство '+t+' не найдено');
+      else if(!dst.ip)clog('wn','  Цель не имеет IP');
+    }
+    runChecks();return;
+  }
+  if(v==='arp'){
+    if(!src){clog('er','select <имя>');return;}
+    G.arpRan.add(src.id);
+    clog('in',`─── ARP-таблица [${src.name}] ──────────────────────────────`);
+    const vis=G.devices.filter(d=>d.ip&&d.id!==src.id&&connVia(src.id,d.id));
+    if(!vis.length)clog('wn','  Пусто. Выполните ping для заполнения.');
+    else{clog('in','  IP                  MAC                  Тип');vis.forEach(d=>clog('in',`  ${d.ip.padEnd(20)}${genMAC(d.id).padEnd(21)}динамический`));}
+    runChecks();return;
+  }
+  if(v==='dhcp'){
+    const sub=parts[1]?.toLowerCase();
+    if(sub==='status'){
+      G.dhcpStatusRan=true;
+      const srv=servers()[0];
+      clog('dhcp','─── DHCP-сервер: Статус ─────────────────────────────────');
+      if(!srv){clog('er','DHCP-сервер не найден.');return;}
+      clog('dhcp',`  Сервер   : ${srv.name}  IP: ${srv.ip||'не задан'}`);
+      clog(srv.dhcpEnabled?'ok':'wn',`  Сервис   : ${srv.dhcpEnabled?'АКТИВЕН ✓':'ОСТАНОВЛЕН'}`);
+      clog('dhcp',`  Аренд    : ${G.leaseTable.length}`);
+      const p=srv.dhcpPool;
+      clog('dhcp',`  Пул      : ${p.name||'не задано'} | ${p.startIP||'?'} — ${p.endIP||'?'}`);
+      runChecks();return;
+    }
+    if(sub==='lease'){
+      G.dhcpLeaseRan=true;
+      clog('dhcp','─── DHCP: Таблица аренды ─────────────────────────────────');
+      if(!G.leaseTable.length){clog('wn','Аренд нет. Настройте DHCP и включите режим DHCP на ПК.');}
+      else{
+        clog('dhcp','  IP               Имя                   Маска             Аренда');
+        clog('dhcp','  ────────────────────────────────────────────────────────────────');
+        G.leaseTable.forEach(l=>clog('dhcp',`  ${l.ip.padEnd(17)}${l.hostname.padEnd(22)}${l.mask.padEnd(18)}${l.expiry}`));
+        clog('dhcp',`  Итого: ${G.leaseTable.length} аренд`);
+      }
+      runChecks();return;
+    }
+    if(sub==='pool'){
+      G.dhcpPoolRan=true;
+      const srv=servers()[0];const p=srv?.dhcpPool||{};
+      clog('dhcp','─── DHCP: Конфигурация пула ──────────────────────────────');
+      clog('dhcp',`  Имя пула      : ${p.name||'не задано'}`);
+      clog('dhcp',`  Начальный IP  : ${p.startIP||'не задан'}`);
+      clog('dhcp',`  Конечный IP   : ${p.endIP||'не задан'}`);
+      clog('dhcp',`  Маска         : ${p.netmask||'не задана'}`);
+      clog('dhcp',`  Шлюз          : ${p.gateway||'не задан'}`);
+      clog('dhcp',`  DNS           : ${p.dns||'не задан'}`);
+      clog('dhcp',`  Аренда        : ${p.leaseTime?p.leaseTime+' сек':'не задано'}`);
+      runChecks();return;
+    }
+    clog('er','dhcp status | dhcp lease | dhcp pool');return;
+  }
+  if(v==='route'){
+    G.routeRan=true;const dev=G.conDev||pcs()[0];
+    clog('in','─── Таблица маршрутизации ────────────────────────────────');
+    if(dev?.ip){
+      const net=dev.ip.split('.').slice(0,3).join('.')+'.0';
+      clog('in',`  ${net.padEnd(20)}255.255.255.0       On-link         ${dev.ip}`);
+      if(dev.gateway)clog('in',`  ${'0.0.0.0'.padEnd(20)}0.0.0.0             ${dev.gateway.padEnd(16)}${dev.ip}`);
+    } else clog('wn','  Маршрутов нет');
+    runChecks();return;
+  }
+  clog('er',`Команда не найдена: "${v}". help — список команд.`);
+}
+
+function showHelp(){execCmd('help');}
+
+// ─── KEYBOARD ───
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT')return;
+  if(e.key==='v'||e.key==='V'||e.key==='м'||e.key==='М')setTool('select');
+  if(e.key==='c'||e.key==='C'||e.key==='с'||e.key==='С')setTool('cable');
+  if(e.key==='d'||e.key==='D'||e.key==='в'||e.key==='В')setTool('delete');
+  if(e.key==='Delete'&&G.selected)delDev(G.selected);
+  if((e.key==='Enter'||e.key==='e'||e.key==='E')&&G.selected)openCfg(G.selected);
+  if(e.key==='Escape'){G.cableFrom=null;hidePrevLine();clearSrc();document.getElementById('csbar').classList.remove('on');setTool('select');}
+});
+document.getElementById('cvw').addEventListener('contextmenu',e=>e.preventDefault());
+
+// ─── INIT ───
+(function(){
+  renderTasks();runChecks();
+  clog('sy','══════════════════════════════════════════════════════');
+  clog('sy','   NetSim Pro  —  Лаборатория 5/6: DHCP-сервер');
+  clog('sy','══════════════════════════════════════════════════════');
+  clog('in','▶ Тема: Автоматическое назначение IP (протокол DHCP)');
+  clog('in','  Топология: 4 ПК + 1 коммутатор + 1 DHCP-сервер');
+  clog('sy','──────────────────────────────────────────────────────');
+  clog('in','💡 DHCP = Dynamic Host Configuration Protocol');
+  clog('in','   Сервер автоматически выдаёт IP, маску, шлюз, DNS');
+  clog('in','   — устройства не нужно настраивать вручную!');
+  clog('sy','──────────────────────────────────────────────────────');
+  clog('in','Шаги: 1) Постройте топологию  2) Настройте сервер');
+  clog('in','      3) Переключите ПК на DHCP  4) Проверьте ping');
+  clog('sy','──────────────────────────────────────────────────────');
+  clog('in','Введите help для просмотра команд консоли');
+  setInterval(runChecks,1500);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1717 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Симулятор 5 — DHCP-сервер</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050c14;
+    --panel: #0a1628;
+    --panel2: #0d1f38;
+    --border: #1a3a5c;
+    --accent: #00d4ff;
+    --accent2: #ff6b35;
+    --green: #00ff88;
+    --yellow: #ffd700;
+    --red: #ff3860;
+    --text: #c8dff0;
+    --muted: #4a7a9b;
+    --done: #00ff88;
+    --font-mono: 'Share Tech Mono', monospace;
+    --font-ui: 'Exo 2', sans-serif;
+    /* Терминал/поля ввода команд всегда тёмные, независимо от темы */
+    --term-bg: #04080f;
+    --term-text: #00ff88;
+    --term-muted: #4a7a9b;
+    --term-accent: #00d4ff;
+    --term-yellow: #ffd700;
+    --term-red: #ff3860;
+  }
+
+  /* ─── ДНЕВНАЯ ТЕМА (включена по умолчанию классом .day на <body>) ─── */
+  body.day {
+    --bg: #f4f7fb;
+    --panel: #ffffff;
+    --panel2: #eef2f8;
+    --border: #d5dde8;
+    --accent: #0077aa;
+    --accent2: #c24a1a;
+    --green: #16825d;
+    --yellow: #a3720a;
+    --red: #c62839;
+    --text: #1a2536;
+    --muted: #6b7d94;
+    --done: #16825d;
+  }
+  body.day .section-header:hover { background: rgba(0,119,170,.06); }
+  body.day .task-item:hover { background: rgba(0,119,170,.05); }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-ui);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 20% 10%, rgba(0,212,255,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 90%, rgba(0,255,136,0.04) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .scanlines {
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.15) 2px,
+      rgba(0,0,0,0.15) 4px
+    );
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .container { position: relative; z-index: 2; max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 30px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-bottom: 2px solid var(--accent);
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: 'DHCP';
+    position: absolute;
+    right: -10px;
+    top: -20px;
+    font-family: var(--font-mono);
+    font-size: 120px;
+    color: rgba(0,212,255,0.04);
+    pointer-events: none;
+    font-weight: 900;
+  }
+
+  .header-left h1 {
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    text-shadow: 0 0 20px rgba(0,212,255,0.5);
+  }
+  .header-left p {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+
+  .header-stats {
+    display: flex;
+    gap: 30px;
+    align-items: center;
+  }
+  .stat-box {
+    text-align: center;
+  }
+  .stat-val {
+    font-family: var(--font-mono);
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--green);
+    text-shadow: 0 0 12px rgba(0,255,136,0.4);
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 3px;
+  }
+
+  .progress-bar-wrap {
+    width: 200px;
+  }
+  .progress-bar-track {
+    height: 6px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--green));
+    border-radius: 3px;
+    transition: width 0.5s ease;
+    box-shadow: 0 0 8px rgba(0,212,255,0.6);
+    width: 0%;
+  }
+  .progress-text {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    text-align: right;
+  }
+
+  #theme-toggle {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--panel2); border: 1px solid var(--border); color: var(--muted);
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 1px;
+    padding: 6px 12px; border-radius: 2px; cursor: pointer; transition: all .2s;
+  }
+  #theme-toggle:hover { background: rgba(0,212,255,0.08); border-color: var(--accent); color: var(--accent); }
+  #theme-icon { font-size: 12px; line-height: 1; }
+
+  /* LAYOUT */
+  .layout {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 20px;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .section-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: rgba(0,212,255,0.05);
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s;
+  }
+  .section-header:hover { background: rgba(0,212,255,0.1); }
+
+  .section-icon {
+    font-size: 16px;
+    width: 24px;
+    text-align: center;
+  }
+  .section-title {
+    flex: 1;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .section-badge {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+  }
+  .section-done .section-title { color: var(--green); }
+  .section-done .section-badge { color: var(--green); }
+
+  .task-list { padding: 8px 0; }
+  .task-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-left: 3px solid transparent;
+  }
+  .task-item:hover { background: rgba(0,212,255,0.06); }
+  .task-item.active {
+    background: rgba(0,212,255,0.1);
+    border-left-color: var(--accent);
+  }
+  .task-item.completed { opacity: 0.65; }
+  .task-item.completed .task-name { text-decoration: line-through; color: var(--muted); }
+
+  .task-check {
+    width: 18px;
+    height: 18px;
+    border: 1px solid var(--muted);
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .task-item.completed .task-check {
+    background: var(--green);
+    border-color: var(--green);
+    color: #000;
+  }
+
+  .task-num {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+    flex-shrink: 0;
+    width: 22px;
+  }
+  .task-name {
+    font-size: 11px;
+    color: var(--text);
+    line-height: 1.4;
+  }
+
+  /* MAIN PANEL */
+  .main-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* TASK VIEW */
+  .task-view {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 28px;
+    flex: 1;
+    min-height: 500px;
+  }
+
+  .task-view-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .task-number-badge {
+    background: rgba(0,212,255,0.1);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 20px;
+    font-weight: 700;
+    min-width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .task-view-meta { flex: 1; }
+  .task-category-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 8px;
+  }
+  .task-view-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+    margin-bottom: 6px;
+  }
+  .task-difficulty {
+    display: flex;
+    gap: 4px;
+    margin-top: 8px;
+  }
+  .diff-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+  }
+  .diff-dot.filled { background: var(--accent2); }
+
+  .task-description {
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--text);
+    margin-bottom: 20px;
+  }
+  .task-description strong { color: var(--accent); }
+
+  .info-block {
+    background: rgba(0,212,255,0.04);
+    border: 1px solid rgba(0,212,255,0.15);
+    border-left: 3px solid var(--accent);
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text);
+  }
+  .info-block .label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  /* INPUT AREA */
+  .input-section {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    padding: 20px;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  .input-label {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--accent);
+    min-width: 200px;
+    flex-shrink: 0;
+  }
+
+  .cmd-input {
+    flex: 1;
+    background: var(--term-bg);
+    border: 1px solid var(--muted);
+    color: var(--term-text);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    padding: 8px 12px;
+    outline: none;
+    transition: border 0.2s, box-shadow 0.2s;
+    min-width: 200px;
+  }
+  .cmd-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent), 0 0 12px rgba(0,212,255,0.2);
+  }
+  .cmd-input::placeholder { color: rgba(74,122,155,0.6); }
+
+  select.cmd-input option { background: #0a1628; color: var(--term-text); }
+
+  .btn {
+    padding: 9px 20px;
+    font-family: var(--font-ui);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+  }
+  .btn-primary:hover { background: #fff; box-shadow: 0 0 20px rgba(0,212,255,0.5); }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+  }
+  .btn-secondary:hover { background: rgba(0,212,255,0.1); }
+
+  .btn-nav {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    font-size: 11px;
+  }
+  .btn-nav:hover { color: var(--accent); border-color: var(--accent); }
+
+  .btn-success {
+    background: var(--green);
+    color: #000;
+  }
+  .btn-success:hover { box-shadow: 0 0 20px rgba(0,255,136,0.4); }
+
+  /* FEEDBACK */
+  .feedback {
+    padding: 12px 16px;
+    font-size: 13px;
+    font-family: var(--font-mono);
+    border-left: 3px solid;
+    margin-top: 12px;
+    display: none;
+    line-height: 1.6;
+  }
+  .feedback.show { display: block; animation: fadeIn 0.3s ease; }
+  .feedback.ok { color: var(--green); border-color: var(--green); background: rgba(0,255,136,0.05); }
+  .feedback.err { color: var(--red); border-color: var(--red); background: rgba(255,56,96,0.05); }
+  .feedback.hint { color: var(--yellow); border-color: var(--yellow); background: rgba(255,215,0,0.05); }
+
+  /* TERMINAL */
+  .terminal {
+    background: #020810;
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--green);
+    padding: 0;
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+  .terminal-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: rgba(0,255,136,0.05);
+    border-bottom: 1px solid var(--border);
+  }
+  .terminal-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .td-red { background: #ff5f56; }
+  .td-yellow { background: #ffbd2e; }
+  .td-green { background: #27c93f; }
+  .terminal-title { font-size: 10px; color: var(--muted); margin-left: 6px; letter-spacing: 1px; }
+  .terminal-body { padding: 14px; min-height: 120px; max-height: 200px; overflow-y: auto; }
+  .terminal-line { color: var(--term-text); line-height: 1.7; white-space: pre-wrap; }
+  .terminal-line.info { color: var(--term-accent); }
+  .terminal-line.warn { color: var(--term-yellow); }
+  .terminal-line.err { color: var(--term-red); }
+  .terminal-line.sys { color: var(--term-muted); }
+
+  /* NAV */
+  .task-nav {
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* SUCCESS MODAL */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    display: none;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    background: var(--panel);
+    border: 2px solid var(--green);
+    padding: 40px;
+    max-width: 500px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 0 60px rgba(0,255,136,0.2);
+  }
+  .modal-icon { font-size: 60px; margin-bottom: 20px; }
+  .modal-title { font-size: 24px; font-weight: 900; color: var(--green); letter-spacing: 3px; margin-bottom: 10px; }
+  .modal-text { color: var(--muted); margin-bottom: 24px; font-size: 14px; line-height: 1.7; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(0,212,255,0.4); }
+    50% { box-shadow: 0 0 0 6px rgba(0,212,255,0); }
+  }
+
+  .pulse { animation: pulse 2s infinite; }
+
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border-radius: 2px;
+    margin-right: 6px;
+  }
+  .tag-theory { background: rgba(0,212,255,0.15); color: var(--accent); }
+  .tag-practice { background: rgba(255,107,53,0.15); color: var(--accent2); }
+  .tag-config { background: rgba(255,215,0,0.15); color: var(--yellow); }
+  .tag-advanced { background: rgba(255,56,96,0.15); color: var(--red); }
+
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+</style>
+</head>
+<body class="day">
+<div class="scanlines"></div>
+
+<div class="container">
+  <!-- HEADER -->
+  <header>
+    <div class="header-left">
+      <h1>&#9679; Симулятор 5 &mdash; DHCP-сервер</h1>
+      <p>Dynamic Host Configuration Protocol &bull; Auto IP Assignment &bull; Pool Management</p>
+    </div>
+    <div class="header-stats">
+      <div class="stat-box">
+        <div class="stat-val" id="completed-count">0</div>
+        <div class="stat-label">Выполнено</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" style="color:var(--accent)" id="total-count">42</div>
+        <div class="stat-label">Всего задач</div>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <div class="progress-text" id="progress-text">0 / 42</div>
+      </div>
+      <button id="theme-toggle" onclick="toggleTheme()" title="Переключить день/ночь">
+        <span id="theme-icon">☀</span><span id="theme-label">День</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- LAYOUT -->
+  <div class="layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <!-- MAIN -->
+    <main class="main-panel">
+      <div class="task-view" id="task-view"></div>
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="terminal-dot td-red"></div>
+          <div class="terminal-dot td-yellow"></div>
+          <div class="terminal-dot td-green"></div>
+          <span class="terminal-title">DHCP SERVER LOG &bull; /var/log/dhcp/dhcpd.log</span>
+        </div>
+        <div class="terminal-body" id="terminal-body"></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- SUCCESS MODAL -->
+<div class="modal-overlay" id="success-modal">
+  <div class="modal-box">
+    <div class="modal-icon">&#127942;</div>
+    <div class="modal-title">&#10003; Курс завершён!</div>
+    <div class="modal-text">Вы успешно выполнили все 42 задания симулятора DHCP-сервера.<br>Вы освоили авто-назначение IP, настройку пулов, резервирование адресов и продвинутую конфигурацию.</div>
+    <button class="btn btn-success" onclick="resetAll()">Начать заново</button>
+  </div>
+</div>
+
+<script>
+function loadSavedProgress() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem('dhcp_done') || '[]'));
+  } catch (e) {
+    return new Set();
+  }
+}
+// ===== DHCP SIMULATOR STATE =====
+const state = {
+  completed: loadSavedProgress(),
+  current: 0,
+};
+
+// ===== TASKS =====
+const sections = [
+  {
+    icon: '&#128218;',
+    title: 'Теория DHCP',
+    tasks: [
+      {
+        id: 1,
+        title: 'Что такое DHCP?',
+        tag: 'theory',
+        diff: 1,
+        desc: 'DHCP (Dynamic Host Configuration Protocol) — сетевой протокол, позволяющий сетевым устройствам автоматически получать IP-адрес и другие параметры, необходимые для работы в сети TCP/IP.<br><br>DHCP работает по модели <strong>клиент-сервер</strong>. Клиент отправляет широковещательный запрос, сервер предлагает адрес, клиент принимает, сервер подтверждает.',
+        theory: 'Процесс DORA: Discover → Offer → Request → Acknowledge',
+        question: 'Введите аббревиатуру процесса получения IP по DHCP (4 буквы):',
+        inputs: [{ label: 'Аббревиатура:', placeholder: 'XXXX', key: 'dora' }],
+        validate(vals) {
+          return vals.dora.trim().toUpperCase() === 'DORA'
+            ? { ok: true, msg: '✓ Правильно! DORA — Discover, Offer, Request, Acknowledge' }
+            : { ok: false, msg: '✗ Неверно. Подсказка: 4 фазы DHCP-диалога.' };
+        }
+      },
+      {
+        id: 2,
+        title: 'Порты DHCP',
+        tag: 'theory',
+        diff: 1,
+        desc: 'DHCP использует протокол <strong>UDP</strong>. Сервер слушает на одном порту, клиент — на другом. Знание портов важно для настройки брандмауэра и диагностики.',
+        theory: 'Сервер: UDP/67, Клиент: UDP/68',
+        question: 'Укажите порт DHCP-сервера:',
+        inputs: [{ label: 'UDP-порт сервера:', placeholder: 'XX', key: 'port' }],
+        validate(vals) {
+          return vals.port.trim() === '67'
+            ? { ok: true, msg: '✓ Верно! UDP/67 — сервер, UDP/68 — клиент.' }
+            : { ok: false, msg: '✗ Неверно. DHCP-сервер слушает на порту 67.' };
+        }
+      },
+      {
+        id: 3,
+        title: 'Типы DHCP-сообщений',
+        tag: 'theory',
+        diff: 2,
+        desc: 'В DHCP определены 8 основных типов сообщений. Каждое сообщение имеет номер в поле <strong>DHCP Message Type (опция 53)</strong>.',
+        theory: '1-Discover, 2-Offer, 3-Request, 4-Decline, 5-ACK, 6-NAK, 7-Release, 8-Inform',
+        question: 'Какой номер имеет сообщение DHCPACK (подтверждение аренды)?',
+        inputs: [{ label: 'Номер DHCPACK:', placeholder: 'X', key: 'ack' }],
+        validate(vals) {
+          return vals.ack.trim() === '5'
+            ? { ok: true, msg: '✓ Правильно! DHCPACK = тип 5. Сервер подтверждает аренду адреса.' }
+            : { ok: false, msg: '✗ Неверно. DHCPACK имеет номер 5.' };
+        }
+      },
+      {
+        id: 4,
+        title: 'Время аренды (Lease Time)',
+        tag: 'theory',
+        diff: 1,
+        desc: 'Каждый DHCP-адрес выдаётся на определённое время — <strong>время аренды</strong>. По истечении 50% времени клиент пытается продлить аренду у исходного сервера (T1). По истечении 87.5% — обращается к любому серверу (T2).',
+        theory: 'T1 = 0.5 × LeaseTime, T2 = 0.875 × LeaseTime',
+        question: 'При lease time = 86400 секунд (24 ч), чему равно T1 (в секундах)?',
+        inputs: [{ label: 'T1 =', placeholder: 'XXXXX', key: 't1' }],
+        validate(vals) {
+          return vals.t1.trim() === '43200'
+            ? { ok: true, msg: '✓ Верно! T1 = 86400 × 0.5 = 43200 секунд (12 часов).' }
+            : { ok: false, msg: '✗ Неверно. T1 = LeaseTime × 0.5 = 86400 × 0.5.' };
+        }
+      },
+    ]
+  },
+  {
+    icon: '&#9881;',
+    title: 'Установка и запуск',
+    tasks: [
+      {
+        id: 5,
+        title: 'Установка ISC DHCP Server',
+        tag: 'practice',
+        diff: 1,
+        desc: 'На системах Ubuntu/Debian DHCP-сервер устанавливается через пакетный менеджер <strong>apt</strong>. Пакет называется <code style="color:var(--green)">isc-dhcp-server</code>.',
+        theory: 'Команда: sudo apt-get install isc-dhcp-server',
+        question: 'Введите полную команду установки DHCP-сервера (без sudo):',
+        inputs: [{ label: '$', placeholder: 'apt...', key: 'cmd' }],
+        validate(vals) {
+          const v = vals.cmd.trim().toLowerCase().replace(/\s+/g,' ');
+          const ok = v === 'apt-get install isc-dhcp-server' || v === 'apt install isc-dhcp-server';
+          return ok
+            ? { ok: true, msg: '✓ Правильно! Пакет isc-dhcp-server установлен.' }
+            : { ok: false, msg: '✗ Неверно. Используйте: apt-get install isc-dhcp-server' };
+        }
+      },
+      {
+        id: 6,
+        title: 'Файл конфигурации',
+        tag: 'config',
+        diff: 1,
+        desc: 'Основной конфигурационный файл ISC DHCP Server находится в директории <strong>/etc/dhcp/</strong>.',
+        theory: 'Файл: /etc/dhcp/dhcpd.conf',
+        question: 'Укажите полный путь к главному конфигурационному файлу DHCP:',
+        inputs: [{ label: 'Путь:', placeholder: '/etc/...', key: 'path' }],
+        validate(vals) {
+          return vals.path.trim() === '/etc/dhcp/dhcpd.conf'
+            ? { ok: true, msg: '✓ Верно! /etc/dhcp/dhcpd.conf — основной файл конфигурации.' }
+            : { ok: false, msg: '✗ Неверно. Файл находится по пути /etc/dhcp/dhcpd.conf' };
+        }
+      },
+      {
+        id: 7,
+        title: 'Запуск службы',
+        tag: 'practice',
+        diff: 1,
+        desc: 'После настройки конфигурации DHCP-сервер запускается командой <strong>systemctl</strong>. Также нужно добавить службу в автозапуск.',
+        theory: 'systemctl start isc-dhcp-server && systemctl enable isc-dhcp-server',
+        question: 'Выберите команду для включения DHCP-сервера в автозапуск:',
+        inputs: [{
+          label: 'Команда автозапуска:',
+          type: 'select',
+          options: ['-- выбрать --', 'systemctl enable isc-dhcp-server', 'systemctl start isc-dhcp-server', 'service dhcp start', 'chkconfig dhcp on'],
+          key: 'cmd'
+        }],
+        validate(vals) {
+          return vals.cmd === 'systemctl enable isc-dhcp-server'
+            ? { ok: true, msg: '✓ Верно! systemctl enable добавляет службу в автозапуск при загрузке системы.' }
+            : { ok: false, msg: '✗ Неверно. Для автозапуска используется systemctl enable.' };
+        }
+      },
+      {
+        id: 8,
+        title: 'Назначение интерфейса',
+        tag: 'config',
+        diff: 2,
+        desc: 'Перед запуском нужно указать, на каком сетевом интерфейсе DHCP-сервер будет слушать запросы. Это задаётся в файле <strong>/etc/default/isc-dhcp-server</strong> в переменной <code style="color:var(--green)">INTERFACESv4</code>.',
+        theory: 'INTERFACESv4="eth0"',
+        question: 'Введите строку конфигурации для прослушивания на интерфейсе ens33:',
+        inputs: [{ label: 'Строка:', placeholder: 'INTERFACESv4=...', key: 'iface' }],
+        validate(vals) {
+          const v = vals.iface.trim().replace(/\s/g,'');
+          const ok = v === 'INTERFACESv4="ens33"' || v === "INTERFACESv4='ens33'";
+          return ok
+            ? { ok: true, msg: '✓ Правильно! Сервер будет слушать на интерфейсе ens33.' }
+            : { ok: false, msg: '✗ Формат: INTERFACESv4="ens33"' };
+        }
+      },
+    ]
+  },
+  {
+    icon: '&#128376;',
+    title: 'Базовая настройка пула',
+    tasks: [
+      {
+        id: 9,
+        title: 'Объявление подсети',
+        tag: 'config',
+        diff: 2,
+        desc: 'Основа конфигурации — блок <strong>subnet</strong>, описывающий пул адресов для сети. Синтаксис: <code style="color:var(--green)">subnet СЕТЬ netmask МАСКА { ... }</code>',
+        theory: 'subnet 192.168.1.0 netmask 255.255.255.0 { ... }',
+        question: 'Введите объявление подсети для сети 10.0.0.0/24:',
+        inputs: [{ label: 'dhcpd.conf:', placeholder: 'subnet ...', key: 'subnet' }],
+        validate(vals) {
+          const v = vals.subnet.trim().replace(/\s+/g,' ');
+          const patterns = [
+            /subnet\s+10\.0\.0\.0\s+netmask\s+255\.255\.255\.0\s*\{/,
+            /subnet\s+10\.0\.0\.0\s+netmask\s+255\.255\.255\.0\s*\{\s*\}/,
+          ];
+          const ok = patterns.some(p => p.test(v));
+          return ok
+            ? { ok: true, msg: '✓ Верно! Блок subnet корректно объявляет сеть 10.0.0.0/24.' }
+            : { ok: false, msg: '✗ Проверьте синтаксис. Пример: subnet 10.0.0.0 netmask 255.255.255.0 {' };
+        }
+      },
+      {
+        id: 10,
+        title: 'Диапазон адресов (range)',
+        tag: 'config',
+        diff: 2,
+        desc: 'Директива <strong>range</strong> задаёт диапазон IP-адресов, которые DHCP-сервер может выдавать клиентам. Адреса за пределами диапазона выдаваться не будут.',
+        theory: 'range 192.168.1.10 192.168.1.100;',
+        question: 'Задайте диапазон от 10.0.0.50 до 10.0.0.150:',
+        inputs: [{ label: 'Директива range:', placeholder: 'range ...', key: 'range' }],
+        validate(vals) {
+          const v = vals.range.trim().replace(/\s+/g,' ').replace(/;$/,'');
+          const ok = /^range\s+10\.0\.0\.50\s+10\.0\.0\.150$/.test(v);
+          return ok
+            ? { ok: true, msg: '✓ Отлично! Пул содержит 101 адрес: 10.0.0.50 — 10.0.0.150.' }
+            : { ok: false, msg: '✗ Формат: range 10.0.0.50 10.0.0.150;' };
+        }
+      },
+      {
+        id: 11,
+        title: 'Шлюз по умолчанию',
+        tag: 'config',
+        diff: 2,
+        desc: 'DHCP-сервер может передавать клиентам адрес шлюза по умолчанию через <strong>опцию 3</strong> (routers). Это одна из обязательных опций для обеспечения связи за пределами локальной сети.',
+        theory: 'option routers 192.168.1.1;',
+        question: 'Укажите шлюз 10.0.0.1 через DHCP:',
+        inputs: [{ label: 'option:', placeholder: 'option routers ...', key: 'gw' }],
+        validate(vals) {
+          const v = vals.gw.trim().replace(/;$/,'').replace(/\s+/g,' ');
+          const ok = v === 'option routers 10.0.0.1';
+          return ok
+            ? { ok: true, msg: '✓ Верно! Клиенты получат шлюз 10.0.0.1 (DHCP option 3).' }
+            : { ok: false, msg: '✗ Синтаксис: option routers 10.0.0.1;' };
+        }
+      },
+      {
+        id: 12,
+        title: 'DNS-серверы',
+        tag: 'config',
+        diff: 2,
+        desc: 'DHCP-опция 6 (<strong>domain-name-servers</strong>) позволяет передавать клиентам адреса DNS-серверов. Можно указать несколько через запятую.',
+        theory: 'option domain-name-servers 8.8.8.8, 8.8.4.4;',
+        question: 'Настройте DNS-серверы 10.0.0.2 и 8.8.8.8:',
+        inputs: [{ label: 'option DNS:', placeholder: 'option domain-name-servers ...', key: 'dns' }],
+        validate(vals) {
+          const v = vals.dns.trim().replace(/;$/,'').replace(/\s+/g,' ');
+          const ok = v === 'option domain-name-servers 10.0.0.2, 8.8.8.8' ||
+                     v === 'option domain-name-servers 10.0.0.2,8.8.8.8' ||
+                     v === 'option domain-name-servers 8.8.8.8, 10.0.0.2' ||
+                     v === 'option domain-name-servers 8.8.8.8,10.0.0.2';
+          return ok
+            ? { ok: true, msg: '✓ Правильно! Клиенты получат два DNS-сервера: локальный и Google.' }
+            : { ok: false, msg: '✗ Формат: option domain-name-servers 10.0.0.2, 8.8.8.8;' };
+        }
+      },
+      {
+        id: 13,
+        title: 'Маска подсети',
+        tag: 'config',
+        diff: 1,
+        desc: 'Маска подсети передаётся через <strong>опцию 1</strong> (subnet-mask). Обычно она совпадает с маской блока subnet, но может быть указана явно для более точного контроля.',
+        theory: 'option subnet-mask 255.255.255.0;',
+        question: 'Передайте маску /25 (255.255.255.128) клиентам:',
+        inputs: [{ label: 'option mask:', placeholder: 'option subnet-mask ...', key: 'mask' }],
+        validate(vals) {
+          const v = vals.mask.trim().replace(/;$/,'').replace(/\s+/g,' ');
+          return v === 'option subnet-mask 255.255.255.128'
+            ? { ok: true, msg: '✓ Верно! Маска /25 = 255.255.255.128. 128 хостов в подсети.' }
+            : { ok: false, msg: '✗ Формат: option subnet-mask 255.255.255.128;' };
+        }
+      },
+    ]
+  },
+  {
+    icon: '&#9200;',
+    title: 'Время аренды',
+    tasks: [
+      {
+        id: 14,
+        title: 'default-lease-time',
+        tag: 'config',
+        diff: 2,
+        desc: 'Директива <strong>default-lease-time</strong> задаёт время аренды по умолчанию в секундах, если клиент не запросил конкретное время. Рекомендуемое значение для офисных сетей — 86400 (24 ч).',
+        theory: 'default-lease-time 86400;',
+        question: 'Установите время аренды по умолчанию 12 часов (в секундах):',
+        inputs: [{ label: 'Директива:', placeholder: 'default-lease-time ...', key: 'dlt' }],
+        validate(vals) {
+          const v = vals.dlt.trim().replace(/;$/,'').replace(/\s+/g,' ');
+          return v === 'default-lease-time 43200'
+            ? { ok: true, msg: '✓ Верно! 12 ч × 3600 с/ч = 43200 секунд.' }
+            : { ok: false, msg: '✗ 12 часов = 43200 секунд. Формат: default-lease-time 43200;' };
+        }
+      },
+      {
+        id: 15,
+        title: 'max-lease-time',
+        tag: 'config',
+        diff: 2,
+        desc: 'Директива <strong>max-lease-time</strong> ограничивает максимальное время аренды, которое клиент может запросить. Даже если клиент запросит больше, сервер выдаст не более max-lease-time.',
+        theory: 'max-lease-time 172800;',
+        question: 'Ограничьте максимальное время аренды 2 сутками:',
+        inputs: [{ label: 'Директива:', placeholder: 'max-lease-time ...', key: 'mlt' }],
+        validate(vals) {
+          const v = vals.mlt.trim().replace(/;$/,'').replace(/\s+/g,' ');
+          return v === 'max-lease-time 172800'
+            ? { ok: true, msg: '✓ Правильно! 2 суток = 2 × 86400 = 172800 секунд.' }
+            : { ok: false, msg: '✗ 2 суток = 172800 секунд. Формат: max-lease-time 172800;' };
+        }
+      },
+      {
+        id: 16,
+        title: 'min-lease-time',
+        tag: 'config',
+        diff: 3,
+        desc: 'Директива <strong>min-lease-time</strong> задаёт минимальное время аренды. Если клиент запросит меньше этого значения или попросит немедленное освобождение, сервер выдаст минимальное время.',
+        theory: 'min-lease-time 300;',
+        question: 'Установите минимальное время аренды 5 минут:',
+        inputs: [{ label: 'Директива:', placeholder: 'min-lease-time ...', key: 'min' }],
+        validate(vals) {
+          const v = vals.min.trim().replace(/;$/,'').replace(/\s+/g,' ');
+          return v === 'min-lease-time 300'
+            ? { ok: true, msg: '✓ Верно! 5 мин × 60 с = 300 секунд.' }
+            : { ok: false, msg: '✗ 5 минут = 300 секунд. Формат: min-lease-time 300;' };
+        }
+      },
+    ]
+  },
+  {
+    icon: '&#128204;',
+    title: 'Резервирование адресов',
+    tasks: [
+      {
+        id: 17,
+        title: 'Статическое резервирование',
+        tag: 'config',
+        diff: 3,
+        desc: 'Блок <strong>host</strong> позволяет зарезервировать конкретный IP-адрес для устройства, идентифицированного по MAC-адресу. Это называется статическим назначением (static assignment или reservation).',
+        theory: 'host printer { hardware ethernet AA:BB:CC:DD:EE:FF; fixed-address 192.168.1.200; }',
+        question: 'Зарезервируйте адрес 10.0.0.20 для MAC 00:1A:2B:3C:4D:5E (хост: server1):',
+        inputs: [
+          { label: 'host NAME {', placeholder: 'host server1 {', key: 'h1' },
+          { label: '  hardware:', placeholder: 'hardware ethernet ...', key: 'h2' },
+          { label: '  fixed-address:', placeholder: 'fixed-address ...', key: 'h3' },
+        ],
+        validate(vals) {
+          const h1 = /host\s+server1\s*\{/.test(vals.h1.trim());
+          const h2 = /hardware\s+ethernet\s+00:1a:2b:3c:4d:5e;?$/i.test(vals.h2.trim().replace(/\s+/g,' '));
+          const h3 = /fixed-address\s+10\.0\.0\.20;?$/.test(vals.h3.trim().replace(/\s+/g,' '));
+          if (h1 && h2 && h3) return { ok: true, msg: '✓ Резервирование настроено! server1 всегда получит 10.0.0.20.' };
+          if (!h1) return { ok: false, msg: '✗ Строка 1: host server1 {' };
+          if (!h2) return { ok: false, msg: '✗ Строка 2: hardware ethernet 00:1A:2B:3C:4D:5E;' };
+          return { ok: false, msg: '✗ Строка 3: fixed-address 10.0.0.20;' };
+        }
+      },
+      {
+        id: 18,
+        title: 'Резервирование за пределами пула',
+        tag: 'config',
+        diff: 3,
+        desc: 'Зарезервированный адрес <strong>НЕ обязательно должен быть внутри пула</strong>. Можно зарезервировать любой адрес из подсети, даже тот, что не входит в range. Это позволяет иметь статические адреса серверов и динамические адреса для клиентов в одной подсети.',
+        theory: 'range 192.168.1.100 192.168.1.200; // fixed-address может быть .1-.99 или .201-.254',
+        question: 'При пуле 10.0.0.50-10.0.0.150, можно ли зарезервировать 10.0.0.200?',
+        inputs: [{
+          label: 'Ответ:',
+          type: 'select',
+          options: ['-- выбрать --', 'Да, можно — он вне пула, конфликта не будет', 'Нет, нельзя — адрес должен быть внутри пула', 'Только если удалить range', 'Зависит от версии DHCP'],
+          key: 'ans'
+        }],
+        validate(vals) {
+          return vals.ans === 'Да, можно — он вне пула, конфликта не будет'
+            ? { ok: true, msg: '✓ Правильно! fixed-address работает для любого адреса подсети, независимо от range.' }
+            : { ok: false, msg: '✗ Неверно. Зарезервированный адрес может быть в любом месте подсети.' };
+        }
+      },
+      {
+        id: 19,
+        title: 'Исключение адресов из пула',
+        tag: 'config',
+        diff: 2,
+        desc: 'Чтобы исключить конкретные адреса из диапазона выдачи (например, уже занятые статически), можно разбить range на несколько диапазонов или использовать декларацию нескольких range.',
+        theory: 'range 10.0.0.10 10.0.0.49; range 10.0.0.51 10.0.0.100; // .50 исключён',
+        question: 'Исключите адрес 10.0.0.50 из диапазона 10.0.0.10-10.0.0.100 (два range):',
+        inputs: [
+          { label: 'Первый range:', placeholder: 'range ...', key: 'r1' },
+          { label: 'Второй range:', placeholder: 'range ...', key: 'r2' },
+        ],
+        validate(vals) {
+          const r1 = /range\s+10\.0\.0\.10\s+10\.0\.0\.49;?$/.test(vals.r1.trim().replace(/\s+/g,' '));
+          const r2 = /range\s+10\.0\.0\.51\s+10\.0\.0\.100;?$/.test(vals.r2.trim().replace(/\s+/g,' '));
+          if (r1 && r2) return { ok: true, msg: '✓ Отлично! Адрес .50 исключён, выдаётся .10-.49 и .51-.100.' };
+          return { ok: false, msg: '✗ Нужно два диапазона: .10-.49 и .51-.100, исключая .50.' };
+        }
+      },
+    ]
+  },
+  {
+    icon: '&#127760;',
+    title: 'Дополнительные опции',
+    tasks: [
+      {
+        id: 20,
+        title: 'Доменное имя',
+        tag: 'config',
+        diff: 2,
+        desc: 'Опция 15 (<strong>domain-name</strong>) передаёт клиентам доменное имя для поиска хостов. Клиент добавляет это имя как суффикс при разрешении коротких имён.',
+        theory: 'option domain-name "company.local";',
+        question: 'Настройте доменный суффикс corp.example.com:',
+        inputs: [{ label: 'option:', placeholder: 'option domain-name ...', key: 'dn' }],
+        validate(vals) {
+          const v = vals.dn.trim().replace(/;$/,'');
+          const ok = /option domain-name ['"]corp\.example\.com['"]/.test(v);
+          return ok
+            ? { ok: true, msg: '✓ Верно! Клиенты смогут обращаться по именам типа server.corp.example.com.' }
+            : { ok: false, msg: '✗ Формат: option domain-name "corp.example.com";' };
+        }
+      },
+      {
+        id: 21,
+        title: 'NTP-сервер (опция 42)',
+        tag: 'config',
+        diff: 2,
+        desc: 'Опция DHCP 42 (<strong>ntp-servers</strong>) позволяет автоматически настроить NTP-клиент на клиентских машинах. Это критично для систем, где важна синхронизация времени.',
+        theory: 'option ntp-servers 192.168.1.1;',
+        question: 'Укажите NTP-сервер 10.0.0.5:',
+        inputs: [{ label: 'option NTP:', placeholder: 'option ntp-servers ...', key: 'ntp' }],
+        validate(vals) {
+          const v = vals.ntp.trim().replace(/;$/,'').replace(/\s+/g,' ');
+          return v === 'option ntp-servers 10.0.0.5'
+            ? { ok: true, msg: '✓ Правильно! Клиенты автоматически настроят синхронизацию с 10.0.0.5.' }
+            : { ok: false, msg: '✗ Формат: option ntp-servers 10.0.0.5;' };
+        }
+      },
+      {
+        id: 22,
+        title: 'WINS-сервер (опция 44)',
+        tag: 'config',
+        diff: 3,
+        desc: 'В среде Windows WINS (Windows Internet Name Service) используется для разрешения NetBIOS-имён. DHCP-опция 44 (<strong>netbios-name-servers</strong>) автоматически настраивает WINS на клиентах.',
+        theory: 'option netbios-name-servers 192.168.1.10;',
+        question: 'Передайте клиентам адрес WINS-сервера 10.0.0.10:',
+        inputs: [{ label: 'option WINS:', placeholder: 'option netbios-name-servers ...', key: 'wins' }],
+        validate(vals) {
+          const v = vals.wins.trim().replace(/;$/,'').replace(/\s+/g,' ');
+          return v === 'option netbios-name-servers 10.0.0.10'
+            ? { ok: true, msg: '✓ Верно! Windows-клиенты получат WINS-сервер для разрешения NetBIOS-имён.' }
+            : { ok: false, msg: '✗ Формат: option netbios-name-servers 10.0.0.10;' };
+        }
+      },
+      {
+        id: 23,
+        title: 'Опция PXE / Boot File',
+        tag: 'config',
+        diff: 4,
+        desc: 'Для сетевой загрузки (PXE) DHCP передаёт имя загрузочного файла через директиву <strong>filename</strong> и адрес TFTP-сервера через <strong>next-server</strong>.',
+        theory: 'next-server 10.0.0.1; filename "pxelinux.0";',
+        question: 'TFTP-сервер: 10.0.0.3, файл: pxelinux.0. Введите обе директивы (через ;):',
+        inputs: [
+          { label: 'TFTP-сервер:', placeholder: 'next-server ...', key: 'ns' },
+          { label: 'Файл загрузки:', placeholder: 'filename ...', key: 'fn' },
+        ],
+        validate(vals) {
+          const ns = /next-server\s+10\.0\.0\.3;?$/.test(vals.ns.trim().replace(/\s+/g,' '));
+          const fn = /filename\s+['"]pxelinux\.0['"];?$/.test(vals.fn.trim().replace(/\s+/g,' '));
+          if (ns && fn) return { ok: true, msg: '✓ PXE-загрузка настроена! Клиенты получат pxelinux.0 с 10.0.0.3.' };
+          if (!ns) return { ok: false, msg: '✗ TFTP: next-server 10.0.0.3;' };
+          return { ok: false, msg: '✗ Файл: filename "pxelinux.0";' };
+        }
+      },
+      {
+        id: 24,
+        title: 'Широковещательный адрес',
+        tag: 'config',
+        diff: 2,
+        desc: 'Опция 28 (<strong>broadcast-address</strong>) передаёт клиентам широковещательный адрес подсети. Обычно это последний адрес в подсети.',
+        theory: 'option broadcast-address 192.168.1.255;',
+        question: 'Укажите broadcast-адрес для сети 10.0.0.0/24:',
+        inputs: [{ label: 'option:', placeholder: 'option broadcast-address ...', key: 'bcast' }],
+        validate(vals) {
+          const v = vals.bcast.trim().replace(/;$/,'').replace(/\s+/g,' ');
+          return v === 'option broadcast-address 10.0.0.255'
+            ? { ok: true, msg: '✓ Правильно! Для /24 широковещательный адрес = .255.' }
+            : { ok: false, msg: '✗ Для /24 broadcast = 10.0.0.255. Формат: option broadcast-address 10.0.0.255;' };
+        }
+      },
+    ]
+  },
+  {
+    icon: '&#128271;',
+    title: 'Классы и политики',
+    tasks: [
+      {
+        id: 25,
+        title: 'Authoritative',
+        tag: 'config',
+        diff: 2,
+        desc: 'Директива <strong>authoritative</strong> указывает, что этот DHCP-сервер является авторитетным для данной сети. Авторитетный сервер отвечает DHCPNAK на запросы с неправильными адресами, ускоряя переконфигурацию клиентов.',
+        theory: 'authoritative;',
+        question: 'Введите директиву авторитетности сервера:',
+        inputs: [{ label: 'Директива:', placeholder: '...', key: 'auth' }],
+        validate(vals) {
+          const v = vals.auth.trim().replace(/;$/,'').trim();
+          return v === 'authoritative'
+            ? { ok: true, msg: '✓ Верно! Сервер объявлен авторитетным для своей сети.' }
+            : { ok: false, msg: '✗ Просто введите: authoritative;' };
+        }
+      },
+      {
+        id: 26,
+        title: 'Классы клиентов (class)',
+        tag: 'config',
+        diff: 4,
+        desc: 'Блок <strong>class</strong> позволяет группировать клиентов по условиям (vendor class, user class и т.д.) и применять к ним разные настройки. Используется для сегрегации трафика.',
+        theory: 'class "windows-clients" { match if option vendor-class-identifier = "MSFT"; }',
+        question: 'Создайте класс "vip" для клиентов с user-class = "premium":',
+        inputs: [
+          { label: 'Объявление класса:', placeholder: 'class "vip" {', key: 'c1' },
+          { label: 'Условие match:', placeholder: 'match if ...', key: 'c2' },
+        ],
+        validate(vals) {
+          const c1 = /class\s+['"]vip['"]\s*\{/.test(vals.c1.trim());
+          const c2 = /match\s+if\s+option\s+user-class\s*=\s*['"]premium['"];?/.test(vals.c2.trim().replace(/\s+/g,' '));
+          if (c1 && c2) return { ok: true, msg: '✓ Класс "vip" настроен! Клиенты с user-class=premium войдут в этот класс.' };
+          if (!c1) return { ok: false, msg: '✗ Строка 1: class "vip" {' };
+          return { ok: false, msg: '✗ Строка 2: match if option user-class = "premium";' };
+        }
+      },
+      {
+        id: 27,
+        title: 'Vendor Class Identifier',
+        tag: 'config',
+        diff: 3,
+        desc: 'Опция DHCP 60 (<strong>vendor-class-identifier</strong>) используется клиентами для идентификации типа устройства или ОС. На её основе сервер может назначить разные параметры.',
+        theory: 'match if option vendor-class-identifier = "PXEClient";',
+        question: 'Какой класс клиента идентифицирует PXE-загрузчик?',
+        inputs: [{ label: 'Vendor Class:', placeholder: '...', key: 'vc' }],
+        validate(vals) {
+          return vals.vc.trim().replace(/['"]/g,'') === 'PXEClient'
+            ? { ok: true, msg: '✓ Правильно! "PXEClient" — стандартный vendor-class для PXE-клиентов.' }
+            : { ok: false, msg: '✗ Для PXE используется vendor-class: PXEClient' };
+        }
+      },
+      {
+        id: 28,
+        title: 'Субнет в пуле (pool)',
+        tag: 'config',
+        diff: 4,
+        desc: 'Блок <strong>pool</strong> внутри subnet позволяет создать отдельный пул адресов с разными параметрами доступа. Можно использовать директивы <strong>allow</strong> и <strong>deny</strong> для ограничения.',
+        theory: 'pool { range 192.168.1.100 192.168.1.200; allow members of "known"; }',
+        question: 'Как разрешить пул только для известных клиентов (known hosts)?',
+        inputs: [{ label: 'Директива allow:', placeholder: 'allow ...', key: 'allow' }],
+        validate(vals) {
+          const v = vals.allow.trim().replace(/;$/,'').replace(/\s+/g,' ');
+          return v === 'allow known clients' || v === 'allow members of "known-clients"'
+            ? { ok: true, msg: '✓ Верно! "allow known clients" ограничивает пул только для хостов из блоков host {}.' }
+            : { ok: false, msg: '✗ Используйте: allow known clients;' };
+        }
+      },
+    ]
+  },
+  {
+    icon: '&#128257;',
+    title: 'Relay Agent и VLAN',
+    tasks: [
+      {
+        id: 29,
+        title: 'DHCP Relay Agent',
+        tag: 'theory',
+        diff: 3,
+        desc: 'В сетях с несколькими подсетями DHCP-broadcast не проходит через маршрутизатор. Для этого используется <strong>DHCP Relay Agent</strong> (агент ретрансляции), который перехватывает DHCP-запросы и пересылает их unicast на DHCP-сервер.',
+        theory: 'Агент добавляет поле giaddr (gateway IP) — адрес интерфейса, через который пришёл запрос.',
+        question: 'Как называется поле в DHCP-пакете, содержащее адрес relay agent?',
+        inputs: [{ label: 'Поле пакета:', placeholder: '...', key: 'giaddr' }],
+        validate(vals) {
+          return vals.giaddr.trim().toLowerCase() === 'giaddr'
+            ? { ok: true, msg: '✓ Правильно! giaddr (Gateway IP Address) определяет подсеть клиента.' }
+            : { ok: false, msg: '✗ Поле называется giaddr (gateway IP address).' };
+        }
+      },
+      {
+        id: 30,
+        title: 'Настройка relay на Cisco',
+        tag: 'practice',
+        diff: 3,
+        desc: 'На маршрутизаторе Cisco команда <strong>ip helper-address</strong> включает DHCP relay на интерфейсе. Она перенаправляет UDP-широковещание (включая DHCP) на указанный сервер.',
+        theory: 'interface GigabitEthernet0/0 → ip helper-address 10.0.0.1',
+        question: 'Введите команду Cisco для relay на DHCP-сервер 192.168.100.5:',
+        inputs: [{ label: 'IOS#', placeholder: 'ip helper-address ...', key: 'helper' }],
+        validate(vals) {
+          const v = vals.helper.trim().replace(/\s+/g,' ');
+          return v === 'ip helper-address 192.168.100.5'
+            ? { ok: true, msg: '✓ Правильно! ip helper-address перенаправляет DHCP-запросы на 192.168.100.5.' }
+            : { ok: false, msg: '✗ Команда: ip helper-address 192.168.100.5' };
+        }
+      },
+      {
+        id: 31,
+        title: 'Shared-network для VLAN',
+        tag: 'config',
+        diff: 4,
+        desc: 'Блок <strong>shared-network</strong> объединяет несколько подсетей на одном физическом интерфейсе (суперсеть). Используется при secondary IP или для разных VLAN на одном интерфейсе.',
+        theory: 'shared-network "office" { subnet 10.0.1.0 netmask ... {} subnet 10.0.2.0 netmask ... {} }',
+        question: 'Введите заголовок блока shared-network с именем "datacenter":',
+        inputs: [{ label: 'Конфиг:', placeholder: 'shared-network ...', key: 'sn' }],
+        validate(vals) {
+          const v = vals.sn.trim().replace(/\s+/g,' ');
+          const ok = /shared-network\s+['"]datacenter['"]\s*\{/.test(v) || /shared-network\s+datacenter\s*\{/.test(v);
+          return ok
+            ? { ok: true, msg: '✓ Верно! Блок shared-network "datacenter" объединяет несколько подсетей.' }
+            : { ok: false, msg: '✗ Формат: shared-network "datacenter" {' };
+        }
+      },
+    ]
+  },
+  {
+    icon: '&#128202;',
+    title: 'Мониторинг и диагностика',
+    tasks: [
+      {
+        id: 32,
+        title: 'Файл аренд (leases)',
+        tag: 'practice',
+        diff: 2,
+        desc: 'DHCP-сервер хранит информацию об активных и прошлых арендах в специальном файле. Это позволяет восстановить состояние после перезапуска.',
+        theory: 'Файл: /var/lib/dhcp/dhcpd.leases',
+        question: 'Укажите путь к файлу аренд DHCP:',
+        inputs: [{ label: 'Путь:', placeholder: '/var/...', key: 'lf' }],
+        validate(vals) {
+          return vals.lf.trim() === '/var/lib/dhcp/dhcpd.leases'
+            ? { ok: true, msg: '✓ Верно! Все выданные адреса хранятся в /var/lib/dhcp/dhcpd.leases.' }
+            : { ok: false, msg: '✗ Путь: /var/lib/dhcp/dhcpd.leases' };
+        }
+      },
+      {
+        id: 33,
+        title: 'Проверка конфигурации',
+        tag: 'practice',
+        diff: 2,
+        desc: 'Перед перезапуском сервера можно проверить синтаксис конфигурационного файла без применения изменений. Это предотвращает простои из-за ошибок синтаксиса.',
+        theory: 'dhcpd -t -cf /etc/dhcp/dhcpd.conf',
+        question: 'Введите команду для проверки синтаксиса dhcpd.conf (без применения):',
+        inputs: [{ label: '$', placeholder: 'dhcpd ...', key: 'check' }],
+        validate(vals) {
+          const v = vals.check.trim().replace(/\s+/g,' ');
+          const ok = v === 'dhcpd -t -cf /etc/dhcp/dhcpd.conf' || v === 'dhcpd -t' || v === 'dhcpd -t -cf /etc/dhcp/dhcpd.conf -lf /dev/null';
+          return ok
+            ? { ok: true, msg: '✓ Правильно! dhcpd -t проверит синтаксис без запуска сервера.' }
+            : { ok: false, msg: '✗ Команда: dhcpd -t -cf /etc/dhcp/dhcpd.conf' };
+        }
+      },
+      {
+        id: 34,
+        title: 'Мониторинг логов',
+        tag: 'practice',
+        diff: 1,
+        desc: 'DHCP-сервер записывает события в системный журнал. Для просмотра логов в реальном времени используется <strong>journalctl</strong> или <strong>tail</strong>.',
+        theory: 'journalctl -u isc-dhcp-server -f',
+        question: 'Введите команду для просмотра логов DHCP в реальном времени:',
+        inputs: [{ label: '$', placeholder: 'journalctl ...', key: 'log' }],
+        validate(vals) {
+          const v = vals.log.trim().replace(/\s+/g,' ');
+          const ok = v === 'journalctl -u isc-dhcp-server -f' ||
+                     v === 'journalctl -f -u isc-dhcp-server' ||
+                     v === 'tail -f /var/log/syslog | grep dhcpd';
+          return ok
+            ? { ok: true, msg: '✓ Верно! journalctl -f показывает новые записи в реальном времени.' }
+            : { ok: false, msg: '✗ Используйте: journalctl -u isc-dhcp-server -f' };
+        }
+      },
+      {
+        id: 35,
+        title: 'Перезагрузка без простоя',
+        tag: 'practice',
+        diff: 2,
+        desc: 'Команда <strong>SIGHUP</strong> (reload) перезагружает конфигурацию DHCP без разрыва существующих аренд. Это позволяет применить изменения без прерывания работы клиентов.',
+        question: 'Выберите команду для перезагрузки конфигурации без разрыва аренд:',
+        inputs: [{
+          label: 'Команда:',
+          type: 'select',
+          options: ['-- выбрать --', 'systemctl reload isc-dhcp-server', 'systemctl restart isc-dhcp-server', 'kill -9 $(pidof dhcpd)', 'dhcpd --reload'],
+          key: 'reload'
+        }],
+        validate(vals) {
+          return vals.reload === 'systemctl reload isc-dhcp-server'
+            ? { ok: true, msg: '✓ Правильно! reload применяет конфиг без остановки сервера. restart прервёт аренды!' }
+            : { ok: false, msg: '✗ Используйте reload, а не restart — чтобы не разрывать существующие аренды.' };
+        }
+      },
+    ]
+  },
+  {
+    icon: '&#128274;',
+    title: 'Безопасность DHCP',
+    tasks: [
+      {
+        id: 36,
+        title: 'DHCP Snooping',
+        tag: 'theory',
+        diff: 3,
+        desc: '<strong>DHCP Snooping</strong> — функция коммутатора, защищающая от мошеннических DHCP-серверов (rogue DHCP). Порты делятся на trusted (к настоящему серверу) и untrusted (к клиентам). DHCP-ответы разрешены только с trusted-портов.',
+        theory: 'Cisco: ip dhcp snooping; ip dhcp snooping vlan 10; interface gi0/1 → ip dhcp snooping trust',
+        question: 'На каком оборудовании настраивается DHCP Snooping?',
+        inputs: [{
+          label: 'Оборудование:',
+          type: 'select',
+          options: ['-- выбрать --', 'На управляемом коммутаторе (L2/L3)', 'На DHCP-сервере', 'На маршрутизаторе клиента', 'На firewall'],
+          key: 'eq'
+        }],
+        validate(vals) {
+          return vals.eq === 'На управляемом коммутаторе (L2/L3)'
+            ? { ok: true, msg: '✓ Верно! DHCP Snooping настраивается на коммутаторе, через который идёт трафик.' }
+            : { ok: false, msg: '✗ Неверно. DHCP Snooping — функция коммутатора второго уровня.' };
+        }
+      },
+      {
+        id: 37,
+        title: 'Rogue DHCP атака',
+        tag: 'theory',
+        diff: 3,
+        desc: 'Атака <strong>Rogue DHCP Server</strong> (мошеннический DHCP-сервер) — злоумышленник запускает свой DHCP-сервер, который выдаёт клиентам поддельные параметры сети (шлюз, DNS), перенаправляя трафик через себя (MitM).',
+        question: 'Какой тип атаки реализуется через Rogue DHCP?',
+        inputs: [{
+          label: 'Тип атаки:',
+          type: 'select',
+          options: ['-- выбрать --', 'Man-in-the-Middle (MitM)', 'DoS / DDoS', 'SQL Injection', 'ARP Poisoning'],
+          key: 'atk'
+        }],
+        validate(vals) {
+          return vals.atk === 'Man-in-the-Middle (MitM)'
+            ? { ok: true, msg: '✓ Правильно! Rogue DHCP позволяет выполнить MitM — весь трафик идёт через атакующего.' }
+            : { ok: false, msg: '✗ Rogue DHCP используется для Man-in-the-Middle атак.' };
+        }
+      },
+      {
+        id: 38,
+        title: 'DHCP Starvation',
+        tag: 'theory',
+        diff: 3,
+        desc: '<strong>DHCP Starvation</strong> — атака исчерпания пула. Атакующий отправляет тысячи DHCP Discover с поддельными MAC-адресами, пока пул адресов не истощится. Легитимные клиенты не могут получить адрес.',
+        theory: 'Защита: ограничение частоты запросов, port security на коммутаторе',
+        question: 'Какой инструмент/функция коммутатора ограничивает количество MAC на порту (защита от Starvation)?',
+        inputs: [{ label: 'Функция:', placeholder: '...', key: 'ps' }],
+        validate(vals) {
+          const v = vals.ps.trim().toLowerCase().replace(/[-\s]/g,'');
+          const ok = v.includes('portsecurity') || v.includes('portguard') || v === 'portsecurity';
+          return ok
+            ? { ok: true, msg: '✓ Правильно! Port Security ограничивает количество MAC-адресов на порту коммутатора.' }
+            : { ok: false, msg: '✗ Функция называется Port Security (ограничение MAC на порту).' };
+        }
+      },
+    ]
+  },
+  {
+    icon: '&#9889;',
+    title: 'Failover и продвинутые темы',
+    tasks: [
+      {
+        id: 39,
+        title: 'DHCP Failover',
+        tag: 'config',
+        diff: 5,
+        desc: '<strong>DHCP Failover</strong> позволяет двум DHCP-серверам синхронизировать информацию об арендах и обеспечивать отказоустойчивость. При недоступности одного сервера, второй продолжает обслуживать клиентов.',
+        theory: 'failover peer "dhcp-failover" { primary; address ...; port 647; peer address ...; peer port 647; }',
+        question: 'Какой порт используется по умолчанию для DHCP Failover протокола?',
+        inputs: [{ label: 'Порт:', placeholder: 'XXX', key: 'fport' }],
+        validate(vals) {
+          return vals.fport.trim() === '647'
+            ? { ok: true, msg: '✓ Верно! TCP/647 — стандартный порт протокола DHCP Failover (RFC 3074).' }
+            : { ok: false, msg: '✗ DHCP Failover использует TCP-порт 647.' };
+        }
+      },
+      {
+        id: 40,
+        title: 'DDNS интеграция',
+        tag: 'config',
+        diff: 4,
+        desc: '<strong>DDNS (Dynamic DNS)</strong> — при выдаче/освобождении IP сервер автоматически обновляет DNS-записи. Это обеспечивает разрешение имён для динамически назначенных адресов.',
+        theory: 'ddns-updates on; ddns-update-style interim; ddns-domainname "local.";',
+        question: 'Введите директиву включения динамических DNS-обновлений:',
+        inputs: [{ label: 'Директива:', placeholder: 'ddns-updates ...', key: 'ddns' }],
+        validate(vals) {
+          const v = vals.ddns.trim().replace(/;$/,'').replace(/\s+/g,' ');
+          return v === 'ddns-updates on'
+            ? { ok: true, msg: '✓ Правильно! ddns-updates on включает автоматическое обновление DNS при изменении аренд.' }
+            : { ok: false, msg: '✗ Директива: ddns-updates on;' };
+        }
+      },
+      {
+        id: 41,
+        title: 'IPv6 DHCPv6',
+        tag: 'theory',
+        diff: 4,
+        desc: '<strong>DHCPv6</strong> используется для автоматической настройки IPv6. Работает через UDP-порты 546 (клиент) и 547 (сервер). Может работать в <strong>stateful</strong> (полное назначение) и <strong>stateless</strong> (только опции, адрес через SLAAC) режимах.',
+        question: 'Какой порт использует DHCPv6-сервер?',
+        inputs: [{ label: 'UDP-порт DHCPv6 сервера:', placeholder: 'XXX', key: 'v6port' }],
+        validate(vals) {
+          return vals.v6port.trim() === '547'
+            ? { ok: true, msg: '✓ Верно! DHCPv6 сервер: UDP/547, клиент: UDP/546 (сравните с v4: 67 и 68).' }
+            : { ok: false, msg: '✗ DHCPv6 сервер слушает на UDP/547.' };
+        }
+      },
+      {
+        id: 42,
+        title: 'Итоговая конфигурация',
+        tag: 'advanced',
+        diff: 5,
+        desc: 'Соберите полную минимальную конфигурацию DHCP-сервера. Требования:<br>• Сеть: <strong>192.168.10.0/24</strong><br>• Пул: <strong>.100 — .200</strong><br>• Шлюз: <strong>192.168.10.1</strong><br>• DNS: <strong>192.168.10.1</strong><br>• Lease: <strong>24 часа</strong><br>• Авторитетный сервер',
+        question: 'Выберите все обязательные компоненты минимальной конфигурации:',
+        inputs: [{
+          label: 'Компонент 1 (обязателен?):',
+          type: 'select',
+          options: ['-- выбрать --', 'authoritative — ДА, нужен', 'authoritative — НЕТ, не нужен'],
+          key: 'c1'
+        },{
+          label: 'Компонент 2:',
+          type: 'select',
+          options: ['-- выбрать --', 'ddns-update-style — обязателен', 'ddns-update-style interim — НЕ обязателен для базовой конфигурации'],
+          key: 'c2'
+        },{
+          label: 'Время аренды корректно?',
+          type: 'select',
+          options: ['-- выбрать --', 'default-lease-time 86400 — верно для 24ч', 'default-lease-time 24 — верно', 'default-lease-time 1440 — верно для 24ч'],
+          key: 'c3'
+        }],
+        validate(vals) {
+          const ok1 = vals.c1 === 'authoritative — ДА, нужен';
+          const ok2 = vals.c2 === 'ddns-update-style interim — НЕ обязателен для базовой конфигурации';
+          const ok3 = vals.c3 === 'default-lease-time 86400 — верно для 24ч';
+          if (ok1 && ok2 && ok3) return { ok: true, msg: '🏆 Финал! Вы правильно определили все компоненты конфигурации DHCP-сервера!' };
+          const errors = [];
+          if (!ok1) errors.push('authoritative нужен для авторитетного сервера');
+          if (!ok2) errors.push('ddns-update-style не обязателен в базовой конфиг');
+          if (!ok3) errors.push('24 часа = 86400 секунд, не 24 и не 1440');
+          return { ok: false, msg: '✗ ' + errors.join('; ') };
+        }
+      },
+    ]
+  },
+];
+
+// ===== ALL TASKS FLAT =====
+const allTasks = [];
+sections.forEach(s => s.tasks.forEach(t => { t.section = s.title; allTasks.push(t); }));
+
+// ===== HELPERS =====
+function saveProgress() {
+  try {
+    localStorage.setItem('dhcp_done', JSON.stringify([...state.completed]));
+  } catch (e) { /* хранилище недоступно (например, в песочнице артефакта) — прогресс просто не сохранится между сессиями */ }
+}
+function updateStats() {
+  const n = state.completed.size;
+  const total = allTasks.length;
+  document.getElementById('completed-count').textContent = n;
+  document.getElementById('total-count').textContent = total;
+  const pct = Math.round(n / total * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-text').textContent = n + ' / ' + total;
+}
+
+function addLog(msg, type='') {
+  const body = document.getElementById('terminal-body');
+  const ts = new Date().toTimeString().slice(0,8);
+  const line = document.createElement('div');
+  line.className = 'terminal-line' + (type ? ' ' + type : '');
+  line.textContent = '[' + ts + '] ' + msg;
+  body.appendChild(line);
+  body.scrollTop = body.scrollHeight;
+  if (body.children.length > 60) body.removeChild(body.firstChild);
+}
+
+// ===== RENDER SIDEBAR =====
+// Ручной выбор "свернуть/развернуть" для каждого раздела (по индексу).
+// undefined = пользователь ещё не трогал этот раздел -> используется формула по умолчанию.
+// Хранится отдельно от renderSidebar(), чтобы не сбрасываться при каждой перерисовке
+// (а renderSidebar вызывается при КАЖДОМ клике по заданию и после каждого ответа).
+const sectionExpandOverride = {};
+
+function renderSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  sidebar.innerHTML = '';
+
+  sections.forEach((sec, secIdx) => {
+    const doneCount = sec.tasks.filter(t => state.completed.has(t.id)).length;
+    const allDone = doneCount === sec.tasks.length;
+    const div = document.createElement('div');
+    div.className = 'section-card';
+
+    const header = document.createElement('div');
+    header.className = 'section-header' + (allDone ? ' section-done' : '');
+    header.innerHTML = `
+      <span class="section-icon">${sec.icon}</span>
+      <span class="section-title">${sec.title}</span>
+      <span class="section-badge">${doneCount}/${sec.tasks.length}</span>
+    `;
+
+    const list = document.createElement('div');
+    list.className = 'task-list';
+    sec.tasks.forEach(task => {
+      const item = document.createElement('div');
+      item.className = 'task-item' + (state.completed.has(task.id) ? ' completed' : '') + (state.current === task.id ? ' active' : '');
+      item.innerHTML = `
+        <div class="task-check">${state.completed.has(task.id) ? '✓' : ''}</div>
+        <div class="task-num">${String(task.id).padStart(2,'0')}</div>
+        <div class="task-name">${task.title}</div>
+      `;
+      item.onclick = () => loadTask(task.id);
+      list.appendChild(item);
+    });
+
+    const defaultExpanded = sec.tasks.some(t => t.id === state.current) || doneCount < sec.tasks.length;
+    let expanded = sectionExpandOverride[secIdx] !== undefined ? sectionExpandOverride[secIdx] : defaultExpanded;
+    list.style.display = expanded ? 'block' : 'none';
+
+    header.onclick = () => {
+      expanded = !expanded;
+      sectionExpandOverride[secIdx] = expanded;
+      list.style.display = expanded ? 'block' : 'none';
+    };
+
+    div.appendChild(header);
+    div.appendChild(list);
+    sidebar.appendChild(div);
+  });
+}
+
+// ===== RENDER TASK =====
+function loadTask(id) {
+  state.current = id;
+  const task = allTasks.find(t => t.id === id);
+  if (!task) return;
+  renderSidebar();
+  renderTask(task);
+}
+
+function renderTask(task) {
+  const view = document.getElementById('task-view');
+  const tagMap = { theory: 'ТЕОРИЯ', practice: 'ПРАКТИКА', config: 'КОНФИГ', advanced: 'ФИНАЛ' };
+  const tagClass = { theory: 'tag-theory', practice: 'tag-practice', config: 'tag-config', advanced: 'tag-advanced' };
+  const diffDots = Array(5).fill(0).map((_, i) =>
+    `<div class="diff-dot${i < task.diff ? ' filled' : ''}"></div>`
+  ).join('');
+
+  const prevId = task.id > 1 ? task.id - 1 : null;
+  const nextId = task.id < allTasks.length ? task.id + 1 : null;
+
+  const inputsHtml = (task.inputs || []).map((inp, i) => {
+    if (inp.type === 'select') {
+      const opts = inp.options.map(o => `<option value="${o}">${o}</option>`).join('');
+      return `<div class="input-row">
+        <div class="input-label">${inp.label}</div>
+        <select class="cmd-input" id="inp_${inp.key}" style="min-width:320px">
+          ${opts}
+        </select>
+      </div>`;
+    }
+    return `<div class="input-row">
+      <div class="input-label">${inp.label}</div>
+      <input class="cmd-input" id="inp_${inp.key}" placeholder="${inp.placeholder || ''}" autocomplete="off" spellcheck="false">
+    </div>`;
+  }).join('');
+
+  view.innerHTML = `
+    <div class="task-view-header">
+      <div class="task-number-badge">${String(task.id).padStart(2,'0')}</div>
+      <div class="task-view-meta">
+        <span class="task-category-tag"><span class="tag ${tagClass[task.tag] || 'tag-config'}">${tagMap[task.tag] || task.tag.toUpperCase()}</span> ${task.section}</span>
+        <div class="task-view-title">${task.title}</div>
+        <div class="task-difficulty">${diffDots}</div>
+      </div>
+    </div>
+
+    <div class="task-description">${task.desc}</div>
+
+    ${task.theory ? `<div class="info-block"><span class="label">&#128161; Справка</span>${task.theory}</div>` : ''}
+
+    <div class="input-section">
+      <div style="font-size:12px; color:var(--muted); margin-bottom:14px; letter-spacing:1px;">▶ ${task.question}</div>
+      ${inputsHtml}
+      <div style="display:flex; gap:10px; margin-top:14px; flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="checkAnswer(${task.id})">✓ ПРОВЕРИТЬ</button>
+        <button class="btn btn-secondary" onclick="showHint(${task.id})">? ПОДСКАЗКА</button>
+        ${state.completed.has(task.id) ? `<button class="btn btn-success" disabled>✓ ВЫПОЛНЕНО</button>` : ''}
+      </div>
+      <div class="feedback" id="feedback_${task.id}"></div>
+    </div>
+
+    <div class="task-nav">
+      <button class="btn btn-nav" onclick="${prevId ? `loadTask(${prevId})` : ''}" ${!prevId ? 'disabled style="opacity:0.3"' : ''}>&#8592; НАЗАД</button>
+      <span style="font-family:var(--font-mono); font-size:11px; color:var(--muted)">${task.id} / ${allTasks.length}</span>
+      <button class="btn btn-nav" onclick="${nextId ? `loadTask(${nextId})` : ''}" ${!nextId ? 'disabled style="opacity:0.3"' : ''}>ВПЕРЁД &#8594;</button>
+    </div>
+  `;
+
+  // Focus first input
+  const firstInput = view.querySelector('.cmd-input');
+  if (firstInput && firstInput.tagName === 'INPUT') {
+    setTimeout(() => firstInput.focus(), 50);
+  }
+
+  // Enter key support (текстовые поля)
+  view.querySelectorAll('input.cmd-input').forEach(inp => {
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter') checkAnswer(task.id);
+    });
+  });
+  // Для select: Enter тоже проверяет ответ (после выбора значения)
+  view.querySelectorAll('select.cmd-input').forEach(sel => {
+    sel.addEventListener('keydown', e => {
+      if (e.key === 'Enter') checkAnswer(task.id);
+    });
+  });
+}
+
+function getInputValues(task) {
+  const vals = {};
+  (task.inputs || []).forEach(inp => {
+    const el = document.getElementById('inp_' + inp.key);
+    vals[inp.key] = el ? el.value : '';
+  });
+  return vals;
+}
+
+function checkAnswer(id) {
+  const task = allTasks.find(t => t.id === id);
+  if (!task) return;
+  const vals = getInputValues(task);
+  const result = task.validate(vals);
+  const fb = document.getElementById('feedback_' + id);
+  fb.className = 'feedback show ' + (result.ok ? 'ok' : 'err');
+  fb.innerHTML = result.msg;
+
+  if (result.ok && !state.completed.has(id)) {
+    state.completed.add(id);
+    saveProgress();
+    updateStats();
+    renderSidebar();
+    addLog('DHCP-TASK-' + String(id).padStart(2,'0') + ' COMPLETED: ' + task.title, 'info');
+    addLog('Progress: ' + state.completed.size + '/42 tasks completed', 'sys');
+
+    // Refresh task view to show "completed" button
+    setTimeout(() => loadTask(id), 400);
+
+    // Check if all done
+    if (state.completed.size === allTasks.length) {
+      setTimeout(() => {
+        document.getElementById('success-modal').classList.add('show');
+      }, 800);
+    }
+  } else if (result.ok) {
+    addLog('Task ' + id + ' already completed. Re-verified: PASS', 'sys');
+  } else {
+    addLog('DHCP-TASK-' + String(id).padStart(2,'0') + ' FAILED: check your input', 'err');
+  }
+}
+
+function showHint(id) {
+  const task = allTasks.find(t => t.id === id);
+  const fb = document.getElementById('feedback_' + id);
+  fb.className = 'feedback show hint';
+  fb.innerHTML = '&#128161; ' + (task.theory || task.desc.replace(/<[^>]+>/g,'').substring(0, 120) + '...');
+  addLog('Hint requested for task ' + id, 'warn');
+}
+
+function resetAll() {
+  state.completed.clear();
+  try { localStorage.removeItem('dhcp_done'); } catch (e) {}
+  updateStats();
+  document.getElementById('success-modal').classList.remove('show');
+  loadTask(1);
+  addLog('=== SIMULATOR RESET ===', 'warn');
+}
+
+// ===== ТЕМА: ДЕНЬ / НОЧЬ (по умолчанию — день) =====
+function toggleTheme() {
+  const isDay = document.body.classList.toggle('day');
+  document.getElementById('theme-icon').textContent = isDay ? '☀' : '☾';
+  document.getElementById('theme-label').textContent = isDay ? 'День' : 'Ночь';
+}
+
+// ===== INIT =====
+function init() {
+  updateStats();
+  loadTask(1);
+
+  // Boot log
+  addLog('=== ISC DHCP Server Simulator v5.0 ===', 'info');
+  addLog('Loaded ' + allTasks.length + ' training tasks across ' + sections.length + ' modules', 'sys');
+  addLog('DHCP service: isc-dhcp-server [SIMULATED]', 'sys');
+  addLog('Config file: /etc/dhcp/dhcpd.conf', 'sys');
+  addLog('Listening on: 0.0.0.0:67/udp', 'info');
+  addLog('Ready. Complete tasks to master DHCP configuration.', 'info');
+  if (state.completed.size > 0) {
+    addLog('Restored progress: ' + state.completed.size + '/42 tasks', 'warn');
+  }
+}
+
+init();
+</script>
+</body>
+</html>

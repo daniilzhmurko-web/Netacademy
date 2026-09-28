@@ -1,0 +1,2639 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NetSim Pro — Симулятор Компьютерных Сетей</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Exo+2:wght@300;400;600;700&display=swap');
+
+:root {
+  --bg-deep: #0b0e14;
+  --bg-primary: #13161e;
+  --bg-secondary: #1a1e28;
+  --bg-panel: #151820;
+  --bg-toolbar: #0f1219;
+  --bg-hover: #1f2536;
+  --accent-blue: #0d6efd;
+  --accent-cyan: #00c8ff;
+  --accent-green: #00e676;
+  --accent-orange: #ff9100;
+  --accent-red: #ff3d3d;
+  --accent-yellow: #ffd600;
+  --text-primary: #d0dce8;
+  --text-secondary: #6a7a92;
+  --text-accent: #00c8ff;
+  --border: #222840;
+  --border-light: #2a3050;
+  --terminal-bg: #080c12;
+  --terminal-green: #00e676;
+  --router-color: #e65100;
+  --switch-color: #1565c0;
+  --pc-color: #2e7d32;
+  --server-color: #4a148c;
+  /* Консоль и тултипы всегда тёмные ("терминал"), независимо от темы */
+  --con-text: #d0dce8;
+  --con-green: #00e676;
+  --con-red: #ff3d3d;
+  --con-cyan: #00c8ff;
+  --con-orange: #ff9100;
+  --con-muted: #6a7a92;
+  --tooltip-bg: #1a2240;
+  --tooltip-text: #d0dce8;
+  --grid-line: rgba(255,255,255,0.02);
+}
+/* ─── ДНЕВНАЯ ТЕМА (включена по умолчанию классом .day на <body>) ─── */
+body.day {
+  --bg-deep: #f3f5fa;
+  --bg-primary: #ffffff;
+  --bg-secondary: #eef1f8;
+  --bg-panel: #ffffff;
+  --bg-toolbar: #e9edf6;
+  --bg-hover: #e3e8f4;
+  --accent-blue: #0d6efd;
+  --accent-cyan: #0077aa;
+  --accent-green: #198754;
+  --accent-orange: #d9600b;
+  --accent-red: #dc2626;
+  --accent-yellow: #b98900;
+  --text-primary: #1b2033;
+  --text-secondary: #5a6685;
+  --text-accent: #0077aa;
+  --border: #dde1ee;
+  --border-light: #ccd2e6;
+  --grid-line: rgba(20,30,60,.05);
+}
+body.day .menu-btn:hover { color: var(--text-primary); }
+body.day .tool-btn:hover { background: rgba(20,30,60,.05); }
+body.day .task-item:hover { background: rgba(20,30,60,.035); }
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Exo 2', sans-serif;
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+}
+
+/* ===== HEADER ===== */
+#header {
+  height: 36px;
+  background: var(--bg-toolbar);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 20px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 100;
+}
+
+.logo {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent-cyan);
+  letter-spacing: 2px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 10px;
+}
+
+.logo-hex {
+  width: 22px;
+  height: 22px;
+  background: var(--accent-blue);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: white;
+}
+
+.menu-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-family: 'Exo 2', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  transition: color 0.15s;
+}
+.menu-btn:hover { color: var(--text-primary); }
+
+.header-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.lesson-badge {
+  background: var(--bg-secondary);
+  border: 1px solid var(--accent-blue);
+  padding: 3px 12px;
+  font-size: 11px;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  color: var(--accent-cyan);
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lesson-dots {
+  display: flex;
+  gap: 4px;
+}
+
+.lesson-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--bg-hover);
+  border: 1px solid var(--border-light);
+  transition: all 0.3s;
+}
+.lesson-dot.done { background: var(--accent-green); border-color: var(--accent-green); }
+.lesson-dot.active { background: var(--accent-cyan); border-color: var(--accent-cyan); box-shadow: 0 0 6px var(--accent-cyan); }
+
+#theme-toggle{display:flex;align-items:center;gap:6px;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-secondary);font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;padding:4px 10px;border-radius:2px;cursor:pointer;transition:all .2s;}
+#theme-toggle:hover{background:var(--bg-hover);border-color:var(--border-light);color:var(--text-primary);}
+#theme-icon{font-size:11px;line-height:1;}
+
+/* ===== TOOLBAR ===== */
+#toolbar {
+  height: 46px;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.tool-btn {
+  width: 36px;
+  height: 34px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: all 0.15s;
+  position: relative;
+}
+.tool-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-light);
+  color: var(--text-primary);
+}
+.tool-btn.active {
+  background: rgba(13, 110, 253, 0.2);
+  border-color: var(--accent-blue);
+  color: var(--accent-cyan);
+}
+.tool-btn[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--tooltip-bg);
+  border: 1px solid var(--border-light);
+  color: var(--tooltip-text);
+  font-size: 10px;
+  padding: 2px 8px;
+  white-space: nowrap;
+  z-index: 200;
+  font-family: 'Exo 2', sans-serif;
+  pointer-events: none;
+}
+
+.toolbar-sep {
+  width: 1px;
+  height: 24px;
+  background: var(--border);
+  margin: 0 6px;
+}
+
+.tool-label {
+  font-size: 10px;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 1px;
+  padding: 0 8px;
+}
+
+#mode-indicator {
+  margin-left: auto;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: var(--accent-green);
+  padding: 4px 12px;
+  border: 1px solid rgba(0, 230, 118, 0.3);
+  background: rgba(0, 230, 118, 0.05);
+}
+
+/* ===== MAIN LAYOUT ===== */
+#main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ===== DEVICE PANEL ===== */
+#device-panel {
+  width: 130px;
+  background: var(--bg-panel);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.panel-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 2px;
+  padding: 8px 10px 6px;
+  border-bottom: 1px solid var(--border);
+  text-transform: uppercase;
+}
+
+.device-category {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.category-label {
+  font-size: 9px;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 1px;
+  padding: 2px 10px 6px;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.device-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 8px;
+  cursor: grab;
+  transition: background 0.15s;
+  gap: 4px;
+}
+.device-item:hover {
+  background: var(--bg-hover);
+}
+.device-item:active { cursor: grabbing; }
+
+.device-item span {
+  font-size: 10px;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.5px;
+}
+
+.device-item:hover span { color: var(--text-primary); }
+
+.dev-icon-wrap {
+  width: 48px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===== CANVAS ===== */
+#canvas-container {
+  flex: 1;
+  position: relative;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(13,110,253,0.05) 0%, transparent 70%),
+    linear-gradient(0deg, transparent 24px, var(--grid-line) 24px),
+    linear-gradient(90deg, transparent 24px, var(--grid-line) 24px);
+  background-size: auto, 25px 25px, 25px 25px;
+  background-color: var(--bg-deep);
+  overflow: hidden;
+  cursor: default;
+}
+
+#canvas-container.cable-mode { cursor: crosshair; }
+#canvas-container.delete-mode { cursor: cell; }
+
+#connections-svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.connection-line {
+  stroke: #3a5080;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 3px rgba(0,200,255,0.15));
+  transition: stroke 0.2s;
+  cursor: pointer;
+  pointer-events: all;
+}
+.connection-line:hover { stroke: var(--accent-red); }
+.connection-line.active-flow {
+  stroke: var(--accent-cyan);
+  animation: dataflow 0.8s linear infinite;
+}
+
+@keyframes dataflow {
+  0% { stroke-dashoffset: 20; }
+  100% { stroke-dashoffset: 0; }
+}
+
+#canvas-devices {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 2;
+}
+
+/* ===== DEVICE NODE ===== */
+.device-node {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: move;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  transition: filter 0.15s;
+}
+
+.device-node:hover { filter: brightness(1.2); }
+.device-node.selected .device-body { box-shadow: 0 0 0 2px var(--accent-cyan), 0 0 12px rgba(0,200,255,0.4); }
+.device-node.cable-target .device-body { box-shadow: 0 0 0 2px var(--accent-green), 0 0 12px rgba(0,230,118,0.4); cursor: pointer; }
+
+.device-body {
+  width: 56px;
+  height: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: box-shadow 0.2s;
+  position: relative;
+}
+
+.device-status {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-green);
+  box-shadow: 0 0 4px var(--accent-green);
+}
+.device-status.off { background: #444; box-shadow: none; }
+
+.device-name {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--text-primary);
+  text-align: center;
+  max-width: 80px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: rgba(10,12,20,0.85);
+  padding: 1px 4px;
+  border: 1px solid var(--border-light);
+}
+
+.device-ip {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  color: var(--accent-cyan);
+  opacity: 0.8;
+  text-align: center;
+}
+
+/* ===== RIGHT PANEL ===== */
+#right-panel {
+  width: 240px;
+  background: var(--bg-panel);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+#properties-panel {
+  flex: 0 0 auto;
+  border-bottom: 1px solid var(--border);
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.prop-section {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.prop-label {
+  font-size: 9px;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.prop-value {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: var(--text-primary);
+}
+
+.prop-value.ip { color: var(--accent-cyan); }
+.prop-value.ok { color: var(--accent-green); }
+.prop-value.warn { color: var(--accent-orange); }
+
+.no-sel {
+  padding: 20px 12px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-align: center;
+  font-family: 'Share Tech Mono', monospace;
+  line-height: 1.6;
+}
+
+.config-btn {
+  margin: 8px 10px;
+  width: calc(100% - 20px);
+  padding: 6px;
+  background: rgba(13,110,253,0.15);
+  border: 1px solid var(--accent-blue);
+  color: var(--accent-cyan);
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.15s;
+}
+.config-btn:hover { background: rgba(13,110,253,0.3); }
+
+/* ===== LESSON PANEL ===== */
+#lesson-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#lesson-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+.lesson-number {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent-blue);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.lesson-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+  line-height: 1.2;
+}
+
+.lesson-desc {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+
+.task-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.task-item {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.task-check {
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+  border: 1px solid var(--border-light);
+  background: var(--bg-secondary);
+  flex-shrink: 0;
+  margin-top: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  transition: all 0.2s;
+}
+.task-check.done {
+  background: var(--accent-green);
+  border-color: var(--accent-green);
+  color: #000;
+}
+
+.hint-box {
+  background: rgba(255, 145, 0, 0.08);
+  border: 1px solid rgba(255, 145, 0, 0.3);
+  border-left: 3px solid var(--accent-orange);
+  padding: 8px 10px;
+  font-size: 10px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-top: 8px;
+}
+.hint-box strong { color: var(--accent-orange); }
+
+.lesson-actions {
+  padding: 8px 10px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.btn-check {
+  padding: 8px;
+  background: rgba(0, 230, 118, 0.1);
+  border: 1px solid var(--accent-green);
+  color: var(--accent-green);
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.15s;
+}
+.btn-check:hover { background: rgba(0, 230, 118, 0.2); }
+
+.btn-hint {
+  padding: 6px;
+  background: transparent;
+  border: 1px solid rgba(255,145,0,0.4);
+  color: var(--accent-orange);
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.15s;
+}
+.btn-hint:hover { background: rgba(255,145,0,0.1); }
+
+.btn-next {
+  padding: 8px;
+  background: rgba(13, 110, 253, 0.15);
+  border: 1px solid var(--accent-blue);
+  color: var(--accent-cyan);
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.15s;
+  display: none;
+}
+.btn-next:hover { background: rgba(13, 110, 253, 0.3); }
+.btn-next.visible { display: block; }
+
+/* ===== BOTTOM CONSOLE ===== */
+#console-panel {
+  height: 160px;
+  background: var(--terminal-bg);
+  border-top: 2px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+#console-header {
+  display: flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-bottom: 1px solid #222840;
+  background: rgba(0,0,0,0.3);
+}
+
+.console-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--con-muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  flex: 1;
+}
+
+.console-clear {
+  background: none;
+  border: 1px solid #2a3050;
+  color: var(--con-muted);
+  font-size: 10px;
+  padding: 2px 8px;
+  cursor: pointer;
+  font-family: 'Share Tech Mono', monospace;
+}
+.console-clear:hover { color: var(--con-text); }
+
+#console-output {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 14px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.con-line { display: flex; gap: 8px; }
+.con-line.cmd { color: var(--con-text); }
+.con-line.ok { color: var(--con-green); }
+.con-line.err { color: var(--con-red); }
+.con-line.info { color: var(--con-cyan); }
+.con-line.warn { color: var(--con-orange); }
+.con-line.sys { color: var(--con-muted); font-style: italic; }
+
+#console-input-row {
+  display: flex;
+  align-items: center;
+  padding: 4px 14px 6px;
+  gap: 8px;
+  border-top: 1px solid #222840;
+  background: rgba(0,0,0,0.2);
+}
+
+.prompt {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  color: var(--con-green);
+}
+
+#console-input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: var(--con-green);
+  caret-color: var(--con-green);
+}
+
+#console-input::placeholder { color: var(--text-secondary); }
+
+/* ===== MODAL ===== */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.15s ease;
+}
+.modal-overlay.hidden { display: none; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal-box {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(0,200,255,0.1);
+  width: 480px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.2s ease;
+}
+
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-primary);
+}
+
+.modal-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent-cyan);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  flex: 1;
+}
+
+.modal-device-type {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--text-secondary);
+  padding: 2px 8px;
+  border: 1px solid var(--border-light);
+  margin-right: 10px;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 18px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 2px 6px;
+}
+.modal-close:hover { color: var(--accent-red); }
+
+.modal-body { padding: 16px; overflow-y: auto; }
+
+.modal-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 14px;
+  gap: 2px;
+}
+
+.modal-tab {
+  padding: 6px 14px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-bottom: none;
+  background: transparent;
+  text-transform: uppercase;
+  transition: all 0.15s;
+}
+.modal-tab:hover { color: var(--text-primary); }
+.modal-tab.active {
+  color: var(--accent-cyan);
+  border-color: var(--border-light);
+  border-bottom-color: var(--bg-secondary);
+  background: var(--bg-secondary);
+}
+
+.form-group {
+  margin-bottom: 12px;
+}
+
+.form-label {
+  display: block;
+  font-size: 10px;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 6px 10px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-light);
+  color: var(--text-primary);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.form-input:focus { border-color: var(--accent-blue); }
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.iface-block {
+  border: 1px solid var(--border);
+  padding: 10px;
+  margin-bottom: 10px;
+  background: var(--bg-panel);
+}
+
+.iface-name {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: var(--accent-orange);
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.btn-save {
+  padding: 7px 20px;
+  background: rgba(13, 110, 253, 0.2);
+  border: 1px solid var(--accent-blue);
+  color: var(--accent-cyan);
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.15s;
+}
+.btn-save:hover { background: rgba(13, 110, 253, 0.4); }
+
+.btn-cancel {
+  padding: 7px 16px;
+  background: transparent;
+  border: 1px solid var(--border-light);
+  color: var(--text-secondary);
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+.btn-cancel:hover { color: var(--text-primary); border-color: var(--text-secondary); }
+
+/* ===== SUCCESS MODAL ===== */
+#success-modal .modal-box {
+  width: 380px;
+  text-align: center;
+}
+
+.success-icon {
+  font-size: 48px;
+  margin: 20px 0 10px;
+}
+
+.success-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent-green);
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+}
+
+.success-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  padding: 0 20px 16px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-deep); }
+::-webkit-scrollbar-thumb { background: var(--border-light); }
+::-webkit-scrollbar-thumb:hover { background: #3a4060; }
+
+/* Cable preview line */
+#cable-preview {
+  position: absolute;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Ping animation */
+.ping-packet {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--accent-cyan);
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--accent-cyan);
+  pointer-events: none;
+  z-index: 20;
+  animation: pingMove 0.5s linear forwards;
+}
+
+@keyframes pingMove {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.3); }
+}
+
+/* Lesson nav */
+#lesson-nav {
+  display: flex;
+  padding: 6px 8px;
+  gap: 3px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-panel);
+  flex-wrap: wrap;
+}
+
+.lesson-nav-btn {
+  flex: 1;
+  min-width: 30px;
+  padding: 4px 2px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s;
+}
+.lesson-nav-btn:hover:not(:disabled) { background: var(--bg-hover); color: var(--text-primary); }
+.lesson-nav-btn.active { border-color: var(--accent-cyan); color: var(--accent-cyan); background: rgba(0,200,255,0.08); }
+.lesson-nav-btn.done { border-color: var(--accent-green); color: var(--accent-green); background: rgba(0,230,118,0.05); }
+.lesson-nav-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* Info tooltip */
+.info-tag {
+  display: inline-block;
+  font-size: 9px;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  padding: 1px 5px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.info-tag.tip { background: rgba(255,145,0,0.15); color: var(--accent-orange); border: 1px solid rgba(255,145,0,0.3); }
+.info-tag.new { background: rgba(0,200,255,0.1); color: var(--accent-cyan); border: 1px solid rgba(0,200,255,0.3); }
+/* ═══════════════════════════════════════════════ FIX: RIGHT PANEL VISIBLE OVER MODALS ═══════════════════════════════════════════════ */
+
+/* Правая панель всегда поверх модальных окон */
+#right-panel {
+  position: relative;
+  z-index: 1001 !important;
+}
+
+/* Оверлей не должен закрывать правую панель */
+.modal-overlay {
+  right: 241px !important; /* ширина правой панели (240px) + 1px рамка */
+  left: 0 !important;
+  width: auto !important;
+}
+
+/* Модальное окно центрируется в доступной области */
+.modal-box {
+  max-width: 90% !important;
+}
+
+/* Адаптация для маленьких экранов */
+@media (max-width: 1200px) {
+  .modal-overlay {
+    right: 0 !important;
+  }
+  #right-panel {
+    z-index: 1000 !important;
+  }
+}
+</style>
+</head>
+<body class="day">
+
+<!-- HEADER -->
+<div id="header">
+  <div class="logo">
+    <div class="logo-hex">N</div>
+    NetSim Pro
+  </div>
+  <button class="menu-btn">Файл</button>
+  <button class="menu-btn">Топология</button>
+  <button class="menu-btn">Симуляция</button>
+  <button class="menu-btn">Справка</button>
+  <div class="header-right">
+    <button id="theme-toggle" onclick="toggleTheme()" title="Переключить день/ночь">
+      <span id="theme-icon">☀</span><span id="theme-label">День</span>
+    </button>
+    <div class="lesson-badge">
+      УРОК <span id="hdr-lesson">1</span> / 6
+      <div class="lesson-dots" id="lesson-dots"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TOOLBAR -->
+<div id="toolbar">
+  <span class="tool-label">ИНСТРУМЕНТЫ:</span>
+  <button class="tool-btn active" id="tool-select" title="Выбор устройств" onclick="setTool('select')">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+      <path d="M3 1l9 7-5 1.5L5 14z"/>
+    </svg>
+  </button>
+  <button class="tool-btn" id="tool-cable" title="Соединить кабелем" onclick="setTool('cable')">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M2 8 Q8 2 14 8M2 8 Q8 14 14 8" stroke-dasharray="3 2"/>
+      <circle cx="2" cy="8" r="2" fill="currentColor"/>
+      <circle cx="14" cy="8" r="2" fill="currentColor"/>
+    </svg>
+  </button>
+  <button class="tool-btn" id="tool-delete" title="Удалить элемент" onclick="setTool('delete')">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+      <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+  </button>
+  <div class="toolbar-sep"></div>
+  <button class="tool-btn" title="Очистить холст" onclick="clearCanvas()">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+      <rect x="2" y="2" width="12" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <path d="M5 5l6 6M11 5l-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+  </button>
+  <div class="toolbar-sep"></div>
+  <span class="tool-label">УСТРОЙСТВО:</span>
+  <button class="tool-btn" id="btn-config" title="Настроить устройство" onclick="openConfigSelected()">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+      <circle cx="8" cy="8" r="2.5"/>
+      <path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.42 1.42M11.53 11.53l1.42 1.42M3.05 12.95l1.42-1.42M11.53 4.47l1.42-1.42" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+  </button>
+  <div id="mode-indicator">● РЕЖИМ РЕАЛЬНОГО ВРЕМЕНИ</div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <!-- DEVICE PANEL -->
+  <div id="device-panel">
+    <div class="panel-title">Устройства</div>
+    <div class="device-category">
+      <div class="category-label">Конечные</div>
+      <div class="device-item" draggable="true" data-type="pc" onmousedown="startDeviceDrag(event,'pc')">
+        <div class="dev-icon-wrap">
+          <svg width="44" height="36" viewBox="0 0 44 36">
+            <rect x="4" y="2" width="36" height="24" rx="2" fill="#1a4a1a" stroke="#2e7d32" stroke-width="1.5"/>
+            <rect x="6" y="4" width="32" height="20" fill="#0a1a0a"/>
+            <text x="22" y="17" text-anchor="middle" fill="#2e7d32" font-size="10" font-family="monospace">&gt;_</text>
+            <rect x="16" y="27" width="12" height="3" fill="#2e7d32"/>
+            <rect x="10" y="30" width="24" height="3" rx="1" fill="#1e3a1e" stroke="#2e7d32" stroke-width="1"/>
+          </svg>
+        </div>
+        <span>ПК</span>
+      </div>
+      <div class="device-item" draggable="true" data-type="server" onmousedown="startDeviceDrag(event,'server')">
+        <div class="dev-icon-wrap">
+          <svg width="44" height="36" viewBox="0 0 44 36">
+            <rect x="8" y="2" width="28" height="32" rx="2" fill="#1a0a2e" stroke="#7b1fa2" stroke-width="1.5"/>
+            <rect x="10" y="5" width="24" height="5" rx="1" fill="#0d0520" stroke="#7b1fa2" stroke-width="0.5"/>
+            <rect x="10" y="12" width="24" height="5" rx="1" fill="#0d0520" stroke="#7b1fa2" stroke-width="0.5"/>
+            <rect x="10" y="19" width="24" height="5" rx="1" fill="#0d0520" stroke="#7b1fa2" stroke-width="0.5"/>
+            <circle cx="30" cy="7.5" r="1.5" fill="#00e676"/>
+            <circle cx="30" cy="14.5" r="1.5" fill="#00e676"/>
+            <circle cx="30" cy="21.5" r="1.5" fill="#ffd600"/>
+          </svg>
+        </div>
+        <span>Сервер</span>
+      </div>
+    </div>
+    <div class="device-category">
+      <div class="category-label">Сетевые</div>
+      <div class="device-item" draggable="true" data-type="switch" onmousedown="startDeviceDrag(event,'switch')">
+        <div class="dev-icon-wrap">
+          <svg width="44" height="30" viewBox="0 0 44 30">
+            <rect x="2" y="8" width="40" height="14" rx="2" fill="#0a1a3a" stroke="#1565c0" stroke-width="1.5"/>
+            <rect x="6" y="11" width="32" height="8" rx="1" fill="#061020"/>
+            <line x1="11" y1="10" x2="11" y2="22" stroke="#1565c0" stroke-width="0.5"/>
+            <line x1="19" y1="10" x2="19" y2="22" stroke="#1565c0" stroke-width="0.5"/>
+            <line x1="27" y1="10" x2="27" y2="22" stroke="#1565c0" stroke-width="0.5"/>
+            <line x1="35" y1="10" x2="35" y2="22" stroke="#1565c0" stroke-width="0.5"/>
+            <circle cx="10" cy="6" r="2" fill="#00c8ff" opacity="0.8"/>
+            <circle cx="17" cy="6" r="2" fill="#00e676" opacity="0.8"/>
+            <circle cx="24" cy="6" r="2" fill="#00e676" opacity="0.8"/>
+            <circle cx="31" cy="6" r="2" fill="#2196f3" opacity="0.8"/>
+            <path d="M10 15 L14 11 L18 15 L22 11 L26 15 L30 11 L34 15" stroke="#1565c0" fill="none" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <span>Коммутатор</span>
+      </div>
+      <div class="device-item" draggable="true" data-type="router" onmousedown="startDeviceDrag(event,'router')">
+        <div class="dev-icon-wrap">
+          <svg width="44" height="36" viewBox="0 0 44 36">
+            <circle cx="22" cy="18" r="14" fill="#1e0e00" stroke="#e65100" stroke-width="1.5"/>
+            <circle cx="22" cy="18" r="9" fill="#120900" stroke="#e65100" stroke-width="0.8" stroke-dasharray="3 2"/>
+            <line x1="22" y1="4" x2="22" y2="32" stroke="#e65100" stroke-width="1" opacity="0.5"/>
+            <line x1="8" y1="18" x2="36" y2="18" stroke="#e65100" stroke-width="1" opacity="0.5"/>
+            <circle cx="22" cy="18" r="3" fill="#e65100"/>
+            <path d="M16 14 L22 10 L28 14" stroke="#ff9100" fill="none" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M14 22 L22 26 L30 22" stroke="#ff9100" fill="none" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <span>Маршрутизатор</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CANVAS -->
+  <div id="canvas-container"
+    ondragover="event.preventDefault()"
+    ondrop="dropDevice(event)"
+    onmousemove="onCanvasMouseMove(event)"
+    onmouseup="onCanvasMouseUp(event)"
+    onclick="onCanvasClick(event)">
+    <svg id="connections-svg">
+      <defs>
+        <marker id="arrow" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#3a5080"/>
+        </marker>
+      </defs>
+    </svg>
+    <div id="canvas-devices"></div>
+    <svg id="cable-preview-svg" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:5;">
+      <line id="cable-preview-line" x1="0" y1="0" x2="0" y2="0" stroke="rgba(0,200,255,0.5)" stroke-width="2" stroke-dasharray="8 4" style="display:none"/>
+    </svg>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div id="right-panel">
+    <div id="properties-panel">
+      <div class="panel-title">Свойства</div>
+      <div id="properties-content">
+        <div class="no-sel">
+          Выберите устройство<br>для просмотра<br>свойств
+        </div>
+      </div>
+    </div>
+    <div id="lesson-panel">
+      <div class="panel-title">Задание</div>
+      <div id="lesson-nav"></div>
+      <div id="lesson-scroll"></div>
+      <div class="lesson-actions">
+        <button class="btn-check" onclick="checkLesson()">✓ Проверить задание</button>
+        <button class="btn-hint" onclick="showHint()">? Подсказка</button>
+        <button class="btn-next hidden" id="btn-next" onclick="nextLesson()">→ Следующий урок</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONSOLE -->
+<div id="console-panel">
+  <div id="console-header">
+    <span class="console-title">■ Консоль / Терминал</span>
+    <span style="font-size:10px;color:var(--text-secondary);font-family:monospace;margin-right:10px;">Введите: ping [IP] | ipconfig | help | clear</span>
+    <button class="console-clear" onclick="clearConsole()">Очистить</button>
+  </div>
+  <div id="console-output"></div>
+  <div id="console-input-row">
+    <span class="prompt" id="console-prompt">PC0></span>
+    <input id="console-input" type="text" placeholder="Введите команду..." autocomplete="off" spellcheck="false" onkeydown="onConsoleKey(event)">
+  </div>
+</div>
+
+<!-- CONFIG MODAL -->
+<div class="modal-overlay hidden" id="config-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-device-type" id="modal-device-type">PC</span>
+      <span class="modal-title" id="modal-title">Конфигурация устройства</span>
+      <button class="modal-close" onclick="closeModal('config-modal')">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('config-modal')">Отмена</button>
+      <button class="btn-save" onclick="saveConfig()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- SUCCESS MODAL -->
+<div class="modal-overlay hidden" id="success-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title">Урок завершён!</span>
+      <button class="modal-close" onclick="closeModal('success-modal')">✕</button>
+    </div>
+    <div class="modal-body" style="text-align:center">
+      <div class="success-icon">🎉</div>
+      <div class="success-title" id="success-title">ОТЛИЧНО!</div>
+      <div class="success-desc" id="success-desc">Задание выполнено успешно</div>
+    </div>
+    <div class="modal-footer" style="justify-content:center">
+      <button class="btn-save" onclick="closeModal('success-modal'); nextLesson()">Следующий урок →</button>
+      <button class="btn-cancel" onclick="closeModal('success-modal')">Остаться</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// =============================================
+// STATE
+// =============================================
+let state = {
+  devices: [],
+  connections: [],
+  nextId: 1,
+  tool: 'select',
+  cableFrom: null,
+  selected: null,
+  dragging: null,
+  dragOffset: {x:0, y:0},
+  currentLesson: 1,
+  unlockedLessons: [1],
+  completedLessons: [],
+  configDevice: null,
+  showHintFlag: false,
+  consoleDevice: null,
+  cmdHistory: [],
+  cmdHistIdx: -1,
+};
+
+// =============================================
+// LESSONS DATA
+// =============================================
+const LESSONS = [
+  {
+    id: 1,
+    title: 'Топология сети',
+    subtitle: 'Знакомство с симулятором',
+    desc: 'Добро пожаловать в NetSim! В этом уроке вы научитесь добавлять устройства на холст и соединять их кабелями — основа любой компьютерной сети.',
+    tasks: [
+      'Добавьте 2 компьютера (ПК) на холст',
+      'Добавьте 1 коммутатор (Switch) на холст',
+      'Соедините оба ПК с коммутатором кабелями',
+    ],
+    hint: 'Перетащите устройства из левой панели на холст. Затем выберите инструмент "Соединить кабелем" на панели инструментов (иконка кабеля) и кликните сначала на ПК, потом на коммутатор.',
+    check(s) {
+      const pcs = s.devices.filter(d => d.type === 'pc');
+      const sw = s.devices.filter(d => d.type === 'switch');
+      if (pcs.length < 2) return { ok: false, msg: 'Нужно добавить минимум 2 ПК' };
+      if (sw.length < 1) return { ok: false, msg: 'Нужно добавить коммутатор' };
+      for (const pc of pcs) {
+        const connected = s.connections.some(c =>
+          (c.from === pc.id && sw.some(sw2 => sw2.id === c.to)) ||
+          (c.to === pc.id && sw.some(sw2 => sw2.id === c.from))
+        );
+        if (!connected) return { ok: false, msg: `${pc.name} не подключён к коммутатору` };
+      }
+      return { ok: true, msg: 'Топология создана! Все устройства соединены.' };
+    },
+    successMsg: 'Вы создали базовую топологию типа "Звезда"! Это основа большинства современных офисных сетей. В следующем уроке вы настроите IP-адреса.',
+  },
+  {
+    id: 2,
+    title: 'IP-адресация',
+    subtitle: 'Настройка сети и проверка связи',
+    desc: 'Каждое устройство в сети должно иметь уникальный IP-адрес. Без него компьютеры не могут общаться друг с другом даже при наличии физического соединения.',
+    tasks: [
+      'Назначьте IP-адреса обоим ПК (192.168.1.x / 255.255.255.0)',
+      'Убедитесь, что адреса в одной подсети',
+      'Выполните команду ping между ПК в консоли',
+    ],
+    hint: 'Дважды кликните на ПК для открытия настроек. Назначьте первому ПК IP: 192.168.1.1, маска: 255.255.255.0. Второму: 192.168.1.2, та же маска. В консоли введите: ping 192.168.1.2',
+    check(s) {
+      const pcs = s.devices.filter(d => d.type === 'pc');
+      if (pcs.length < 2) return { ok: false, msg: 'Нужно как минимум 2 ПК' };
+      const configured = pcs.filter(pc => pc.ip && pc.mask);
+      if (configured.length < 2) return { ok: false, msg: 'Настройте IP-адреса на обоих ПК' };
+      const sameSubnet = configured.every(pc => pc.ip.startsWith('192.168.1.'));
+      if (!sameSubnet) return { ok: false, msg: 'Убедитесь, что все ПК в одной подсети (192.168.1.x)' };
+      const ips = configured.map(pc => pc.ip);
+      const unique = new Set(ips).size === ips.length;
+      if (!unique) return { ok: false, msg: 'У каждого ПК должен быть уникальный IP-адрес' };
+      return { ok: true, msg: 'IP-адреса настроены корректно! Связь установлена.' };
+    },
+    successMsg: 'IP-адресация настроена правильно! Компьютеры теперь могут обмениваться данными в пределах одной подсети.',
+  },
+  {
+    id: 3,
+    title: 'Маршрутизатор',
+    subtitle: 'Связь между двумя подсетями',
+    desc: 'Для соединения разных сетей используется маршрутизатор. Он принимает пакеты из одной сети и перенаправляет их в другую.',
+    tasks: [
+      'Добавьте маршрутизатор на холст',
+      'Подключите коммутатор 1-й сети к маршрутизатору',
+      'Добавьте 2-й ПК и коммутатор для сети 192.168.2.x',
+      'Настройте интерфейсы маршрутизатора (gi0/0 и gi0/1)',
+      'Укажите шлюзы на всех ПК',
+    ],
+    hint: 'На маршрутизаторе настройте: интерфейс gi0/0 → 192.168.1.254 / 255.255.255.0 (для сети 1), gi0/1 → 192.168.2.254 / 255.255.255.0 (для сети 2). На ПК сети 1 шлюз = 192.168.1.254. На ПК сети 2 шлюз = 192.168.2.254.',
+    check(s) {
+      const routers = s.devices.filter(d => d.type === 'router');
+      if (routers.length < 1) return { ok: false, msg: 'Добавьте маршрутизатор' };
+      const r = routers[0];
+      const hasIfaces = r.interfaces && r.interfaces.filter(i => i.ip).length >= 2;
+      if (!hasIfaces) return { ok: false, msg: 'Настройте минимум 2 интерфейса маршрутизатора' };
+      const pcs = s.devices.filter(d => d.type === 'pc' && d.ip);
+      if (pcs.length < 2) return { ok: false, msg: 'Добавьте ПК в обе сети и настройте их IP' };
+      const hasGateways = pcs.filter(pc => pc.gateway).length >= 2;
+      if (!hasGateways) return { ok: false, msg: 'Укажите шлюзы на всех ПК' };
+      return { ok: true, msg: 'Маршрутизатор настроен! Сети 1 и 2 связаны через маршрутизатор.' };
+    },
+    successMsg: 'Отлично! Маршрутизатор связал две разные подсети. Теперь данные могут передаваться между 192.168.1.x и 192.168.2.x.',
+  },
+  {
+    id: 4,
+    title: 'Статическая маршрутизация',
+    subtitle: 'Таблица маршрутов',
+    desc: 'При наличии нескольких маршрутизаторов необходимо настроить статические маршруты — явно указать маршрутизатору, куда отправлять пакеты для каждой сети.',
+    tasks: [
+      'Добавьте второй маршрутизатор',
+      'Соедините маршрутизаторы между собой',
+      'Добавьте 3-ю сеть (192.168.3.x)',
+      'Настройте статические маршруты на маршрутизаторах',
+      'Проверьте связь ping между разными сетями',
+    ],
+    hint: 'В настройках маршрутизатора найдите раздел "Статические маршруты". Добавьте маршрут: сеть назначения, маска, следующий узел (Next Hop). Пример: маршрутизатор R1 должен знать как добраться до 192.168.3.0 через интерфейс R2.',
+    check(s) {
+      const routers = s.devices.filter(d => d.type === 'router');
+      if (routers.length < 2) return { ok: false, msg: 'Добавьте минимум 2 маршрутизатора' };
+      const withRoutes = routers.filter(r => r.routes && r.routes.length > 0);
+      if (withRoutes.length < 1) return { ok: false, msg: 'Настройте статические маршруты хотя бы на одном маршрутизаторе' };
+      const pcs = s.devices.filter(d => d.type === 'pc' && d.ip);
+      const subnets = new Set(pcs.map(pc => pc.ip.split('.').slice(0,3).join('.')));
+      if (subnets.size < 3) return { ok: false, msg: 'Создайте ПК в трёх разных подсетях' };
+      return { ok: true, msg: 'Статические маршруты настроены! Все три сети связаны.' };
+    },
+    successMsg: 'Вы освоили статическую маршрутизацию! В реальных сетях используют также динамические протоколы (OSPF, RIP), которые автоматизируют этот процесс.',
+  },
+  {
+    id: 5,
+    title: 'DHCP-сервер',
+    subtitle: 'Автоматическое назначение IP',
+    desc: 'DHCP-сервер автоматически раздаёт IP-адреса клиентам, избавляя от ручной настройки. Это стандарт в современных сетях — домашние роутеры тоже работают по DHCP.',
+    tasks: [
+      'Добавьте сервер на холст',
+      'Подключите сервер к коммутатору',
+      'Назначьте серверу статический IP (192.168.1.100)',
+      'Настройте DHCP-пул на сервере',
+      'Переведите ПК на получение IP по DHCP',
+    ],
+    hint: 'Дважды кликните на Сервер → вкладка DHCP. Укажите: начальный IP пула (192.168.1.10), конечный IP (192.168.1.50), маска (255.255.255.0), шлюз (192.168.1.254). На ПК в настройках выберите "Получить IP автоматически (DHCP)".',
+    check(s) {
+      const servers = s.devices.filter(d => d.type === 'server');
+      if (servers.length < 1) return { ok: false, msg: 'Добавьте сервер' };
+      const dhcpServer = servers.find(srv => srv.dhcp && srv.dhcp.enabled);
+      if (!dhcpServer) return { ok: false, msg: 'Настройте DHCP-пул на сервере' };
+      const dhcpClients = s.devices.filter(d => d.type === 'pc' && d.useDhcp);
+      if (dhcpClients.length < 1) return { ok: false, msg: 'Переведите хотя бы один ПК на режим DHCP' };
+      return { ok: true, msg: 'DHCP настроен! Клиенты автоматически получают IP-адреса.' };
+    },
+    successMsg: 'DHCP работает! Теперь новые устройства в сети автоматически получают IP без ручной настройки.',
+  },
+  {
+    id: 6,
+    title: 'Корпоративная сеть',
+    subtitle: 'Финальное задание',
+    desc: 'Примените все полученные знания! Постройте полноценную корпоративную сеть с несколькими отделами, каждый в своей подсети, объединённых маршрутизаторами.',
+    tasks: [
+      'Создайте 3 сегмента сети (3 коммутатора)',
+      'Добавьте по 2 ПК в каждый сегмент',
+      'Установите 2 маршрутизатора',
+      'Добавьте DNS/DHCP сервер',
+      'Настройте маршрутизацию между всеми сегментами',
+      'Проверьте связность командой ping',
+    ],
+    hint: 'Спланируйте сеть: Отдел А — 192.168.10.x, Отдел Б — 192.168.20.x, Серверная — 192.168.100.x. Каждый сегмент подключается к своему порту маршрутизатора. Для 3-й сети добавьте второй маршрутизатор и настройте статические маршруты.',
+    check(s) {
+      const pcs = s.devices.filter(d => d.type === 'pc');
+      const switches = s.devices.filter(d => d.type === 'switch');
+      const routers = s.devices.filter(d => d.type === 'router');
+      const servers = s.devices.filter(d => d.type === 'server');
+      if (pcs.length < 4) return { ok: false, msg: 'Добавьте минимум 4 ПК' };
+      if (switches.length < 2) return { ok: false, msg: 'Нужно минимум 2 коммутатора' };
+      if (routers.length < 2) return { ok: false, msg: 'Установите 2 маршрутизатора' };
+      if (servers.length < 1) return { ok: false, msg: 'Добавьте сервер' };
+      const configuredPcs = pcs.filter(p => p.ip);
+      if (configuredPcs.length < 4) return { ok: false, msg: 'Настройте IP на всех ПК (проверьте, что DHCP-клиенты реально получили адрес)' };
+      const routerWithIfaces = routers.find(r => r.interfaces && r.interfaces.filter(i => i.ip).length >= 2);
+      if (!routerWithIfaces) return { ok: false, msg: 'Настройте маршрутизатор (минимум 2 интерфейса)' };
+      return { ok: true, msg: 'Корпоративная сеть построена! Все сегменты связаны.' };
+    },
+    successMsg: '🏆 Поздравляем! Вы прошли все 6 уроков и построили полноценную корпоративную сеть. Вы освоили базовые принципы компьютерных сетей!',
+  },
+];
+
+// =============================================
+// SVG ICONS FOR DEVICE NODES
+// =============================================
+function getDeviceSVG(type, size=48) {
+  const s = size;
+  const svgs = {
+    pc: `<svg width="${s}" height="${s}" viewBox="0 0 48 48">
+      <rect x="4" y="4" width="40" height="28" rx="3" fill="#0d200d" stroke="#2e7d32" stroke-width="1.5"/>
+      <rect x="6" y="6" width="36" height="24" fill="#061406"/>
+      <text x="24" y="21" text-anchor="middle" fill="#2e7d32" font-size="11" font-family="monospace">&gt;_</text>
+      <rect x="18" y="33" width="12" height="4" fill="#1e3a1e"/>
+      <rect x="12" y="37" width="24" height="4" rx="1" fill="#0d200d" stroke="#2e7d32" stroke-width="1"/>
+      <circle cx="38" cy="8" r="2" fill="#00e676"/>
+    </svg>`,
+    server: `<svg width="${s}" height="${s*0.9}" viewBox="0 0 48 44">
+      <rect x="6" y="2" width="36" height="40" rx="3" fill="#110820" stroke="#7b1fa2" stroke-width="1.5"/>
+      <rect x="9" y="6" width="30" height="8" rx="1" fill="#080414" stroke="#7b1fa2" stroke-width="0.8"/>
+      <rect x="9" y="17" width="30" height="8" rx="1" fill="#080414" stroke="#7b1fa2" stroke-width="0.8"/>
+      <rect x="9" y="28" width="30" height="8" rx="1" fill="#080414" stroke="#7b1fa2" stroke-width="0.8"/>
+      <circle cx="35" cy="10" r="2" fill="#00e676"/>
+      <circle cx="35" cy="21" r="2" fill="#00e676"/>
+      <circle cx="35" cy="32" r="2" fill="#ffd600"/>
+      <rect x="11" y="8" width="16" height="4" rx="0.5" fill="#1a0836"/>
+    </svg>`,
+    switch: `<svg width="${s+12}" height="${s*0.7}" viewBox="0 0 60 34">
+      <rect x="2" y="8" width="56" height="18" rx="3" fill="#051020" stroke="#1565c0" stroke-width="1.5"/>
+      <rect x="5" y="11" width="50" height="12" rx="1" fill="#030a18"/>
+      <line x1="15" y1="10" x2="15" y2="26" stroke="#1565c0" stroke-width="0.5" opacity="0.7"/>
+      <line x1="25" y1="10" x2="25" y2="26" stroke="#1565c0" stroke-width="0.5" opacity="0.7"/>
+      <line x1="35" y1="10" x2="35" y2="26" stroke="#1565c0" stroke-width="0.5" opacity="0.7"/>
+      <line x1="45" y1="10" x2="45" y2="26" stroke="#1565c0" stroke-width="0.5" opacity="0.7"/>
+      <path d="M8 18 L12 14 L18 18 L22 14 L28 18 L32 14 L38 18 L42 14 L48 18 L52 14" stroke="#1565c0" fill="none" stroke-width="1.5"/>
+      <circle cx="8" cy="5" r="2.5" fill="#00c8ff" opacity="0.9"/>
+      <circle cx="16" cy="5" r="2.5" fill="#00e676" opacity="0.9"/>
+      <circle cx="24" cy="5" r="2.5" fill="#00e676" opacity="0.9"/>
+      <circle cx="32" cy="5" r="2.5" fill="#00e676" opacity="0.9"/>
+      <circle cx="40" cy="5" r="2.5" fill="#2196f3" opacity="0.9"/>
+    </svg>`,
+    router: `<svg width="${s}" height="${s}" viewBox="0 0 48 48">
+      <circle cx="24" cy="24" r="20" fill="#1a0800" stroke="#e65100" stroke-width="1.8"/>
+      <circle cx="24" cy="24" r="13" fill="#100500" stroke="#e65100" stroke-width="0.8" stroke-dasharray="4 3"/>
+      <line x1="24" y1="4" x2="24" y2="44" stroke="#e65100" stroke-width="0.8" opacity="0.4"/>
+      <line x1="4" y1="24" x2="44" y2="24" stroke="#e65100" stroke-width="0.8" opacity="0.4"/>
+      <ellipse cx="24" cy="24" rx="13" ry="5" fill="none" stroke="#e65100" stroke-width="0.8" opacity="0.4"/>
+      <circle cx="24" cy="24" r="4" fill="#e65100"/>
+      <path d="M18 19 L24 14 L30 19" stroke="#ff9100" fill="none" stroke-width="2" stroke-linecap="round"/>
+      <path d="M18 29 L24 34 L30 29" stroke="#ff9100" fill="none" stroke-width="2" stroke-linecap="round"/>
+    </svg>`,
+  };
+  return svgs[type] || svgs.pc;
+}
+
+// =============================================
+// INIT
+// =============================================
+document.addEventListener('DOMContentLoaded', () => {
+  renderLessonNav();
+  renderLesson();
+  renderDots();
+  conLog('sys', '═══════════════════════════════════════');
+  conLog('sys', '  NetSim Pro — Симулятор Сетей v1.0');
+  conLog('sys', '  Добро пожаловать!');
+  conLog('sys', '═══════════════════════════════════════');
+  conLog('info', '> Введите "help" для списка команд');
+  conLog('info', '> Дважды кликните на устройство для настройки');
+});
+
+// =============================================
+// TOOLS
+// =============================================
+// =============================================
+// ТЕМА: ДЕНЬ / НОЧЬ (по умолчанию — день)
+// =============================================
+function toggleTheme() {
+  const isDay = document.body.classList.toggle('day');
+  document.getElementById('theme-icon').textContent = isDay ? '☀' : '☾';
+  document.getElementById('theme-label').textContent = isDay ? 'День' : 'Ночь';
+}
+
+function setTool(tool) {
+  state.tool = tool;
+  state.cableFrom = null;
+  hideCablePreview();
+  document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tool-' + tool)?.classList.add('active');
+  const container = document.getElementById('canvas-container');
+  container.className = tool === 'cable' ? 'cable-mode' : tool === 'delete' ? 'delete-mode' : '';
+  document.querySelectorAll('.device-node').forEach(n => {
+    n.classList.toggle('cable-target', tool === 'cable');
+  });
+}
+
+// =============================================
+// DEVICE DRAG FROM PANEL
+// =============================================
+let dragDeviceType = null;
+let ghostEl = null;
+
+function startDeviceDrag(e, type) {
+  dragDeviceType = type;
+  ghostEl = document.createElement('div');
+  ghostEl.style.cssText = `position:fixed;pointer-events:none;z-index:9999;opacity:0.7;`;
+  ghostEl.innerHTML = getDeviceSVG(type, 40);
+  document.body.appendChild(ghostEl);
+  document.addEventListener('mousemove', onGhostMove);
+  document.addEventListener('mouseup', onGhostDrop);
+  e.preventDefault();
+}
+
+function onGhostMove(e) {
+  if (!ghostEl) return;
+  ghostEl.style.left = (e.clientX - 20) + 'px';
+  ghostEl.style.top = (e.clientY - 20) + 'px';
+}
+
+function onGhostDrop(e) {
+  document.removeEventListener('mousemove', onGhostMove);
+  document.removeEventListener('mouseup', onGhostDrop);
+  if (ghostEl) { ghostEl.remove(); ghostEl = null; }
+  if (!dragDeviceType) return;
+
+  const canvas = document.getElementById('canvas-container');
+  const rect = canvas.getBoundingClientRect();
+  if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) {
+    dragDeviceType = null; return;
+  }
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  addDevice(dragDeviceType, x, y);
+  dragDeviceType = null;
+}
+
+function dropDevice(e) {
+  // handled by ghost drop
+}
+
+// =============================================
+// DEVICE MANAGEMENT
+// =============================================
+function addDevice(type, x, y) {
+  const id = 'dev' + state.nextId++;
+  const typeNames = { pc: 'PC', switch: 'SW', router: 'R', server: 'SRV' };
+  const count = state.devices.filter(d => d.type === type).length;
+  const device = {
+    id, type,
+    name: typeNames[type] + count,
+    x, y,
+    ip: '',
+    mask: '',
+    gateway: '',
+    useDhcp: false,
+    interfaces: type === 'router' ? [
+      { name: 'gi0/0', ip: '', mask: '' },
+      { name: 'gi0/1', ip: '', mask: '' },
+      { name: 'gi0/2', ip: '', mask: '' },
+    ] : null,
+    routes: type === 'router' ? [] : null,
+    dhcp: type === 'server' ? { enabled: false, start: '', end: '', mask: '', gateway: '' } : null,
+    dns: type === 'server' ? { enabled: false, entries: [] } : null,
+  };
+  state.devices.push(device);
+  renderDevice(device);
+  updateConsolePrompt();
+  return device;
+}
+
+function renderDevice(device) {
+  const canvas = document.getElementById('canvas-devices');
+  const el = document.createElement('div');
+  el.className = 'device-node';
+  el.id = 'node-' + device.id;
+  el.style.left = device.x + 'px';
+  el.style.top = device.y + 'px';
+
+  const colors = { pc: '#2e7d32', switch: '#1565c0', router: '#e65100', server: '#7b1fa2' };
+  const col = colors[device.type];
+
+  el.innerHTML = `
+    <div class="device-body" style="background:rgba(${hexToRgb(col)},0.12);border:1px solid ${col}60;">
+      <div class="device-status"></div>
+      ${getDeviceSVG(device.type, 44)}
+    </div>
+    <div class="device-name">${device.name}</div>
+    <div class="device-ip" id="ip-${device.id}">${device.ip || ''}</div>
+  `;
+
+  el.addEventListener('mousedown', (e) => {
+    if (state.tool === 'select') {
+      state.dragging = device.id;
+      const rect = el.getBoundingClientRect();
+      state.dragOffset = { x: e.clientX - rect.left - rect.width/2, y: e.clientY - rect.top - rect.height/2 };
+      selectDevice(device.id);
+      e.stopPropagation();
+    } else if (state.tool === 'cable') {
+      handleCableClick(device.id);
+      e.stopPropagation();
+    } else if (state.tool === 'delete') {
+      deleteDevice(device.id);
+      e.stopPropagation();
+    }
+  });
+
+  el.addEventListener('dblclick', (e) => {
+    openConfig(device.id);
+    e.stopPropagation();
+  });
+
+  canvas.appendChild(el);
+}
+
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return `${r},${g},${b}`;
+}
+
+function updateDeviceEl(device) {
+  const el = document.getElementById('node-' + device.id);
+  if (!el) return;
+  el.style.left = device.x + 'px';
+  el.style.top = device.y + 'px';
+  const nameEl = el.querySelector('.device-name');
+  if (nameEl) nameEl.textContent = device.name;
+  const ipEl = document.getElementById('ip-' + device.id);
+  if (ipEl) ipEl.textContent = device.ip || (device.useDhcp ? '(DHCP)' : '');
+  updateConnections();
+}
+
+function deleteDevice(id) {
+  state.devices = state.devices.filter(d => d.id !== id);
+  state.connections = state.connections.filter(c => c.from !== id && c.to !== id);
+  document.getElementById('node-' + id)?.remove();
+  if (state.selected === id) { state.selected = null; renderProperties(); }
+  if (state.consoleDevice && state.consoleDevice.id === id) {
+    state.consoleDevice = null;
+    updateConsolePrompt();
+  }
+  renderConnections();
+}
+
+function selectDevice(id) {
+  document.querySelectorAll('.device-node').forEach(n => n.classList.remove('selected'));
+  state.selected = id;
+  if (id) {
+    document.getElementById('node-' + id)?.classList.add('selected');
+    const device = state.devices.find(d => d.id === id);
+    if (device) { renderProperties(device); state.consoleDevice = device; updateConsolePrompt(); }
+  }
+}
+
+// =============================================
+// CANVAS MOUSE EVENTS
+// =============================================
+function onCanvasMouseMove(e) {
+  const canvas = document.getElementById('canvas-container');
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  if (state.dragging) {
+    const device = state.devices.find(d => d.id === state.dragging);
+    if (device) {
+      device.x = x - state.dragOffset.x;
+      device.y = y - state.dragOffset.y;
+      updateDeviceEl(device);
+    }
+  }
+
+  if (state.tool === 'cable' && state.cableFrom) {
+    const src = state.devices.find(d => d.id === state.cableFrom);
+    if (src) {
+      const line = document.getElementById('cable-preview-line');
+      line.style.display = '';
+      line.setAttribute('x1', src.x); line.setAttribute('y1', src.y);
+      line.setAttribute('x2', x); line.setAttribute('y2', y);
+    }
+  }
+}
+
+function onCanvasMouseUp(e) {
+  state.dragging = null;
+}
+
+function onCanvasClick(e) {
+  if (e.target === document.getElementById('canvas-container') ||
+      e.target === document.getElementById('canvas-devices')) {
+    selectDevice(null);
+  }
+}
+
+function hideCablePreview() {
+  const line = document.getElementById('cable-preview-line');
+  if (line) { line.style.display = 'none'; line.setAttribute('x1',0); line.setAttribute('y1',0); line.setAttribute('x2',0); line.setAttribute('y2',0); }
+}
+
+// =============================================
+// CABLE (CONNECTION)
+// =============================================
+function handleCableClick(deviceId) {
+  if (!state.cableFrom) {
+    state.cableFrom = deviceId;
+    conLog('info', `Кабель: выберите второе устройство...`);
+    const node = document.getElementById('node-' + deviceId);
+    node?.classList.add('selected');
+  } else {
+    if (state.cableFrom === deviceId) { state.cableFrom = null; hideCablePreview(); return; }
+    // Check duplicate
+    const exists = state.connections.some(c =>
+      (c.from === state.cableFrom && c.to === deviceId) ||
+      (c.from === deviceId && c.to === state.cableFrom)
+    );
+    if (exists) {
+      conLog('warn', 'Эти устройства уже соединены!');
+    } else {
+      state.connections.push({ id: 'con' + state.nextId++, from: state.cableFrom, to: deviceId });
+      renderConnections();
+      const d1 = state.devices.find(d => d.id === state.cableFrom);
+      const d2 = state.devices.find(d => d.id === deviceId);
+      conLog('ok', `Кабель подключён: ${d1?.name} ↔ ${d2?.name}`);
+    }
+    document.querySelectorAll('.device-node').forEach(n => n.classList.remove('selected'));
+    state.cableFrom = null;
+    hideCablePreview();
+  }
+}
+
+function renderConnections() {
+  const svg = document.getElementById('connections-svg');
+  svg.innerHTML = `<defs>
+    <marker id="arrow" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#3a5080"/>
+    </marker>
+  </defs>`;
+  state.connections.forEach(c => {
+    const d1 = state.devices.find(d => d.id === c.from);
+    const d2 = state.devices.find(d => d.id === c.to);
+    if (!d1 || !d2) return;
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', d1.x); line.setAttribute('y1', d1.y);
+    line.setAttribute('x2', d2.x); line.setAttribute('y2', d2.y);
+    line.setAttribute('class', 'connection-line');
+    line.setAttribute('data-id', c.id);
+    line.addEventListener('click', (e) => {
+      if (state.tool === 'delete') {
+        state.connections = state.connections.filter(x => x.id !== c.id);
+        renderConnections();
+        conLog('warn', `Кабель ${d1.name} ↔ ${d2.name} удалён`);
+        e.stopPropagation();
+      }
+    });
+    svg.appendChild(line);
+  });
+}
+
+function updateConnections() { renderConnections(); }
+
+// =============================================
+// PROPERTIES PANEL
+// =============================================
+function renderProperties(device) {
+  const panel = document.getElementById('properties-content');
+  if (!device) {
+    panel.innerHTML = `<div class="no-sel">Выберите устройство<br>для просмотра<br>свойств</div>`;
+    return;
+  }
+  const typeLabels = { pc: 'ПК', switch: 'Коммутатор', router: 'Маршрутизатор', server: 'Сервер' };
+  const conns = state.connections.filter(c => c.from === device.id || c.to === device.id);
+  let html = `
+    <div class="prop-section">
+      <div class="prop-label">Имя</div>
+      <div class="prop-value">${device.name}</div>
+    </div>
+    <div class="prop-section">
+      <div class="prop-label">Тип</div>
+      <div class="prop-value">${typeLabels[device.type]}</div>
+    </div>`;
+
+  if (device.type === 'pc' || device.type === 'server') {
+    html += `
+    <div class="prop-section">
+      <div class="prop-label">IP-адрес</div>
+      <div class="prop-value ip">${device.ip || (device.useDhcp ? 'DHCP' : '—')}</div>
+    </div>
+    <div class="prop-section">
+      <div class="prop-label">Маска</div>
+      <div class="prop-value">${device.mask || '—'}</div>
+    </div>
+    <div class="prop-section">
+      <div class="prop-label">Шлюз</div>
+      <div class="prop-value">${device.gateway || '—'}</div>
+    </div>`;
+  }
+
+  if (device.type === 'router') {
+    html += `<div class="prop-section"><div class="prop-label">Интерфейсы</div>`;
+    (device.interfaces || []).forEach(iface => {
+      if (iface.ip) html += `<div class="prop-value ip" style="font-size:10px">${iface.name}: ${iface.ip}/${iface.mask}</div>`;
+    });
+    if ((device.routes||[]).length > 0) {
+      html += `<div class="prop-label" style="margin-top:6px">Маршруты</div>`;
+      device.routes.forEach(r => html += `<div class="prop-value" style="font-size:10px">${r.network}/${r.mask} → ${r.gateway}</div>`);
+    }
+    html += `</div>`;
+  }
+
+  html += `
+    <div class="prop-section">
+      <div class="prop-label">Соединений</div>
+      <div class="prop-value ${conns.length > 0 ? 'ok' : 'warn'}">${conns.length}</div>
+    </div>`;
+
+  html += `<button class="config-btn" onclick="openConfig('${device.id}')">⚙ Настроить</button>`;
+  panel.innerHTML = html;
+}
+
+// =============================================
+// CONFIGURATION MODAL
+// =============================================
+function openConfigSelected() {
+  if (state.selected) openConfig(state.selected);
+}
+
+function openConfig(id) {
+  const device = state.devices.find(d => d.id === id);
+  if (!device) return;
+  state.configDevice = device;
+
+  const typeLabels = { pc: 'ПК', switch: 'Коммутатор', router: 'Маршрутизатор', server: 'Сервер' };
+  document.getElementById('modal-device-type').textContent = typeLabels[device.type];
+  document.getElementById('modal-title').textContent = 'Конфигурация: ' + device.name;
+
+  const body = document.getElementById('modal-body');
+  body.innerHTML = buildConfigForm(device);
+
+  document.getElementById('config-modal').classList.remove('hidden');
+}
+
+function buildConfigForm(device) {
+  let html = `
+    <div class="form-group">
+      <label class="form-label">Имя устройства</label>
+      <input class="form-input" id="cfg-name" value="${device.name}">
+    </div>`;
+
+  if (device.type === 'pc' || device.type === 'server') {
+    html += `
+    <div class="modal-tabs">
+      <button class="modal-tab active" onclick="switchTab(this,'tab-ip')">IP-адрес</button>
+      ${device.type === 'server' ? '<button class="modal-tab" onclick="switchTab(this,\'tab-dhcp\')">DHCP</button>' : ''}
+    </div>
+    <div id="tab-ip">
+      <div class="form-group">
+        <label class="form-label">
+          <input type="checkbox" id="cfg-dhcp" ${device.useDhcp?'checked':''} onchange="toggleDhcpFields()"> Получить IP автоматически (DHCP)
+        </label>
+      </div>
+      <div id="static-fields" ${device.useDhcp?'style="opacity:0.4;pointer-events:none"':''}>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">IP-адрес</label>
+            <input class="form-input" id="cfg-ip" value="${device.ip}" placeholder="192.168.1.1">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Маска подсети</label>
+            <input class="form-input" id="cfg-mask" value="${device.mask}" placeholder="255.255.255.0">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Основной шлюз</label>
+          <input class="form-input" id="cfg-gw" value="${device.gateway}" placeholder="192.168.1.254">
+        </div>
+      </div>
+    </div>`;
+
+    if (device.type === 'server') {
+      const d = device.dhcp || {};
+      html += `<div id="tab-dhcp" style="display:none">
+        <div class="form-group">
+          <label class="form-label"><input type="checkbox" id="cfg-dhcp-enabled" ${d.enabled?'checked':''}> Включить DHCP-сервер</label>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Начало пула</label>
+            <input class="form-input" id="cfg-dhcp-start" value="${d.start||''}" placeholder="192.168.1.10">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Конец пула</label>
+            <input class="form-input" id="cfg-dhcp-end" value="${d.end||''}" placeholder="192.168.1.50">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Маска</label>
+            <input class="form-input" id="cfg-dhcp-mask" value="${d.mask||''}" placeholder="255.255.255.0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Шлюз по умолч.</label>
+            <input class="form-input" id="cfg-dhcp-gw" value="${d.gateway||''}" placeholder="192.168.1.254">
+          </div>
+        </div>
+      </div>`;
+    }
+  }
+
+  if (device.type === 'router') {
+    html += `
+    <div class="modal-tabs">
+      <button class="modal-tab active" onclick="switchTab(this,'tab-ifaces')">Интерфейсы</button>
+      <button class="modal-tab" onclick="switchTab(this,'tab-routes')">Маршруты</button>
+    </div>
+    <div id="tab-ifaces">`;
+    (device.interfaces || []).forEach((iface, i) => {
+      html += `<div class="iface-block">
+        <div class="iface-name">▶ ${iface.name}</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">IP-адрес</label>
+            <input class="form-input" id="cfg-iface-ip-${i}" value="${iface.ip}" placeholder="192.168.1.254">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Маска</label>
+            <input class="form-input" id="cfg-iface-mask-${i}" value="${iface.mask}" placeholder="255.255.255.0">
+          </div>
+        </div>
+      </div>`;
+    });
+    html += `</div>
+    <div id="tab-routes" style="display:none">
+      <div id="routes-list">`;
+    (device.routes || []).forEach((route, i) => {
+      html += routeRow(route, i);
+    });
+    html += `</div>
+      <button onclick="addRouteRow()" style="width:100%;padding:6px;background:rgba(0,200,255,0.08);border:1px dashed rgba(0,200,255,0.4);color:var(--accent-cyan);cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:600;font-size:11px;letter-spacing:1px;margin-top:4px;">+ Добавить маршрут</button>
+    </div>`;
+  }
+
+  if (device.type === 'switch') {
+    html += `<div style="padding:12px;font-size:11px;color:var(--text-secondary);font-family:monospace;line-height:1.8">
+      <div>Тип: Layer 2 Коммутатор</div>
+      <div>Портов: 8 × FastEthernet</div>
+      <div>Режим: Access</div>
+      <br>
+      <div style="color:var(--accent-orange);font-size:10px">ℹ Коммутатор работает автоматически. Настройка VLAN доступна в расширенном режиме.</div>
+    </div>`;
+  }
+
+  return html;
+}
+
+function routeRow(route, i) {
+  return `<div class="iface-block" id="route-row-${i}" style="padding:8px">
+    <div class="form-row" style="grid-template-columns:1fr 1fr 1fr auto">
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label" style="font-size:9px">Сеть назначения</label>
+        <input class="form-input" id="route-net-${i}" value="${route?.network||''}" placeholder="192.168.3.0">
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label" style="font-size:9px">Маска</label>
+        <input class="form-input" id="route-mask-${i}" value="${route?.mask||''}" placeholder="255.255.255.0">
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label" style="font-size:9px">Следующий узел</label>
+        <input class="form-input" id="route-gw-${i}" value="${route?.gateway||''}" placeholder="10.0.0.2">
+      </div>
+    </div>
+  </div>`;
+}
+
+let routeCount = 0;
+function addRouteRow() {
+  const device = state.configDevice;
+  const list = document.getElementById('routes-list');
+  if (!list) return;
+  const idx = (device.routes?.length || 0) + routeCount++;
+  list.insertAdjacentHTML('beforeend', routeRow({}, idx));
+}
+
+function switchTab(btn, tabId) {
+  const modal = btn.closest('.modal-body');
+  modal.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  const tabs = ['tab-ip','tab-ifaces','tab-routes','tab-dhcp'];
+  tabs.forEach(t => { const el = document.getElementById(t); if (el) el.style.display = 'none'; });
+  const active = document.getElementById(tabId);
+  if (active) active.style.display = '';
+}
+
+function toggleDhcpFields() {
+  const checked = document.getElementById('cfg-dhcp')?.checked;
+  const fields = document.getElementById('static-fields');
+  if (fields) { fields.style.opacity = checked ? '0.4' : '1'; fields.style.pointerEvents = checked ? 'none' : ''; }
+}
+
+function isValidIP(ip) {
+  if (typeof ip !== 'string') return false;
+  const parts = ip.trim().split('.');
+  if (parts.length !== 4) return false;
+  return parts.every(p => /^\d{1,3}$/.test(p) && +p >= 0 && +p <= 255);
+}
+
+function saveConfig() {
+  const device = state.configDevice;
+  if (!device) return;
+
+  const nameEl = document.getElementById('cfg-name');
+  if (nameEl) device.name = nameEl.value;
+
+  if (device.type === 'pc' || device.type === 'server') {
+    const dhcpEl = document.getElementById('cfg-dhcp');
+    const wasDhcpWithLease = device.useDhcp && isValidIP(device.ip);
+    device.useDhcp = dhcpEl?.checked || false;
+    if (!device.useDhcp) {
+      const ipVal = document.getElementById('cfg-ip')?.value.trim() || '';
+      const maskVal = document.getElementById('cfg-mask')?.value.trim() || '';
+      const gwVal = document.getElementById('cfg-gw')?.value.trim() || '';
+      if (ipVal && !isValidIP(ipVal)) {
+        conLog('err', `Неверный формат IP-адреса: "${ipVal}". Ожидается: 0-255.0-255.0-255.0-255`);
+      } else {
+        device.ip = ipVal;
+      }
+      if (maskVal && !isValidIP(maskVal)) {
+        conLog('err', `Неверный формат маски: "${maskVal}"`);
+      } else {
+        device.mask = maskVal;
+      }
+      if (gwVal && !isValidIP(gwVal)) {
+        conLog('err', `Неверный формат шлюза: "${gwVal}"`);
+      } else {
+        device.gateway = gwVal;
+      }
+    } else if (wasDhcpWithLease) {
+      // Устройство уже получило рабочий IP по DHCP ранее — простое пересохранение
+      // конфигурации (например, переименование) не должно молча выдавать новый адрес.
+      conLog('info', `${device.name}: аренда DHCP уже активна (${device.ip}), IP не менялся`);
+    } else {
+      // Simulate DHCP assignment
+      const dhcpServer = state.devices.find(d => d.type === 'server' && d.dhcp?.enabled);
+      if (dhcpServer && isValidIP(dhcpServer.dhcp.start)) {
+        const startParts = dhcpServer.dhcp.start.split('.').map(Number);
+        const endParts = isValidIP(dhcpServer.dhcp.end) ? dhcpServer.dhcp.end.split('.').map(Number) : null;
+        const assigned = state.devices.filter(d => d.useDhcp && d.ip && d.id !== device.id).length;
+        const lastOctet = startParts[3] + assigned + 1;
+        if (endParts && lastOctet > endParts[3]) {
+          device.ip = '';
+          conLog('warn', `DHCP: пул адресов исчерпан (${dhcpServer.dhcp.start} — ${dhcpServer.dhcp.end})`);
+        } else {
+          startParts[3] = lastOctet;
+          device.ip = startParts.join('.');
+          device.mask = dhcpServer.dhcp.mask || '255.255.255.0';
+          device.gateway = dhcpServer.dhcp.gateway || '';
+          conLog('ok', `DHCP: ${device.name} получил IP ${device.ip}`);
+        }
+      } else if (dhcpServer) {
+        device.ip = '';
+        conLog('warn', `DHCP: у сервера не задан корректный начальный IP пула`);
+      } else {
+        device.ip = '';
+        conLog('warn', `DHCP: сервер не найден или не настроен`);
+      }
+    }
+
+    if (device.type === 'server') {
+      device.dhcp = device.dhcp || {};
+      device.dhcp.enabled = document.getElementById('cfg-dhcp-enabled')?.checked || false;
+      device.dhcp.start = document.getElementById('cfg-dhcp-start')?.value || '';
+      device.dhcp.end = document.getElementById('cfg-dhcp-end')?.value || '';
+      device.dhcp.mask = document.getElementById('cfg-dhcp-mask')?.value || '';
+      device.dhcp.gateway = document.getElementById('cfg-dhcp-gw')?.value || '';
+    }
+  }
+
+  if (device.type === 'router') {
+    (device.interfaces || []).forEach((iface, i) => {
+      const ipVal = document.getElementById(`cfg-iface-ip-${i}`)?.value.trim() || '';
+      const maskVal = document.getElementById(`cfg-iface-mask-${i}`)?.value.trim() || '';
+      if (ipVal && !isValidIP(ipVal)) {
+        conLog('err', `Неверный формат IP интерфейса: "${ipVal}"`);
+      } else {
+        iface.ip = ipVal;
+      }
+      if (maskVal && !isValidIP(maskVal)) {
+        conLog('err', `Неверный формат маски интерфейса: "${maskVal}"`);
+      } else {
+        iface.mask = maskVal;
+      }
+    });
+    // Collect routes
+    device.routes = [];
+    const routesList = document.getElementById('routes-list');
+    if (routesList) {
+      routesList.querySelectorAll('[id^="route-row-"]').forEach((row, i) => {
+        const net = row.querySelector(`[id^="route-net-"]`)?.value;
+        const mask = row.querySelector(`[id^="route-mask-"]`)?.value;
+        const gw = row.querySelector(`[id^="route-gw-"]`)?.value;
+        if (net && mask && gw) device.routes.push({ network: net, mask, gateway: gw });
+      });
+    }
+    // Set primary IP from first configured interface
+    const firstIface = device.interfaces.find(i => i.ip);
+    if (firstIface) { device.ip = firstIface.ip; device.mask = firstIface.mask; }
+  }
+
+  routeCount = 0;
+  updateDeviceEl(device);
+  renderProperties(device);
+  closeModal('config-modal');
+  conLog('ok', `${device.name}: конфигурация сохранена`);
+}
+
+function closeModal(id) {
+  document.getElementById(id)?.classList.add('hidden');
+}
+
+// =============================================
+// LESSONS
+// =============================================
+function renderLessonNav() {
+  const nav = document.getElementById('lesson-nav');
+  nav.innerHTML = '';
+  LESSONS.forEach(l => {
+    const btn = document.createElement('button');
+    btn.className = 'lesson-nav-btn';
+    btn.textContent = l.id;
+    btn.title = l.title;
+    if (l.id === state.currentLesson) btn.classList.add('active');
+    if (state.completedLessons.includes(l.id)) btn.classList.add('done');
+    if (!state.unlockedLessons.includes(l.id)) btn.disabled = true;
+    btn.onclick = () => { if (!btn.disabled) { state.currentLesson = l.id; renderLessonNav(); renderLesson(); } };
+    nav.appendChild(btn);
+  });
+}
+
+function renderLesson() {
+  const lesson = LESSONS.find(l => l.id === state.currentLesson);
+  if (!lesson) return;
+  document.getElementById('hdr-lesson').textContent = state.currentLesson;
+
+  const tasks = lesson.tasks.map((t, i) => `
+    <li class="task-item">
+      <div class="task-check ${state.completedLessons.includes(lesson.id) ? 'done' : ''}">${state.completedLessons.includes(lesson.id) ? '✓' : ''}</div>
+      <span>${t}</span>
+    </li>`).join('');
+
+  const scroll = document.getElementById('lesson-scroll');
+  scroll.innerHTML = `
+    <div class="lesson-number">УРОК ${lesson.id} / 6 — <span class="info-tag new">${lesson.subtitle}</span></div>
+    <div class="lesson-title">${lesson.title}</div>
+    <div class="lesson-desc">${lesson.desc}</div>
+    <ul class="task-list">${tasks}</ul>
+    ${state.showHintFlag ? `<div class="hint-box"><strong>💡 Подсказка:</strong> ${lesson.hint}</div>` : ''}
+  `;
+
+  const nextBtn = document.getElementById('btn-next');
+  if (state.completedLessons.includes(lesson.id)) {
+    nextBtn.classList.add('visible');
+  } else {
+    nextBtn.classList.remove('visible');
+  }
+
+  renderDots();
+}
+
+function checkLesson() {
+  const lesson = LESSONS.find(l => l.id === state.currentLesson);
+  if (!lesson) return;
+  const result = lesson.check(state);
+  if (result.ok) {
+    if (!state.completedLessons.includes(lesson.id)) {
+      state.completedLessons.push(lesson.id);
+      const nextId = lesson.id + 1;
+      if (nextId <= 6 && !state.unlockedLessons.includes(nextId)) {
+        state.unlockedLessons.push(nextId);
+      }
+    }
+    conLog('ok', `✓ Урок ${lesson.id}: ${result.msg}`);
+    renderLesson();
+    renderLessonNav();
+    // Show success modal
+    document.getElementById('success-title').textContent = lesson.id === 6 ? '🏆 КУРС ПРОЙДЕН!' : 'УРОК ЗАВЕРШЁН!';
+    document.getElementById('success-desc').textContent = lesson.successMsg;
+    document.getElementById('success-modal').classList.remove('hidden');
+  } else {
+    conLog('err', `✗ Урок ${lesson.id}: ${result.msg}`);
+    state.showHintFlag = true;
+    renderLesson();
+  }
+}
+
+function showHint() {
+  state.showHintFlag = true;
+  renderLesson();
+}
+
+function nextLesson() {
+  const nextId = state.currentLesson + 1;
+  if (nextId <= 6 && state.unlockedLessons.includes(nextId)) {
+    state.currentLesson = nextId;
+    state.showHintFlag = false;
+    renderLessonNav();
+    renderLesson();
+  }
+}
+
+function renderDots() {
+  const dots = document.getElementById('lesson-dots');
+  if (!dots) return;
+  dots.innerHTML = '';
+  for (let i = 1; i <= 6; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'lesson-dot';
+    if (state.completedLessons.includes(i)) dot.classList.add('done');
+    else if (i === state.currentLesson) dot.classList.add('active');
+    dots.appendChild(dot);
+  }
+}
+
+// =============================================
+// CONSOLE / TERMINAL
+// =============================================
+function updateConsolePrompt() {
+  const dev = state.consoleDevice || state.devices[0];
+  const prompt = document.getElementById('console-prompt');
+  if (prompt) prompt.textContent = (dev ? dev.name : 'NetSim') + '>';
+}
+
+function conLog(type, text) {
+  const output = document.getElementById('console-output');
+  if (!output) return;
+  const line = document.createElement('div');
+  line.className = 'con-line ' + type;
+  line.textContent = text;
+  output.appendChild(line);
+  output.scrollTop = output.scrollHeight;
+}
+
+function clearConsole() {
+  const output = document.getElementById('console-output');
+  if (output) output.innerHTML = '';
+}
+
+function onConsoleKey(e) {
+  const input = document.getElementById('console-input');
+  if (e.key === 'Enter') {
+    const cmd = input.value.trim();
+    if (!cmd) return;
+    conLog('cmd', '> ' + cmd);
+    state.cmdHistory.unshift(cmd);
+    state.cmdHistIdx = -1;
+    input.value = '';
+    execCommand(cmd);
+  } else if (e.key === 'ArrowUp') {
+    state.cmdHistIdx = Math.min(state.cmdHistIdx + 1, state.cmdHistory.length - 1);
+    input.value = state.cmdHistory[state.cmdHistIdx] || '';
+    e.preventDefault();
+  } else if (e.key === 'ArrowDown') {
+    state.cmdHistIdx = Math.max(state.cmdHistIdx - 1, -1);
+    input.value = state.cmdHistIdx >= 0 ? state.cmdHistory[state.cmdHistIdx] : '';
+    e.preventDefault();
+  }
+}
+
+function execCommand(cmd) {
+  const parts = cmd.toLowerCase().split(/\s+/);
+  const verb = parts[0];
+  const srcDevice = state.consoleDevice || state.devices.find(d => d.type === 'pc');
+
+  if (verb === 'help') {
+    conLog('info', '╔══════════════════════════════════════╗');
+    conLog('info', '║         ДОСТУПНЫЕ КОМАНДЫ            ║');
+    conLog('info', '╠══════════════════════════════════════╣');
+    conLog('info', '║ ping <IP>      — проверить связь     ║');
+    conLog('info', '║ ipconfig       — показать IP         ║');
+    conLog('info', '║ ipconfig /all  — расширенная инфо    ║');
+    conLog('info', '║ arp -a         — таблица ARP         ║');
+    conLog('info', '║ route print    — таблица маршрутов   ║');
+    conLog('info', '║ devices        — список устройств    ║');
+    conLog('info', '║ select <имя>   — выбрать устройство  ║');
+    conLog('info', '║ clear          — очистить консоль    ║');
+    conLog('info', '╚══════════════════════════════════════╝');
+    return;
+  }
+
+  if (verb === 'clear') { clearConsole(); return; }
+
+  if (verb === 'devices') {
+    conLog('info', '--- Устройства в сети ---');
+    state.devices.forEach(d => {
+      const typeL = { pc:'ПК', switch:'Коммутатор', router:'Маршрутизатор', server:'Сервер' };
+      conLog('info', `  ${d.name.padEnd(10)} ${typeL[d.type].padEnd(16)} ${d.ip || '—'}`);
+    });
+    return;
+  }
+
+  if (verb === 'select') {
+    const name = parts[1];
+    const dev = state.devices.find(d => d.name.toLowerCase() === name);
+    if (dev) {
+      state.consoleDevice = dev;
+      selectDevice(dev.id);
+      updateConsolePrompt();
+      conLog('ok', `Активное устройство: ${dev.name}`);
+    } else {
+      conLog('err', `Устройство "${name}" не найдено`);
+    }
+    return;
+  }
+
+  if (verb === 'ipconfig') {
+    if (!srcDevice) { conLog('err', 'Выберите устройство командой: select <имя>'); return; }
+    const all = parts[1] === '/all';
+    conLog('info', `\nАдаптер Ethernet ${srcDevice.name}:`);
+    if (srcDevice.type === 'router') {
+      (srcDevice.interfaces || []).forEach(iface => {
+        if (iface.ip) {
+          conLog('info', `  ${iface.name}:`);
+          conLog('info', `    IP-адрес:  ${iface.ip}`);
+          conLog('info', `    Маска:     ${iface.mask}`);
+        }
+      });
+    } else {
+      conLog('info', `  IP-адрес:       ${srcDevice.ip || 'не назначен'}`);
+      conLog('info', `  Маска подсети:  ${srcDevice.mask || '—'}`);
+      conLog('info', `  Основной шлюз: ${srcDevice.gateway || '—'}`);
+      if (all) {
+        conLog('info', `  Тип конфигур.: ${srcDevice.useDhcp ? 'DHCP' : 'Статический'}`);
+        conLog('info', `  DNS-суффикс:   netsim.local`);
+      }
+    }
+    return;
+  }
+
+  if (verb === 'arp') {
+    if (!srcDevice) { conLog('err', 'Сначала выберите устройство'); return; }
+    conLog('info', `Таблица ARP для ${srcDevice.name}:`);
+    conLog('info', '  IP-адрес          Физический адрес   Тип');
+    conLog('info', '  ─────────────────────────────────────────────');
+    const conns = state.connections.filter(c => c.from === srcDevice.id || c.to === srcDevice.id);
+    const neighbors = conns.map(c => state.devices.find(d => d.id === (c.from === srcDevice.id ? c.to : c.from)));
+    neighbors.filter(n => n && n.ip).forEach(n => {
+      const mac = generateMACForDevice(n.id);
+      conLog('info', `  ${n.ip.padEnd(18)}${mac}   динамический`);
+    });
+    return;
+  }
+
+  if (verb === 'route') {
+    if (!srcDevice) { conLog('err', 'Выберите устройство'); return; }
+    conLog('info', `Таблица маршрутов ${srcDevice.name}:`);
+    conLog('info', '  Сеть            Маска           Шлюз            Метрика');
+    conLog('info', '  ─────────────────────────────────────────────────────────');
+    if (srcDevice.ip) {
+      const net = srcDevice.ip.split('.').slice(0,3).join('.') + '.0';
+      conLog('info', `  ${net.padEnd(16)}${(srcDevice.mask||'').padEnd(16)}On-link         1`);
+    }
+    if (srcDevice.gateway) {
+      conLog('info', `  0.0.0.0         0.0.0.0         ${srcDevice.gateway.padEnd(16)}10`);
+    }
+    if (srcDevice.type === 'router') {
+      (srcDevice.routes || []).forEach(r => {
+        conLog('info', `  ${r.network.padEnd(16)}${r.mask.padEnd(16)}${r.gateway.padEnd(16)}1`);
+      });
+    }
+    return;
+  }
+
+  if (verb === 'ping') {
+    const targetIp = parts[1];
+    if (!targetIp) { conLog('err', 'Использование: ping <IP-адрес>'); return; }
+    if (!srcDevice) { conLog('err', 'Выберите устройство: select <имя>'); return; }
+    executePing(srcDevice, targetIp);
+    return;
+  }
+
+  conLog('err', `Команда не найдена: "${verb}". Введите "help" для справки.`);
+}
+
+function generateMACForDevice(id) {
+  // Deterministic MAC from device ID
+  let hash = 0;
+  for (let c of id) hash = (hash * 31 + c.charCodeAt(0)) & 0xFFFFFF;
+  return `00-50-${((hash>>16)&0xFF).toString(16).padStart(2,'0').toUpperCase()}-${((hash>>8)&0xFF).toString(16).padStart(2,'0').toUpperCase()}-${(hash&0xFF).toString(16).padStart(2,'0').toUpperCase()}-AA`;
+}
+
+function executePing(srcDevice, targetIp) {
+  conLog('info', `\nОтправка ping ${targetIp} от ${srcDevice.name}:`);
+  const result = simulatePing(srcDevice, targetIp);
+  if (result.reachable) {
+    for (let i = 0; i < 4; i++) {
+      setTimeout(() => {
+        const ms = Math.floor(Math.random() * 15) + 1;
+        conLog('ok', `Ответ от ${targetIp}: байт=32 время<${ms}мс TTL=128`);
+        if (i === 3) {
+          conLog('info', `\nСтатистика Ping для ${targetIp}:`);
+          conLog('info', `  Пакетов: отправлено=4, получено=4, потеряно=0 (0% потерь)`);
+          animatePing(srcDevice.id, result.targetId);
+        }
+      }, i * 300);
+    }
+  } else {
+    for (let i = 0; i < 4; i++) {
+      setTimeout(() => {
+        conLog('err', `Превышен интервал ожидания для запроса.`);
+        if (i === 3) {
+          conLog('info', `\nСтатистика Ping для ${targetIp}:`);
+          conLog('info', `  Пакетов: отправлено=4, получено=0, потеряно=4 (100% потерь)`);
+          conLog('warn', `Причина: ${result.reason}`);
+        }
+      }, i * 300);
+    }
+  }
+}
+
+function simulatePing(srcDevice, targetIp) {
+  if (!srcDevice.ip && !srcDevice.interfaces) return { reachable: false, reason: 'IP-адрес не назначен на источнике' };
+
+  // Find target device
+  const target = state.devices.find(d => {
+    if (d.ip === targetIp) return true;
+    if (d.type === 'router') return (d.interfaces||[]).some(i => i.ip === targetIp);
+    return false;
+  });
+
+  if (!target) return { reachable: false, reason: 'Адресат не найден в сети' };
+
+  const srcIp = srcDevice.type === 'router' ? (srcDevice.interfaces||[])[0]?.ip : srcDevice.ip;
+  const srcMask = srcDevice.type === 'router' ? (srcDevice.interfaces||[])[0]?.mask : srcDevice.mask;
+
+  if (!srcIp) return { reachable: false, reason: 'Нет IP на источнике' };
+
+  // Same subnet check
+  if (srcMask && inSameSubnet(srcIp, targetIp, srcMask)) {
+    const connected = checkL2Connected(srcDevice.id, target.id);
+    if (connected) return { reachable: true, targetId: target.id };
+    return { reachable: false, reason: 'Нет физического соединения' };
+  }
+
+  // Need gateway
+  const gw = srcDevice.gateway;
+  if (!gw) return { reachable: false, reason: 'Основной шлюз не настроен' };
+
+  const router = state.devices.find(d => d.type === 'router' && (d.interfaces||[]).some(i => i.ip === gw));
+  if (!router) return { reachable: false, reason: `Шлюз ${gw} недостижим` };
+
+  const toRouter = checkL2Connected(srcDevice.id, router.id);
+  if (!toRouter) return { reachable: false, reason: `Нет физического пути к шлюзу ${gw}` };
+
+  // Router routing
+  return routerForward(router.id, targetIp, target.id, new Set([srcDevice.id, router.id]));
+}
+
+function routerForward(routerId, targetIp, targetId, visited) {
+  const router = state.devices.find(d => d.id === routerId);
+  if (!router) return { reachable: false, reason: 'Маршрутизатор не найден' };
+
+  // Direct interface check
+  for (const iface of (router.interfaces || [])) {
+    if (!iface.ip || !iface.mask) continue;
+    if (inSameSubnet(iface.ip, targetIp, iface.mask)) {
+      const connected = checkL2Connected(routerId, targetId);
+      if (connected) return { reachable: true, targetId };
+      return { reachable: false, reason: 'Нет физического соединения к адресату' };
+    }
+  }
+
+  // Static route check
+  for (const route of (router.routes || [])) {
+    if (!route.network || !route.mask) continue;
+    if (inSameSubnet(route.network, targetIp, route.mask)) {
+      const nextRouter = state.devices.find(d => d.type === 'router' && (d.interfaces||[]).some(i => i.ip === route.gateway));
+      if (nextRouter && !visited.has(nextRouter.id)) {
+        visited.add(nextRouter.id);
+        return routerForward(nextRouter.id, targetIp, targetId, visited);
+      }
+    }
+  }
+
+  return { reachable: false, reason: 'Нет маршрута к адресату (проверьте таблицу маршрутов)' };
+}
+
+function inSameSubnet(ip1, ip2, mask) {
+  try {
+    const p1 = ip1.split('.').map(Number);
+    const p2 = ip2.split('.').map(Number);
+    const pm = mask.split('.').map(Number);
+    for (let i = 0; i < 4; i++) if ((p1[i] & pm[i]) !== (p2[i] & pm[i])) return false;
+    return true;
+  } catch { return false; }
+}
+
+function checkL2Connected(id1, id2) {
+  const visited = new Set();
+  const queue = [id1];
+  while (queue.length) {
+    const cur = queue.shift();
+    if (cur === id2) return true;
+    if (visited.has(cur)) continue;
+    visited.add(cur);
+    state.connections
+      .filter(c => c.from === cur || c.to === cur)
+      .forEach(c => {
+        const next = c.from === cur ? c.to : c.from;
+        const dev = state.devices.find(d => d.id === next);
+        // Pass through switches without stopping
+        if (dev && !visited.has(next)) queue.push(next);
+      });
+  }
+  return false;
+}
+
+function animatePing(fromId, toId) {
+  const fromEl = document.getElementById('node-' + fromId);
+  const toEl = document.getElementById('node-' + toId);
+  if (!fromEl || !toEl) return;
+
+  const container = document.getElementById('canvas-container');
+  const cRect = container.getBoundingClientRect();
+  const f = state.devices.find(d => d.id === fromId);
+  const t = state.devices.find(d => d.id === toId);
+  if (!f || !t) return;
+
+  // Animate line
+  const line = document.getElementById('connections-svg');
+  const animLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  animLine.setAttribute('x1', f.x); animLine.setAttribute('y1', f.y);
+  animLine.setAttribute('x2', t.x); animLine.setAttribute('y2', t.y);
+  animLine.setAttribute('stroke', 'var(--accent-cyan)');
+  animLine.setAttribute('stroke-width', '3');
+  animLine.setAttribute('opacity', '0.8');
+  animLine.style.transition = 'opacity 0.5s';
+  line.appendChild(animLine);
+  setTimeout(() => { animLine.style.opacity = '0'; setTimeout(() => animLine.remove(), 500); }, 800);
+}
+
+// =============================================
+// UTILS
+// =============================================
+function clearCanvas() {
+  if (!confirm('Очистить холст? Все устройства и соединения будут удалены.')) return;
+  state.devices = [];
+  state.connections = [];
+  state.selected = null;
+  state.cableFrom = null;
+  document.getElementById('canvas-devices').innerHTML = '';
+  document.getElementById('connections-svg').innerHTML = `<defs>
+    <marker id="arrow" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#3a5080"/>
+    </marker>
+  </defs>`;
+  renderProperties();
+  conLog('warn', 'Холст очищен');
+}
+
+// Prevent context menu on canvas
+document.addEventListener('contextmenu', e => {
+  if (e.target.closest('#canvas-container')) e.preventDefault();
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === 'v' || e.key === 'V' || e.key === 'Escape') setTool('select');
+  if (e.key === 'c' || e.key === 'C') setTool('cable');
+  if (e.key === 'Delete' || e.key === 'd' || e.key === 'D') setTool('delete');
+  if (e.key === 'Enter' && state.selected) openConfig(state.selected);
+});
+</script>
+</body>
+</html>

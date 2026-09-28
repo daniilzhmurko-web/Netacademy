@@ -1,0 +1,910 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NetSim Pro — Лаб. 3: Маршрутизация</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Exo+2:wght@300;400;600;700&display=swap');
+:root{
+  --bg0:#07090f;--bg1:#0d0f18;--bg2:#111420;--bg3:#161929;--bg4:#1c2035;
+  --bgh:#1f2540;--c-blue:#0d6efd;--c-cyan:#00c8ff;--c-green:#00e676;
+  --c-orange:#ff9100;--c-red:#ff3d3d;--c-yellow:#ffd600;--c-purple:#c77dff;
+  --t1:#ccd8f0;--t2:#6e80a0;--t3:#323d5a;
+  --bd:#1a1f35;--bd2:#222840;--bd3:#2c3558;
+}
+
+/* ========== THEME TOGGLE: DAY/NIGHT MODE ========== */
+body.day {
+  --bg0:#f8f9fc;--bg1:#ffffff;--bg2:#f0f2f8;--bg3:#e6e9f2;--bg4:#dce0eb;
+  --bgh:#e8ecf5;--c-blue:#0d6efd;--c-cyan:#0077cc;--c-green:#198754;
+  --c-orange:#fd7e14;--c-red:#dc3545;--c-yellow:#ffc107;--c-purple:#6f42c1;
+  --t1:#1a1f3a;--t2:#4a5575;--t3:#7a85a5;
+  --bd:#d0d5e5;--bd2:#c0c8dc;--bd3:#b0b8d0;
+}
+body.day { background:var(--bg0); color:var(--t1); }
+body.day #hdr,
+body.day #ibar,
+body.day #devp,
+body.day #taskp,
+body.day #con,
+body.day .mbox,
+body.day .tghdr,
+body.day .mhdr,
+body.day .mftr {
+  background:var(--bg1) !important; border-color:var(--bd) !important; color:var(--t1) !important;
+}
+body.day #cvw {
+  background-color:#f0f4ff !important;
+  background-image:
+    radial-gradient(ellipse at 30% 50%,rgba(13,110,253,.04) 0%,transparent 55%),
+    radial-gradient(ellipse at 70% 50%,rgba(111,66,193,.03) 0%,transparent 55%),
+    linear-gradient(rgba(0,0,0,.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,0,0,.03) 1px,transparent 1px) !important;
+}
+body.day .minp,
+body.day #cin,
+body.day #rcli-in {
+  background:var(--bg2) !important; border-color:var(--bd2) !important; color:var(--t1) !important;
+}
+body.day .dli:hover,
+body.day .tghdr:hover,
+body.day .hmb:hover,
+body.day .bcl:hover,
+body.day .tpbtn-check:hover,
+body.day .tpbtn-next:hover {
+  background:var(--bgh) !important;
+}
+body.day .titem.done { background:rgba(25,135,84,.08) !important; }
+body.day #cout,
+body.day #rcli-out { background:var(--bg2) !important; }
+body.day .overlay { background:rgba(255,255,255,.92); }
+body.day .dnode:hover .dbody { filter:brightness(1.05); }
+body.day .titem { border-top-color:rgba(20,30,60,.08); }
+
+#theme-toggle {
+  position: fixed; top: 42px; right: 14px; z-index: 9999;
+  padding: 4px 10px; background: var(--bg3); border: 1px solid var(--bd);
+  border-radius: 4px; color: var(--t1); font-family: 'Rajdhani', sans-serif;
+  font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; gap: 4px;
+}
+body.day #theme-toggle { background: var(--bg2); border-color: var(--bd2); }
+#theme-toggle:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+/* ========== END THEME TOGGLE ========== */
+
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Exo 2',sans-serif;background:var(--bg0);color:var(--t1);display:flex;flex-direction:column;user-select:none;}
+
+/* HEADER */
+#hdr{height:38px;flex-shrink:0;background:linear-gradient(180deg,#0c0f1c,#0a0d19);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 14px;z-index:50;}
+.logo{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:var(--c-cyan);letter-spacing:3px;display:flex;align-items:center;gap:8px;margin-right:20px;}
+.logo-gem{width:22px;height:22px;background:linear-gradient(135deg,#0d6efd,#00c8ff);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#fff;}
+.hmenu{display:flex;gap:2px;}
+.hmb{background:none;border:none;color:var(--t2);font-family:'Exo 2',sans-serif;font-size:11px;font-weight:600;padding:4px 10px;cursor:pointer;letter-spacing:.5px;text-transform:uppercase;transition:color .15s;border-radius:2px;}
+.hmb:hover{color:var(--t1);background:rgba(255,255,255,.04);}
+.hdr-r{margin-left:auto;display:flex;align-items:center;gap:12px;}
+.lab-badge{font-family:'Rajdhani',sans-serif;font-size:10px;font-weight:700;color:var(--c-purple);letter-spacing:2px;padding:3px 12px;border:1px solid rgba(199,125,255,.4);background:rgba(199,125,255,.07);}
+.pmini{display:flex;align-items:center;gap:8px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--t2);}
+.pmini span{color:var(--c-green);font-weight:700;}
+#hdots{display:flex;gap:3px;}
+.hdot{width:7px;height:7px;border-radius:50%;background:var(--bg4);border:1px solid var(--bd2);transition:all .3s;}
+.hdot.on{background:var(--c-green);border-color:var(--c-green);box-shadow:0 0 5px var(--c-green);}
+
+/* INFO BAR */
+#ibar{height:29px;flex-shrink:0;background:rgba(199,125,255,.03);border-bottom:1px solid rgba(199,125,255,.15);display:flex;align-items:center;padding:0 14px;gap:14px;}
+.ibi{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--t2);display:flex;align-items:center;gap:5px;}
+.ibv{color:var(--c-purple);}
+.ibv.ok{color:var(--c-green);}
+.ibv.warn{color:var(--c-orange);}
+.ibs{color:var(--t3);}
+
+/* MAIN */
+#main{flex:1;display:flex;overflow:hidden;}
+
+/* LEFT: devices */
+#devp{width:145px;flex-shrink:0;background:var(--bg1);border-right:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden;}
+.dp-head{font-size:9px;font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--t3);letter-spacing:2px;padding:8px 10px 5px;text-transform:uppercase;border-bottom:1px solid var(--bd);}
+.dp-sub{font-size:8px;font-family:'Share Tech Mono',monospace;color:var(--t3);padding:4px 10px 3px;background:var(--bg2);border-bottom:1px solid var(--bd);letter-spacing:.5px;}
+#dev-list{flex:1;overflow-y:auto;}
+#dev-list::-webkit-scrollbar{width:3px;}
+#dev-list::-webkit-scrollbar-thumb{background:var(--bd3);}
+.dli{padding:7px 10px 6px;border-bottom:1px solid var(--bd);cursor:pointer;transition:background .15s;border-left:3px solid transparent;}
+.dli:hover{background:var(--bgh);}
+.dli.sel{background:rgba(0,200,255,.07);border-left-color:var(--c-cyan);}
+.dli-row{display:flex;align-items:center;gap:5px;}
+.dli-dot{width:7px;height:7px;border-radius:50%;background:var(--t3);flex-shrink:0;}
+.dli-dot.ok{background:var(--c-green);box-shadow:0 0 4px var(--c-green);}
+.dli-dot.half{background:var(--c-orange);}
+.dli-name{font-size:11px;font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--t1);}
+.dli-type{font-size:8px;color:var(--t3);font-family:'Share Tech Mono',monospace;}
+.dli-ip{font-size:9px;font-family:'Share Tech Mono',monospace;color:var(--c-green);}
+.dli-ip.none{color:var(--t3);font-style:italic;}
+.dli-gw{font-size:8.5px;font-family:'Share Tech Mono',monospace;color:var(--c-orange);}
+.dli-gw.none{color:var(--t3);font-style:italic;}
+.dli-subnet{font-size:8px;font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--t3);letter-spacing:1px;padding:3px 10px 2px;background:var(--bg2);border-bottom:1px solid var(--bd);text-transform:uppercase;}
+.dli-subnet.s1{color:#3399ff;border-left:3px solid #3399ff;}
+.dli-subnet.s2{color:#ff8844;border-left:3px solid #ff8844;}
+.dli-subnet.rt{color:var(--c-purple);border-left:3px solid var(--c-purple);}
+
+/* CANVAS */
+#cvw{flex:1;position:relative;overflow:hidden;
+  background-color:#060810;
+  background-image:
+    radial-gradient(ellipse at 30% 50%,rgba(0,80,200,.05) 0%,transparent 55%),
+    radial-gradient(ellipse at 70% 50%,rgba(150,50,200,.04) 0%,transparent 55%),
+    linear-gradient(rgba(255,255,255,.013) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.013) 1px,transparent 1px);
+  background-size:auto,auto,26px 26px,26px 26px;
+}
+#zone-left{position:absolute;left:0;top:0;width:38%;height:100%;background:rgba(0,80,200,.025);border-right:1px dashed rgba(0,120,255,.12);pointer-events:none;z-index:0;}
+#zone-right{position:absolute;right:0;top:0;width:38%;height:100%;background:rgba(150,40,200,.025);border-left:1px dashed rgba(180,80,255,.12);pointer-events:none;z-index:0;}
+#zone-left-lbl{position:absolute;left:12px;top:8px;font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;color:rgba(80,160,255,.4);letter-spacing:2px;pointer-events:none;z-index:1;}
+#zone-right-lbl{position:absolute;right:12px;top:8px;font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;color:rgba(180,100,255,.4);letter-spacing:2px;pointer-events:none;z-index:1;}
+#conn-svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:2;}
+.cline{stroke-linecap:round;pointer-events:none;transition:stroke .5s,stroke-width .3s,filter .5s;}
+.cn0{stroke:#1c2a45;stroke-width:2.5;}
+.cn1{stroke:#5a3500;stroke-width:2.5;filter:drop-shadow(0 0 3px rgba(200,100,0,.3));}
+.cn2{stroke:#00a050;stroke-width:3;filter:drop-shadow(0 0 6px rgba(0,200,100,.4));}
+.cn-router{stroke:#7000c0;stroke-width:3.5;filter:drop-shadow(0 0 8px rgba(180,80,255,.5));}
+#canvas-nodes{position:absolute;top:0;left:0;width:100%;height:100%;z-index:3;}
+.dnode{position:absolute;display:flex;flex-direction:column;align-items:center;gap:3px;transform:translate(-50%,-50%);cursor:pointer;z-index:10;}
+.dnode:hover .dbody{filter:brightness(1.25);}
+.dnode.sel .dbody{box-shadow:0 0 0 2px var(--c-cyan),0 0 16px rgba(0,200,255,.3);}
+.dbody{border-radius:6px;overflow:hidden;flex-shrink:0;transition:box-shadow .2s;}
+.dname{font-size:9px;font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--t2);text-align:center;}
+.dip{font-size:8px;font-family:'Share Tech Mono',monospace;text-align:center;}
+.dip.ok{color:var(--c-green);}
+.dip.none{color:var(--t3);}
+.dgw{font-size:7.5px;font-family:'Share Tech Mono',monospace;text-align:center;color:var(--c-orange);}
+.dgw.none{color:var(--t3);}
+.router-status{display:flex;gap:3px;margin-top:2px;}
+.rif-dot{width:8px;height:8px;border-radius:2px;background:var(--t3);border:1px solid var(--bd2);}
+.rif-dot.up{background:var(--c-green);box-shadow:0 0 4px var(--c-green);}
+
+/* RIGHT: tasks */
+#taskp{width:295px;flex-shrink:0;background:var(--bg1);border-left:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden;}
+.tp-hdr{padding:10px 12px 8px;border-bottom:1px solid var(--bd);}
+.tp-title{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;color:var(--c-purple);letter-spacing:1px;}
+.tp-sub{font-size:9px;color:var(--t3);font-family:'Share Tech Mono',monospace;letter-spacing:.5px;margin-bottom:4px;}
+.tp-bar{height:4px;background:var(--bg4);border-radius:2px;overflow:hidden;}
+.tp-fill{height:100%;background:linear-gradient(90deg,var(--c-purple),var(--c-cyan));border-radius:2px;transition:width .4s;}
+.tp-lbl{font-size:8px;font-family:'Share Tech Mono',monospace;color:var(--t2);margin-top:3px;text-align:right;}
+#tlist{flex:1;overflow-y:auto;}
+#tlist::-webkit-scrollbar{width:3px;}
+#tlist::-webkit-scrollbar-thumb{background:var(--bd3);}
+.tgrp{border-bottom:1px solid var(--bd);}
+.tghdr{display:flex;align-items:center;padding:6px 10px;cursor:pointer;background:var(--bg2);gap:6px;transition:background .15s;}
+.tghdr:hover{background:var(--bgh);}
+.tghdr.done{background:rgba(0,230,118,.06);}
+.tgico{font-size:13px;flex-shrink:0;}
+.tgname{font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;color:var(--t1);flex:1;}
+.tgscore{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--t3);}
+.tgscore.done{color:var(--c-green);}
+.tgbody{display:block;}
+.titem{display:flex;align-items:flex-start;padding:6px 10px 5px 8px;gap:7px;border-top:1px solid rgba(255,255,255,.022);}
+.titem.done{background:rgba(0,230,118,.04);}
+.titem.active{background:rgba(199,125,255,.06);}
+.tchk{width:14px;height:14px;border-radius:3px;border:1px solid var(--bd3);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:10px;}
+.titem.done .tchk{background:var(--c-green);border-color:var(--c-green);color:#000;}
+.tnum{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--t3);flex-shrink:0;margin-top:2px;width:18px;}
+.ttext{font-size:10px;color:var(--t2);line-height:1.4;flex:1;}
+.titem.done .ttext{text-decoration:line-through;text-decoration-color:rgba(0,230,118,.35);}
+.titem.active .ttext{color:var(--t1);}
+.thint{font-size:9px;color:var(--t3);margin-top:2px;font-family:'Share Tech Mono',monospace;display:none;}
+.titem.active .thint{display:block;}
+.tp-foot{padding:8px;border-top:1px solid var(--bd);}
+.tpbtn{width:100%;padding:7px;font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;border-radius:3px;transition:all .15s;border:1px solid;}
+.tpbtn-check{background:rgba(199,125,255,.1);border-color:rgba(199,125,255,.3);color:var(--c-purple);}
+.tpbtn-check:hover{background:rgba(199,125,255,.2);}
+.tpbtn-next{background:rgba(0,230,118,.12);border-color:rgba(0,230,118,.35);color:var(--c-green);margin-top:6px;display:none;}
+.tpbtn-next:hover{background:rgba(0,230,118,.22);}
+
+/* CONSOLE */
+#con{height:155px;flex-shrink:0;background:#040609;border-top:1px solid var(--bd);display:flex;flex-direction:column;}
+.con-hdr{height:25px;background:var(--bg2);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 10px;gap:8px;flex-shrink:0;}
+.con-title{font-size:9px;font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--t3);letter-spacing:2px;text-transform:uppercase;}
+.con-dev{font-size:9px;font-family:'Share Tech Mono',monospace;color:var(--c-cyan);}
+.con-cls{margin-left:auto;background:none;border:none;color:var(--t3);font-size:9px;cursor:pointer;font-family:'Share Tech Mono',monospace;padding:2px 6px;border-radius:2px;}
+.con-cls:hover{background:var(--bgh);color:var(--t1);}
+.con-hint{font-size:8.5px;color:var(--t3);font-family:'Share Tech Mono',monospace;margin-left:6px;}
+#cout{flex:1;overflow-y:auto;padding:4px 10px;font-family:'Share Tech Mono',monospace;font-size:10.5px;line-height:1.7;}
+#cout::-webkit-scrollbar{width:3px;}
+#cout::-webkit-scrollbar-thumb{background:var(--bd3);}
+.lc{color:#7088b8;}.lo{color:var(--c-green);}.le{color:var(--c-red);}
+.li{color:var(--c-cyan);}.lw{color:var(--c-orange);}.ls{color:var(--t3);}
+.lip{color:var(--c-yellow);}.lt{color:#5070a0;}.lr{color:var(--c-purple);}
+#cin-row{height:25px;flex-shrink:0;display:flex;align-items:center;padding:0 10px;gap:6px;border-top:1px solid var(--bd);background:rgba(0,0,0,.3);}
+#cin-p{font-family:'Share Tech Mono',monospace;font-size:10.5px;color:var(--c-green);white-space:nowrap;flex-shrink:0;}
+#cin{flex:1;background:none;border:none;outline:none;font-family:'Share Tech Mono',monospace;font-size:10.5px;color:var(--c-green);caret-color:var(--c-green);}
+
+/* MODALS */
+.overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);z-index:1000;display:flex;align-items:center;justify-content:center;}
+.overlay.hid{display:none;}
+.mbox{background:var(--bg3);border:1px solid var(--bd3);box-shadow:0 24px 70px rgba(0,0,0,.9);display:flex;flex-direction:column;}
+.mhdr{display:flex;align-items:center;padding:11px 15px;border-bottom:1px solid var(--bd2);background:var(--bg2);}
+.mtype{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--t2);padding:2px 8px;border:1px solid var(--bd2);margin-right:10px;}
+.mtitle{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;color:var(--t1);flex:1;}
+.mclose{background:none;border:none;color:var(--t3);font-size:16px;cursor:pointer;padding:2px 6px;}
+.mclose:hover{color:var(--c-red);}
+.mbody{padding:16px;overflow-y:auto;}
+.msec{margin-bottom:14px;}
+.mstitle{font-family:'Rajdhani',sans-serif;font-size:10px;font-weight:700;color:var(--t3);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;border-bottom:1px solid var(--bd2);padding-bottom:4px;}
+.mrow{display:flex;align-items:flex-start;gap:10px;margin-bottom:9px;}
+.mlbl{font-size:10px;color:var(--t2);width:130px;flex-shrink:0;font-family:'Share Tech Mono',monospace;padding-top:6px;}
+.minp{width:100%;background:var(--bg2);border:1px solid var(--bd3);color:var(--t1);font-family:'Share Tech Mono',monospace;font-size:11px;padding:5px 8px;outline:none;transition:border-color .15s;}
+.minp:focus{border-color:var(--c-purple);}
+.minp.ok{border-color:rgba(0,230,118,.5);}
+.minp.er{border-color:rgba(255,60,60,.5);}
+.minp[readonly]{color:var(--t3);}
+.mhint{font-size:9px;color:var(--t3);margin-top:3px;font-family:'Share Tech Mono',monospace;}
+.mhint.ok{color:var(--c-green);}
+.mhint.er{color:var(--c-red);}
+.minfo{background:rgba(199,125,255,.04);border:1px solid rgba(199,125,255,.15);padding:10px 12px;font-size:10px;color:var(--t2);line-height:1.7;margin-bottom:12px;border-radius:2px;}
+.minfo strong{color:var(--c-purple);}
+.merr{color:var(--c-red);font-size:10px;font-family:'Share Tech Mono',monospace;margin-top:5px;min-height:15px;}
+.mftr{display:flex;justify-content:flex-end;gap:8px;padding:10px 15px;border-top:1px solid var(--bd2);background:var(--bg2);}
+.bsv{background:rgba(0,230,118,.15);border:1px solid rgba(0,230,118,.4);color:var(--c-green);font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;padding:6px 20px;cursor:pointer;letter-spacing:1px;transition:all .15s;}
+.bsv:hover{background:rgba(0,230,118,.28);}
+.bcl{background:transparent;border:1px solid var(--bd3);color:var(--t2);font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;padding:6px 16px;cursor:pointer;letter-spacing:1px;transition:all .15s;}
+.bcl:hover{color:var(--t1);background:var(--bgh);}
+
+/* Router CLI Modal */
+#rcli-modal .mbox{width:620px;box-shadow:0 24px 70px rgba(0,0,0,.95),0 0 0 1px rgba(199,125,255,.12);}
+#rcli-out{height:280px;background:#030408;padding:8px 12px;overflow-y:auto;font-family:'Share Tech Mono',monospace;font-size:11px;line-height:1.8;}
+#rcli-out::-webkit-scrollbar{width:3px;}
+#rcli-out::-webkit-scrollbar-thumb{background:var(--bd3);}
+#rcli-row{display:flex;align-items:center;padding:4px 12px;gap:6px;border-top:1px solid var(--bd2);background:rgba(0,0,0,.5);}
+#rcli-p{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--c-purple);white-space:nowrap;flex-shrink:0;}
+#rcli-in{flex:1;background:none;border:none;outline:none;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--c-purple);caret-color:var(--c-purple);}
+.rcli-status{display:flex;gap:16px;padding:6px 12px;background:var(--bg2);border-top:1px solid var(--bd2);}
+.rcli-if{font-family:'Share Tech Mono',monospace;font-size:9px;display:flex;align-items:center;gap:5px;}
+.rcli-if-dot{width:7px;height:7px;border-radius:50%;background:var(--t3);border:1px solid var(--bd3);}
+.rcli-if-dot.up{background:var(--c-green);box-shadow:0 0 4px var(--c-green);}
+.rcli-hint{font-size:9px;color:var(--t3);font-family:'Share Tech Mono',monospace;padding:4px 12px 5px;background:rgba(199,125,255,.03);border-top:1px solid rgba(199,125,255,.08);}
+
+/* Success */
+.sinner{text-align:center;padding:28px 22px 16px;}
+.sico{font-size:54px;margin-bottom:10px;}
+.stit{font-family:'Rajdhani',sans-serif;font-size:26px;font-weight:700;color:var(--c-green);letter-spacing:3px;margin-bottom:8px;}
+.ssub{font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:18px;}
+.sstats{display:flex;gap:12px;justify-content:center;margin-bottom:18px;}
+.sstat{background:var(--bg4);border:1px solid var(--bd3);padding:10px 16px;text-align:center;}
+.ssval{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--c-purple);}
+.sslbl{font-size:9px;color:var(--t3);font-family:'Share Tech Mono',monospace;margin-top:2px;}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:var(--bd3);border-radius:2px;}
+/* ═══════════════════════════════════════════════ FIX: RIGHT PANEL VISIBLE ═══════════════════════════════════════════════ */
+#taskp {
+  position: relative;
+  z-index: 1001 !important;
+}
+
+.overlay {
+  right: 295px !important;
+  width: auto !important;
+  left: 0 !important;
+}
+
+/* Адаптация для маленьких экранов */
+@media (max-width: 1200px) {
+  .overlay {
+    right: 0 !important;
+  }
+  #taskp {
+    z-index: 1000 !important;
+  }
+}
+</style>
+</head>
+<body class="day">
+
+<!-- HEADER -->
+<div id="hdr">
+  <div class="logo"><div class="logo-gem">N</div>NetSim Pro</div>
+  <div class="hmenu">
+    <button class="hmb">Файл</button>
+    <button class="hmb">Сеть</button>
+    <button class="hmb">Вид</button>
+    <button class="hmb" onclick="resetLab()">Сбросить</button>
+    <button class="hmb" onclick="showHelpDlg()">Справка</button>
+  </div>
+  <div class="hdr-r">
+    <div class="pmini">Выполнено: <span id="hdr-done">0</span>/<span id="hdr-tot">54</span></div>
+    <div id="hdots"></div>
+    <div class="lab-badge">ЛАБ 3 / 6 — МАРШРУТИЗАЦИЯ</div>
+  </div>
+</div>
+
+<!-- INFO BAR -->
+<div id="ibar">
+  <div class="ibi">📡 Роутер: <span class="ibv" id="ib-rt">не настроен</span></div>
+  <span class="ibs">|</span>
+  <div class="ibi">🖥 Подсеть 1 (PC): <span class="ibv" id="ib-s1">0/3</span></div>
+  <span class="ibs">|</span>
+  <div class="ibi">🖥 Подсеть 2 (PC+SRV): <span class="ibv" id="ib-s2">0/3</span></div>
+  <span class="ibs">|</span>
+  <div class="ibi">🏓 Межсетевых ping: <span class="ibv" id="ib-xping">0</span></div>
+  <span class="ibs">|</span>
+  <div class="ibi">Активно: <span class="ibv ok" id="ib-dev">—</span></div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div id="devp">
+    <div class="dp-head">Устройства</div>
+    <div id="dev-list"></div>
+  </div>
+  <div id="cvw">
+    <div id="zone-left"></div>
+    <div id="zone-right"></div>
+    <div id="zone-left-lbl">192.168.1.0/24</div>
+    <div id="zone-right-lbl">192.168.2.0/24</div>
+    <svg id="conn-svg">
+      <defs>
+        <filter id="glow"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+    </svg>
+    <div id="canvas-nodes"></div>
+  </div>
+  <div id="taskp">
+    <div class="tp-hdr">
+      <div class="tp-title">ЛАБ. 3: МАРШРУТИЗАЦИЯ</div>
+      <div class="tp-sub">Интерфейсы · шлюзы · разные подсети</div>
+      <div class="tp-bar"><div class="tp-fill" id="tp-fill" style="width:0%"></div></div>
+      <div class="tp-lbl"><span id="tp-done">0</span>/<span id="tp-total">54</span> заданий выполнены</div>
+    </div>
+    <div id="tlist"></div>
+    <div class="tp-foot">
+      <button class="tpbtn tpbtn-check" onclick="runChecks()">✓ Проверить прогресс</button>
+      <button class="tpbtn tpbtn-next" id="btn-next">→ Лабораторная 4</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONSOLE -->
+<div id="con" onclick="focusCin()">
+  <div class="con-hdr">
+    <span class="con-title">Консоль / Терминал</span>
+    <span class="con-dev" id="con-dev">нет устройства</span>
+    <button class="con-cls" onclick="clearCon();event.stopPropagation()">cls</button>
+    <span class="con-hint">help | devices | select [имя] | ipconfig | ping [IP] | tracert [IP] | route print</span>
+  </div>
+  <div id="cout"></div>
+  <div id="cin-row">
+    <span id="cin-p">C:\&gt;</span>
+    <input id="cin" autocomplete="off" spellcheck="false" placeholder="введите команду и нажмите Enter">
+  </div>
+</div>
+
+<!-- PC CONFIG MODAL -->
+<div class="overlay hid" id="cfg-modal">
+  <div class="mbox" style="width:460px">
+    <div class="mhdr">
+      <div class="mtype" id="cfg-badge">ПК</div>
+      <div class="mtitle" id="cfg-title">Настройки</div>
+      <button class="mclose" onclick="closeModal('cfg-modal')">✕</button>
+    </div>
+    <div class="mbody">
+      <div class="minfo" id="cfg-info">
+        Укажите IP-адрес, маску и <strong>шлюз по умолчанию</strong> (Default Gateway).<br>
+        Шлюз — это IP-адрес ближайшего интерфейса маршрутизатора.
+      </div>
+      <div class="msec">
+        <div class="mstitle">Идентификация</div>
+        <div class="mrow"><span class="mlbl">Имя</span><input class="minp" id="cfg-name" readonly></div>
+        <div class="mrow"><span class="mlbl">MAC-адрес</span><input class="minp" id="cfg-mac" readonly></div>
+      </div>
+      <div class="msec">
+        <div class="mstitle">Сетевые настройки</div>
+        <div class="mrow">
+          <span class="mlbl">IP-адрес</span>
+          <div style="flex:1"><input class="minp" id="cfg-ip" placeholder="напр. 192.168.1.1">
+          <div class="mhint" id="cfg-ip-hint">Введите IPv4-адрес</div></div>
+        </div>
+        <div class="mrow">
+          <span class="mlbl">Маска подсети</span>
+          <div style="flex:1"><input class="minp" id="cfg-mask" placeholder="255.255.255.0">
+          <div class="mhint">Стандартная маска /24</div></div>
+        </div>
+        <div class="mrow">
+          <span class="mlbl">Шлюз (Gateway)</span>
+          <div style="flex:1"><input class="minp" id="cfg-gw" placeholder="напр. 192.168.1.254">
+          <div class="mhint" id="cfg-gw-hint">IP-адрес интерфейса роутера в этой подсети</div></div>
+        </div>
+        <div class="merr" id="cfg-err"></div>
+      </div>
+    </div>
+    <div class="mftr">
+      <button class="bcl" onclick="closeModal('cfg-modal')">Отмена</button>
+      <button class="bsv" onclick="saveCfg()">💾 Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- ROUTER CLI MODAL -->
+<div class="overlay hid" id="rcli-modal">
+  <div class="mbox" id="rcli-mbox" style="width:640px">
+    <div class="mhdr" style="background:#0a0512;border-bottom-color:rgba(199,125,255,.2);">
+      <div class="mtype" style="color:var(--c-purple);border-color:rgba(199,125,255,.3);">МАРШРУТИЗАТОР</div>
+      <div class="mtitle" style="color:var(--c-purple);">R1 — Cisco IOS Terminal</div>
+      <div style="font-size:9px;font-family:'Share Tech Mono',monospace;color:var(--t3);margin-right:8px;">Модель: Cisco 2901</div>
+      <button class="mclose" onclick="closeModal('rcli-modal')">✕</button>
+    </div>
+    <div class="rcli-hint">
+      💡 Команды: <span style="color:var(--c-purple)">enable</span> · <span style="color:var(--c-purple)">conf t</span> · <span style="color:var(--c-purple)">interface fa0/0</span> · <span style="color:var(--c-purple)">ip address [IP] [MASK]</span> · <span style="color:var(--c-purple)">no shutdown</span> · <span style="color:var(--c-purple)">exit</span> · <span style="color:var(--c-purple)">show ip interface brief</span>
+    </div>
+    <div id="rcli-out"></div>
+    <div id="rcli-row">
+      <span id="rcli-p" style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--c-purple);">R1&gt;</span>
+      <input id="rcli-in" autocomplete="off" spellcheck="false" style="flex:1;background:none;border:none;outline:none;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--c-purple);caret-color:var(--c-purple);">
+    </div>
+    <div class="rcli-status">
+      <div class="rcli-if"><div class="rcli-if-dot" id="rif0-dot"></div><span style="color:var(--t2);">fa0/0:</span><span id="rif0-ip" style="color:var(--t3);">не настроен</span></div>
+      <div class="rcli-if"><div class="rcli-if-dot" id="rif1-dot"></div><span style="color:var(--t2);">fa0/1:</span><span id="rif1-ip" style="color:var(--t3);">не настроен</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- SUCCESS MODAL -->
+<div class="overlay hid" id="smod">
+  <div class="mbox" style="width:510px">
+    <div class="sinner">
+      <div class="sico">🎉</div>
+      <div class="stit">ОТЛИЧНО!</div>
+      <div class="ssub">
+        Лабораторная работа 3 завершена!<br>
+        Вы настроили маршрутизатор и связали две подсети.<br><br>
+        В <strong style="color:var(--c-cyan)">Лабораторной 4</strong> изучим DNS и сетевые службы.
+      </div>
+      <div class="sstats">
+        <div class="sstat"><div class="ssval" id="s-xping">0</div><div class="sslbl">МЕЖСЕТЕВЫХ PING</div></div>
+        <div class="sstat"><div class="ssval">9</div><div class="sslbl">УСТРОЙСТВ</div></div>
+        <div class="sstat"><div class="ssval" id="s-tasks">54</div><div class="sslbl">ЗАДАНИЙ</div></div>
+      </div>
+    </div>
+    <div class="mftr" style="justify-content:center">
+      <button class="bsv" onclick="closeModal('smod')">Продолжить</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* ═══════════════════════════════════════════════ TOPOLOGY DATA ═══════════════════════════════════════════════ */
+const DEVS0 = [
+  {id:'pc1',type:'pc',    name:'PC-1',   subnet:1, x:115,y:105, ip:'',mask:'255.255.255.0',gw:'',mac:'AA:01:00:00:00:01'},
+  {id:'pc2',type:'pc',    name:'PC-2',   subnet:1, x:115,y:245, ip:'',mask:'255.255.255.0',gw:'',mac:'AA:01:00:00:00:02'},
+  {id:'pc3',type:'pc',    name:'PC-3',   subnet:1, x:115,y:385, ip:'',mask:'255.255.255.0',gw:'',mac:'AA:01:00:00:00:03'},
+  {id:'sw1', type:'switch',name:'SW-1',  subnet:1, x:295,y:245, ip:'',mask:'',              gw:'',mac:'AA:01:00:00:00:10'},
+  {id:'r1',  type:'router',name:'R1',    subnet:0, x:500,y:245, ip:'',mask:'',              gw:'',mac:'AA:00:00:00:00:FF'},
+  {id:'sw2', type:'switch',name:'SW-2',  subnet:2, x:705,y:245, ip:'',mask:'',              gw:'',mac:'AA:02:00:00:00:10'},
+  {id:'pc4', type:'pc',    name:'PC-4',  subnet:2, x:890,y:120, ip:'',mask:'255.255.255.0',gw:'',mac:'AA:02:00:00:00:01'},
+  {id:'pc5', type:'pc',    name:'PC-5',  subnet:2, x:890,y:245, ip:'',mask:'255.255.255.0',gw:'',mac:'AA:02:00:00:00:02'},
+  {id:'srv2',type:'server',name:'SRV-2', subnet:2, x:890,y:370, ip:'',mask:'255.255.255.0',gw:'',mac:'AA:02:00:00:00:50'},
+];
+const CONS0 = [
+  {id:'c1',from:'pc1',to:'sw1'},{id:'c2',from:'pc2',to:'sw1'},{id:'c3',from:'pc3',to:'sw1'},
+  {id:'c4',from:'sw1',to:'r1'},{id:'c5',from:'r1',to:'sw2'},
+  {id:'c6',from:'pc4',to:'sw2'},{id:'c7',from:'pc5',to:'sw2'},{id:'c8',from:'srv2',to:'sw2'},
+];
+
+/* ═══════════════════════════════════════════════ ROUTER STATE ═══════════════════════════════════════════════ */
+const R = {
+  mode: 'user', currentIf: null,
+  interfaces: { 'fa0/0': {ip:'', mask:'', shutdown:true}, 'fa0/1': {ip:'', mask:'', shutdown:true} },
+  enableDone:false, showIfDone:false, showIpBrief:false, showRunDone:false, confTDone:false,
+  if0Entered:false, if1Entered:false, ip0Set:false, ip1Set:false, noShut0:false, noShut1:false,
+  if0Exited:false, if1Exited:false,
+  exitedConfig:false, cliOpened:false, cliHistory:[], cliHistIdx:-1,
+};
+
+/* ═══════════════════════════════════════════════ GLOBAL STATE ═══════════════════════════════════════════════ */
+const G = {
+  devices: JSON.parse(JSON.stringify(DEVS0)), connections: JSON.parse(JSON.stringify(CONS0)),
+  selected: null, conDev: null, cfgDevice: null, consoleClicked: false, helpRun: false, devicesRun: false,
+  ipconfigMultiple: new Set(), ipconfigOnPC1WithGW: false,
+  ipconfigOnPC4: false, ipconfigOnSrv: false, selectConsolePC1: false, selectConsolePC4: false,
+  selectConsoleSrv: false, selectedRouter: false, routePrintRun: false, arpRun: false, tracertRun: false,
+  tracertShownGW: false, invalidIPAttempted: false, duplicateIPAttempted: false, noGWPingTried: false,
+  pingLog: [], successPings: 0, crossPings: 0, totalPings: 0, arpTable: {}, taskDone: {},
+  prevDone: 0, cmdHistory: [], cmdHistIdx: -1,
+};
+
+/* ═══════════════════════════════════════════════ TASK DEFINITIONS ═══════════════════════════════════════════════ */
+const GROUPS = [
+  {id:'g1',icon:'🔍',name:'Обзор топологии',tasks:[
+    {id:1,  t:'Найдите роутер R1 в центре холста',             h:'Роутер — оранжевое устройство посередине',      c:()=>G.devices.length>=9},
+    {id:2,  t:'Найдите 2 коммутатора (SW-1 и SW-2)',           h:'Синие устройства справа и слева от роутера',   c:()=>G.connections.length>=8},
+    {id:3,  t:'Обратите внимание: зоны двух подсетей',         h:'Левая = 192.168.1.0/24, правая = 192.168.2.0/24',c:()=>G.devices.length>=9},
+    {id:4,  t:'Кликните на область консоли',                   h:'Нажмите в нижнюю панель',                      c:()=>G.consoleClicked},
+    {id:5,  t:'Введите: help',                                  h:'→ help',                                        c:()=>G.helpRun},
+    {id:6,  t:'Введите: devices',                               h:'→ devices (список всех устройств)',             c:()=>G.devicesRun},
+  ]},
+  {id:'g2',icon:'📡',name:'Роутер: первое знакомство',tasks:[
+    {id:7,  t:'Кликните на роутер R1',                         h:'Одиночный клик → выделение',                   c:()=>G.selectedRouter},
+    {id:8,  t:'Откройте терминал роутера (двойной клик)',      h:'Двойной клик на R1 → откроется Cisco IOS CLI', c:()=>R.cliOpened},
+    {id:9,  t:'Введите команду: enable',                       h:'→ enable (вход в привилегированный режим)',     c:()=>R.enableDone},
+    {id:10, t:'Введите: show interfaces',                      h:'→ show interfaces (статус портов)',             c:()=>R.showIfDone},
+    {id:11, t:'Введите: show ip interface brief',              h:'→ show ip interface brief',                     c:()=>R.showIpBrief},
+    {id:12, t:'Введите: show running-config',                  h:'→ show running-config (текущая конфигурация)', c:()=>R.showRunDone},
+  ]},
+  {id:'g3',icon:'⚙',name:'Роутер: настройка fa0/0',tasks:[
+    {id:13, t:'Войдите в режим конфигурации: conf t',          h:'→ configure terminal (или conf t)',             c:()=>R.confTDone},
+    {id:14, t:'Перейдите на интерфейс: interface fa0/0',       h:'→ interface fa0/0 (или int fa0/0)',             c:()=>R.if0Entered},
+    {id:15, t:'Назначьте IP: ip address 192.168.1.254 255.255.255.0',h:'→ ip address 192.168.1.254 255.255.255.0',c:()=>R.ip0Set},
+    {id:16, t:'Активируйте порт: no shutdown',                 h:'→ no shutdown (или no shut)',                   c:()=>R.noShut0},
+    {id:17, t:'Выйдите: exit',                                 h:'→ exit (назад в режим конфигурации)',           c:()=>R.if0Exited},
+    {id:18, t:'Кабель SW-1 ↔ R1 стал зелёным с подсветкой',  h:'Порт fa0/0 активен → кабель зелёный',          c:()=>routerCableGreen('sw1')},
+  ]},
+  {id:'g4',icon:'⚙',name:'Роутер: настройка fa0/1',tasks:[
+    {id:19, t:'Перейдите на интерфейс: interface fa0/1',       h:'→ interface fa0/1 (или int fa0/1)',             c:()=>R.if1Entered},
+    {id:20, t:'Назначьте IP: ip address 192.168.2.254 255.255.255.0',h:'→ ip address 192.168.2.254 255.255.255.0',c:()=>R.ip1Set},
+    {id:21, t:'Активируйте порт: no shutdown',                 h:'→ no shutdown',                                 c:()=>R.noShut1},
+    {id:22, t:'Введите: end (выйти из конфигурации)',          h:'→ end (вернуться в привилегированный режим)',   c:()=>R.exitedConfig},
+    {id:23, t:'Проверьте: show ip interface brief',            h:'→ show ip interface brief (оба должны быть up)',c:()=>R.showIpBrief&&R.ip0Set&&R.ip1Set},
+    {id:24, t:'Оба интерфейса роутера показывают UP/UP',       h:'fa0/0 и fa0/1 должны быть активны',            c:()=>bothIfUp()},
+  ]},
+  {id:'g5',icon:'🖥',name:'Настройка ПК: подсеть 1',tasks:[
+    {id:25, t:'PC-1: IP 192.168.1.1, шлюз 192.168.1.254',     h:'Двойной клик на PC-1 → IP + Gateway',          c:()=>dv('pc1').ip==='192.168.1.1'&&dv('pc1').gw==='192.168.1.254'},
+    {id:26, t:'PC-2: IP 192.168.1.2, шлюз 192.168.1.254',     h:'Двойной клик на PC-2',                         c:()=>dv('pc2').ip==='192.168.1.2'&&dv('pc2').gw==='192.168.1.254'},
+    {id:27, t:'PC-3: IP 192.168.1.3, шлюз 192.168.1.254',     h:'Двойной клик на PC-3',                         c:()=>dv('pc3').ip==='192.168.1.3'&&dv('pc3').gw==='192.168.1.254'},
+    {id:28, t:'Все ПК подсети 1 имеют маску 255.255.255.0',    h:'Маска заполняется автоматически',               c:()=>subnet1().every(d=>d.mask==='255.255.255.0')},
+    {id:29, t:'Введите ipconfig на PC-1 — виден Gateway',      h:'select PC-1 → ipconfig',                       c:()=>G.ipconfigOnPC1WithGW},
+  ]},
+  {id:'g6',icon:'🖥',name:'Настройка ПК: подсеть 2',tasks:[
+    {id:30, t:'PC-4: IP 192.168.2.1, шлюз 192.168.2.254',     h:'Двойной клик на PC-4 → IP + Gateway',          c:()=>dv('pc4').ip==='192.168.2.1'&&dv('pc4').gw==='192.168.2.254'},
+    {id:31, t:'PC-5: IP 192.168.2.2, шлюз 192.168.2.254',     h:'Двойной клик на PC-5',                         c:()=>dv('pc5').ip==='192.168.2.2'&&dv('pc5').gw==='192.168.2.254'},
+    {id:32, t:'SRV-2: IP 192.168.2.100, шлюз 192.168.2.254',  h:'Двойной клик на SRV-2',                        c:()=>dv('srv2').ip==='192.168.2.100'&&dv('srv2').gw==='192.168.2.254'},
+    {id:33, t:'Все устройства подсети 2 имеют шлюз',           h:'Шлюз для подсети 2 = 192.168.2.254',           c:()=>subnet2().every(d=>d.gw==='192.168.2.254')},
+    {id:34, t:'Введите ipconfig на PC-4 — виден Gateway',      h:'select PC-4 → ipconfig',                       c:()=>G.ipconfigOnPC4},
+  ]},
+  {id:'g7',icon:'📡',name:'Первый межсетевой ping',tasks:[
+    {id:35, t:'Выберите PC-1 в консоли: select PC-1',          h:'→ select PC-1',                                 c:()=>G.selectConsolePC1},
+    {id:36, t:'Пропингуйте PC-2 (своя подсеть): ping 192.168.1.2',h:'→ ping 192.168.1.2 (без роутера)',         c:()=>pingOK('pc1','192.168.1.2')},
+    {id:37, t:'Пропингуйте PC-4 (другая подсеть): ping 192.168.2.1',h:'→ ping 192.168.2.1 (через роутер!)',     c:()=>pingOK('pc1','192.168.2.1')},
+    {id:38, t:'Пропингуйте SRV-2: ping 192.168.2.100',         h:'→ ping 192.168.2.100',                         c:()=>pingOK('pc1','192.168.2.100')},
+    {id:39, t:'Пропингуйте интерфейс роутера: ping 192.168.1.254',h:'→ ping 192.168.1.254 (шлюз)',              c:()=>pingOK('pc1','192.168.1.254')},
+    {id:40, t:'Попробуйте ping без шлюза (убедитесь, что нужен)',h:'→ ping 192.168.2.1 (без шлюза — ошибка)',   c:()=>G.noGWPingTried},
+    {id:41, t:'Итого успешных межсетевых ping: 2+',            h:'Пингуйте устройства из другой подсети',        c:()=>G.crossPings>=2},
+    {id:42, t:'Итого всего успешных ping: 4+',                  h:'Включая внутрисетевые',                        c:()=>G.successPings>=4},
+  ]},
+  {id:'g8',icon:'🔁',name:'Ping с разных устройств',tasks:[
+    {id:43, t:'Переключитесь на PC-4: select PC-4',            h:'→ select PC-4',                                 c:()=>G.selectConsolePC4},
+    {id:44, t:'Пропингуйте PC-1 с PC-4: ping 192.168.1.1',    h:'→ ping 192.168.1.1 (обратный маршрут)',        c:()=>pingOK('pc4','192.168.1.1')},
+    {id:45, t:'Пропингуйте PC-3 с PC-4: ping 192.168.1.3',    h:'→ ping 192.168.1.3',                            c:()=>pingOK('pc4','192.168.1.3')},
+    {id:46, t:'Переключитесь на SRV-2: select SRV-2',         h:'→ select SRV-2',                                c:()=>G.selectConsoleSrv},
+    {id:47, t:'Пропингуйте PC-2 с сервера: ping 192.168.1.2', h:'→ ping 192.168.1.2',                            c:()=>pingOK('srv2','192.168.1.2')},
+  ]},
+  {id:'g9',icon:'🗺',name:'Traceroute и маршруты',tasks:[
+    {id:48, t:'Введите: tracert 192.168.2.1 (с PC-1)',         h:'→ tracert 192.168.2.1',                         c:()=>G.tracertRun},
+    {id:49, t:'В tracert 1-й хоп — роутер 192.168.1.254',     h:'Проверьте вывод tracert — там должен быть шлюз',c:()=>G.tracertShownGW},
+    {id:50, t:'Введите: route print',                          h:'→ route print (таблица маршрутизации)',          c:()=>G.routePrintRun},
+    {id:51, t:'Введите ipconfig на 2+ устройствах',           h:'select <имя> → ipconfig, затем повторите',       c:()=>G.ipconfigMultiple.size>=2},
+    {id:52, t:'Введите: arp -a (после успешного ping)',       h:'Сначала выполните ping, затем arp -a',            c:()=>G.arpRun},
+    {id:53, t:'ARP-таблица содержит записи',                  h:'Проверьте вывод arp -a',                          c:()=>arpCount()>=1},
+  ]},
+  {id:'g10',icon:'✅',name:'Итоговая проверка',live:true,tasks:[
+    {id:54, t:'✔ Роутер: оба интерфейса настроены и активны',  h:'fa0/0 = 192.168.1.254, fa0/1 = 192.168.2.254', c:()=>bothIfUp()},
+    {id:55, t:'✔ Все 6 конечных узлов имеют IP и шлюзы',      h:'3 ПК в подсети 1, 2 ПК + сервер в подсети 2',  c:()=>allHostsReady()},
+    {id:56, t:'✔ Межсетевых успешных ping: 5+',               h:'Выполните ping между подсетями',                c:()=>G.crossPings>=5},
+    {id:57, t:'🌟 Сети 192.168.1.0/24 и 192.168.2.0/24 объединены!',h:'Завершите все задания выше',            c:()=>labComplete()},
+  ]},
+];
+const TASKS = GROUPS.flatMap(g => g.tasks);
+
+/* ═══════════════════════════════════════════════ HELPERS ═══════════════════════════════════════════════ */
+const dv = id => G.devices.find(d => d.id === id) || {ip:'',mask:'',gw:''};
+const pcs = () => G.devices.filter(d => d.type === 'pc');
+const subnet1 = () => G.devices.filter(d => d.subnet === 1 && d.type !== 'switch');
+const subnet2 = () => G.devices.filter(d => d.subnet === 2 && d.type !== 'switch');
+const getSW1 = () => G.devices.find(d => d.id === 'sw1');
+const getSW2 = () => G.devices.find(d => d.id === 'sw2');
+const getR1 = () => G.devices.find(d => d.id === 'r1');
+const devByIP = ip => G.devices.find(d => d.ip === ip) ||
+  (ip==='192.168.1.254'&&!R.interfaces['fa0/0'].shutdown&&R.interfaces['fa0/0'].ip==='192.168.1.254'?{id:'r1_f0',ip:'192.168.1.254',mac:'AA:00:FF:00:00:01',name:'R1 fa0/0',type:'router',gw:''}:null) ||
+  (ip==='192.168.2.254'&&!R.interfaces['fa0/1'].shutdown&&R.interfaces['fa0/1'].ip==='192.168.2.254'?{id:'r1_f1',ip:'192.168.2.254',mac:'AA:00:FF:00:00:02',name:'R1 fa0/1',type:'router',gw:''}:null);
+const validIP = ip => /^(\d{1,3}\.){3}\d{1,3}$/.test(ip||'') && ip.split('.').every(n=>+n<=255);
+
+function bothIfUp() {
+  return !R.interfaces['fa0/0'].shutdown && R.interfaces['fa0/0'].ip === '192.168.1.254' &&
+         !R.interfaces['fa0/1'].shutdown && R.interfaces['fa0/1'].ip === '192.168.2.254';
+}
+function allHostsReady() { return subnet1().every(d=>d.ip&&d.gw) && subnet2().every(d=>d.ip&&d.gw); }
+function routerCableGreen(swId) {
+  const c = G.connections.find(x=>(x.from===swId&&x.to==='r1')||(x.from==='r1'&&x.to===swId));
+  if(!c) return false; const sw = G.devices.find(d=>d.id===swId);
+  if(swId==='sw1') return !R.interfaces['fa0/0'].shutdown && !!R.interfaces['fa0/0'].ip;
+  if(swId==='sw2') return !R.interfaces['fa0/1'].shutdown && !!R.interfaces['fa0/1'].ip;
+  return false;
+}
+function pingOK(fromId, toIp) { return G.pingLog.some(p => p.from===fromId && p.to===toIp && p.ok); }
+function pingTried(fromId, toIp) { return G.pingLog.some(p => (fromId===null||p.from===fromId) && p.to===toIp); }
+function arpCount() { return Object.values(G.arpTable).reduce((s,a)=>s+a.length,0); }
+function isCrossSubnet(fromDev, toIp) {
+  if(!fromDev || !fromDev.ip) return false;
+  const fromPfx = fromDev.ip.split('.').slice(0,3).join('.');
+  const toPfx = toIp.split('.').slice(0,3).join('.');
+  return fromPfx !== toPfx;
+}
+function labComplete() { return bothIfUp() && allHostsReady() && G.crossPings >= 5; }
+
+function cableClass(c) {
+  const a = G.devices.find(d=>d.id===c.from), b = G.devices.find(d=>d.id===c.to);
+  if(!a||!b) return 'cn0';
+  if(a.type==='router'||b.type==='router') {
+    const swId = a.type==='router'?b.id:a.id;
+    return routerCableGreen(swId) ? 'cn-router' : 'cn0';
+  }
+  if(a.ip&&b.ip) return 'cn2'; if(a.ip||b.ip) return 'cn1'; return 'cn0';
+}
+function typeLabel(t){return{pc:'Рабочая станция',switch:'Коммутатор',server:'Сервер',router:'Маршрутизатор'}[t]||t;}
+
+/* ═══════════════════════════════════════════════ INIT ═══════════════════════════════════════════════ */
+function init() {
+  const dc = document.getElementById('hdots');
+  for(let i=0;i<10;i++){const d=document.createElement('div');d.className='hdot';d.id='hd'+i;dc.appendChild(d);}
+  G.devices.forEach(renderDev); redrawConns(); renderDevList(); renderTasks();
+  document.getElementById('cin').addEventListener('keydown', onCinKey);
+  document.getElementById('rcli-in').addEventListener('keydown', onRCliKey);
+  document.getElementById('con').addEventListener('click',()=>{G.consoleClicked=true;focusCin();});
+  document.getElementById('cvw').addEventListener('click', onCvwClick);
+  document.getElementById('cvw').addEventListener('dblclick', onCvwDbl);
+  clog('s','━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  clog('i','  NetSim Pro — Лабораторная 3: Маршрутизация');
+  clog('s','  Топология: 2 подсети, 1 маршрутизатор, 6 хостов');
+  clog('s','  Двойной клик на R1 → открыть терминал роутера');
+  clog('s','━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  setConDev(G.devices[0]); runChecks();
+}
+
+/* ═══════════════════════════════════════════════ DEVICE SVG & RENDER ═══════════════════════════════════════════════ */
+function devSVG(type, s) {
+  switch(type) {
+    case 'pc': return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 50 50"><rect x="3" y="5" width="44" height="28" rx="3" fill="#152515" stroke="#2e7d32" stroke-width="1.5"/><rect x="6" y="8" width="38" height="22" fill="#0a1a0a"/><text x="25" y="23" text-anchor="middle" fill="#00e676" font-size="11" font-family="monospace">&gt;_</text><rect x="20" y="33" width="10" height="4" fill="#2e7d32"/><rect x="13" y="37" width="24" height="3" rx="1" fill="#152515" stroke="#2e7d32" stroke-width=".8"/><circle cx="44" cy="7" r="2" fill="#00e676"/></svg>';
+    case 'switch': return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 50 50"><rect x="2" y="15" width="46" height="20" rx="3" fill="#0a1830" stroke="#1565c0" stroke-width="1.5"/><rect x="5" y="19" width="40" height="4" fill="#0d2040"/><rect x="6" y="25" width="3" height="7" rx="1" fill="#1565c0"/><rect x="11" y="25" width="3" height="7" rx="1" fill="#1565c0" opacity=".7"/><rect x="16" y="25" width="3" height="7" rx="1" fill="#1565c0"/><rect x="21" y="25" width="3" height="7" rx="1" fill="#1565c0" opacity=".7"/><rect x="26" y="25" width="3" height="7" rx="1" fill="#1565c0"/><rect x="31" y="25" width="3" height="7" rx="1" fill="#1565c0" opacity=".7"/><rect x="36" y="25" width="3" height="7" rx="1" fill="#1565c0"/><rect x="41" y="25" width="3" height="7" rx="1" fill="#1565c0" opacity=".7"/><circle cx="44" cy="17" r="2" fill="#00e676"/></svg>';
+    case 'server': return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 50 50"><rect x="5" y="3" width="40" height="44" rx="3" fill="#16092a" stroke="#7b1fa2" stroke-width="1.5"/><rect x="8" y="7" width="34" height="9" rx="2" fill="#220a3a" stroke="#7b1fa2" stroke-width=".8"/><rect x="8" y="19" width="34" height="9" rx="2" fill="#220a3a" stroke="#7b1fa2" stroke-width=".8"/><rect x="8" y="31" width="34" height="9" rx="2" fill="#220a3a" stroke="#7b1fa2" stroke-width=".8"/><circle cx="35" cy="11.5" r="2.5" fill="#00e676"/><circle cx="35" cy="23.5" r="2.5" fill="#00e676"/><circle cx="35" cy="35.5" r="2.5" fill="#ffd600"/></svg>';
+    case 'router': return '<svg width="'+(s+8)+'" height="'+(s+8)+'" viewBox="0 0 58 58"><circle cx="29" cy="29" r="24" fill="#1a0820" stroke="#9c27b0" stroke-width="1.5"/><circle cx="29" cy="29" r="15" fill="#0a0412" stroke="#c77dff" stroke-width="1"/><text x="29" y="26" text-anchor="middle" fill="#c77dff" font-size="10" font-family="Rajdhani,sans-serif" font-weight="700">fa0/0</text><text x="29" y="38" text-anchor="middle" fill="#c77dff" font-size="10" font-family="Rajdhani,sans-serif" font-weight="700">fa0/1</text><circle cx="5" cy="29" r="4" fill="#0a0412" stroke="#9c27b0" stroke-width="1"/><circle cx="53" cy="29" r="4" fill="#0a0412" stroke="#9c27b0" stroke-width="1"/></svg>';
+    default: return '';
+  }
+}
+
+function renderDev(d) {
+  const wrap = document.getElementById('canvas-nodes'), el = document.createElement('div');
+  el.className = 'dnode'; el.id = 'nd-'+d.id; el.style.left = d.x+'px'; el.style.top = d.y+'px';
+  const isRouter = d.type === 'router';
+  el.innerHTML = '<div class="dbody" id="db-'+d.id+'">' + devSVG(d.type, isRouter?54:50) + '</div>' +
+    '<div class="dname">' + d.name + '</div>' +
+    (isRouter ? '<div class="router-status"><div class="rif-dot" id="rn-if0"></div><div class="rif-dot" id="rn-if1"></div></div>' :
+    '<div class="dip none" id="dip-'+d.id+'">нет IP</div><div class="dgw none" id="dgw-'+d.id+'">нет GW</div>');
+  el.addEventListener('click', ev => { selectDev(d.id); ev.stopPropagation(); });
+  el.addEventListener('dblclick', ev => { if(d.type==='router') openRouterCLI(); else openCfg(d.id); ev.stopPropagation(); });
+  wrap.appendChild(el);
+}
+
+function updNodeDisplay(d) {
+  if(d.type==='router') {
+    const d0 = document.getElementById('rn-if0'), d1 = document.getElementById('rn-if1');
+    if(d0) d0.classList.toggle('up', !R.interfaces['fa0/0'].shutdown && !!R.interfaces['fa0/0'].ip);
+    if(d1) d1.classList.toggle('up', !R.interfaces['fa0/1'].shutdown && !!R.interfaces['fa0/1'].ip);
+    return;
+  }
+  const ipEl = document.getElementById('dip-'+d.id), gwEl = document.getElementById('dgw-'+d.id);
+  if(ipEl) { ipEl.textContent = d.ip||'нет IP'; ipEl.className = 'dip'+(d.ip?' ok':' none'); }
+  if(gwEl) { if(d.type==='switch') { gwEl.textContent=''; return; } gwEl.textContent = d.gw||'нет GW'; gwEl.className = 'dgw'+(d.gw?' ':'none'); }
+}
+
+/* ═══════════════════════════════════════════════ CONNECTIONS ═══════════════════════════════════════════════ */
+function redrawConns() {
+  const svg = document.getElementById('conn-svg');
+  [...svg.querySelectorAll('.cline')].forEach(l=>l.remove());
+  G.connections.forEach(c => {
+    const a = G.devices.find(d=>d.id===c.from), b = G.devices.find(d=>d.id===c.to);
+    if(!a||!b) return;
+    const ln = document.createElementNS('http://www.w3.org/2000/svg','line');
+    ln.setAttribute('x1',a.x); ln.setAttribute('y1',a.y); ln.setAttribute('x2',b.x); ln.setAttribute('y2',b.y);
+    ln.setAttribute('class','cline '+cableClass(c)); svg.appendChild(ln);
+  });
+}
+
+/* ═══════════════════════════════════════════════ DEVICE LIST ═══════════════════════════════════════════════ */
+function renderDevList() {
+  const list = document.getElementById('dev-list'); list.innerHTML = '';
+  const r1 = getR1(), rs = document.createElement('div');
+  rs.className = 'dli-subnet rt'; rs.textContent = '■ Маршрутизатор'; list.appendChild(rs);
+  addDevItem(list, r1);
+  const s1hdr = document.createElement('div'); s1hdr.className = 'dli-subnet s1'; s1hdr.textContent = '■ Подсеть 1 · 192.168.1.0/24'; list.appendChild(s1hdr);
+  G.devices.filter(d=>d.subnet===1).forEach(d=>addDevItem(list,d));
+  const s2hdr = document.createElement('div'); s2hdr.className = 'dli-subnet s2'; s2hdr.textContent = '■ Подсеть 2 · 192.168.2.0/24'; list.appendChild(s2hdr);
+  G.devices.filter(d=>d.subnet===2).forEach(d=>addDevItem(list,d));
+}
+
+function addDevItem(list, d) {
+  const el = document.createElement('div'); el.className = 'dli'+(G.selected===d.id?' sel':''); el.id = 'dli-'+d.id;
+  const dotCls = d.type==='router'?(bothIfUp()?'ok':'half'):(d.ip&&d.gw?'ok':d.ip?'half':'');
+  let ipText = '', gwText = '';
+  if(d.type==='router') { const f0 = R.interfaces['fa0/0'], f1 = R.interfaces['fa0/1']; ipText = (f0.ip||'—') + ' / ' + (f1.ip||'—'); gwText = ''; }
+  else { ipText = d.ip||'нет IP'; gwText = (d.type!=='switch')?(d.gw||'нет GW'):''; }
+  el.innerHTML = '<div class="dli-row"><span class="dli-dot '+dotCls+'"></span><span class="dli-name">'+d.name+'</span></div>'+
+    '<div class="dli-type">'+typeLabel(d.type)+'</div>'+
+    '<div class="dli-ip'+(d.ip||d.type==='router'?'':' none')+'">'+ipText+'</div>'+
+    (gwText?'<div class="dli-gw'+(d.gw?'':' none')+'">GW: '+gwText+'</div>':'');
+  el.addEventListener('click', () => { selectDev(d.id); });
+  el.addEventListener('dblclick', () => { if(d.type==='router') openRouterCLI(); else openCfg(d.id); });
+  list.appendChild(el);
+}
+
+function selectDev(id) {
+  G.selected = id;
+  document.querySelectorAll('.dnode').forEach(n=>n.classList.remove('sel'));
+  document.getElementById('nd-'+id)?.classList.add('sel');
+  document.querySelectorAll('.dli').forEach(n=>n.classList.remove('sel'));
+  document.getElementById('dli-'+id)?.classList.add('sel');
+  const d = G.devices.find(x=>x.id===id);
+  if(d && d.type==='router') G.selectedRouter = true;
+  runChecks();
+}
+function onCvwClick(e){ if(e.target===document.getElementById('cvw')||e.target===document.getElementById('canvas-nodes')){ G.selected=null; document.querySelectorAll('.dnode,.dli').forEach(n=>n.classList.remove('sel')); } }
+function onCvwDbl(e){ const nd=e.target.closest('.dnode'); if(nd){const id=nd.id.replace('nd-','');const d=G.devices.find(x=>x.id===id);if(d){if(d.type==='router')openRouterCLI();else openCfg(id);}} }
+
+/* ═══════════════════════════════════════════════ PC CONFIG MODAL ═══════════════════════════════════════════════ */
+function openCfg(id) {
+  const d = G.devices.find(x=>x.id===id); if(!d || d.type==='router'||d.type==='switch') return;
+  G.cfgDevice = d; const isS1 = d.subnet===1;
+  document.getElementById('cfg-badge').textContent = typeLabel(d.type).toUpperCase();
+  document.getElementById('cfg-title').textContent = 'Настройки: '+d.name;
+  document.getElementById('cfg-name').value = d.name; document.getElementById('cfg-mac').value = d.mac;
+  document.getElementById('cfg-ip').value = d.ip; document.getElementById('cfg-ip').className = 'minp'+(d.ip?' ok':'');
+  document.getElementById('cfg-mask').value = d.mask||'255.255.255.0';
+  document.getElementById('cfg-gw').value = d.gw; document.getElementById('cfg-gw').className = 'minp'+(d.gw?' ok':'');
+  document.getElementById('cfg-err').textContent = '';
+  document.getElementById('cfg-info').innerHTML = 'Укажите IP-адрес и <strong>шлюз (Gateway)</strong> — IP-адрес интерфейса роутера.<br>'+
+    '<strong>Подсеть:</strong> 192.168.'+d.subnet+'.0/24 &nbsp;|&nbsp; <strong>Шлюз:</strong> 192.168.'+d.subnet+'.254';
+  const gwHint = document.getElementById('cfg-gw-hint');
+  gwHint.textContent = isS1 ? 'Для подсети 1 шлюз = 192.168.1.254 (fa0/0 роутера)' : 'Для подсети 2 шлюз = 192.168.2.254 (fa0/1 роутера)';
+  document.getElementById('cfg-modal').classList.remove('hid');
+  setTimeout(()=>document.getElementById('cfg-ip').focus(),60); runChecks();
+}
+
+function saveCfg() {
+  const d = G.cfgDevice; if(!d) return;
+  const newIP = document.getElementById('cfg-ip').value.trim(), newMask = document.getElementById('cfg-mask').value.trim()||'255.255.255.0', newGW = document.getElementById('cfg-gw').value.trim(), errEl = document.getElementById('cfg-err');
+  if(newIP && !validIP(newIP)){ errEl.textContent='✗ Неверный IP-адрес (пример: 192.168.1.1)'; document.getElementById('cfg-ip').className='minp er'; G.invalidIPAttempted=true; runChecks(); return; }
+  if(newIP){ const other=G.devices.find(x=>x.id!==d.id&&x.ip===newIP); if(other){errEl.textContent='✗ IP '+newIP+' уже занят: '+other.name; document.getElementById('cfg-ip').className='minp er'; G.duplicateIPAttempted=true; runChecks(); return;} }
+  if(newGW && !validIP(newGW)){ errEl.textContent='✗ Неверный адрес шлюза'; runChecks(); return; }
+  d.ip=newIP; d.mask=newMask; d.gw=newGW; if(newIP) clog('o','✓ '+d.name+': IP='+newIP+' GW='+(newGW||'не задан'));
+  closeModal('cfg-modal'); updNodeDisplay(d); redrawConns(); renderDevList(); updInfoBar(); runChecks();
+}
+function closeModal(id){ document.getElementById(id).classList.add('hid'); }
+
+/* ═══════════════════════════════════════════════ ROUTER CLI ═══════════════════════════════════════════════ */
+function openRouterCLI() {
+  R.cliOpened = true; document.getElementById('rcli-modal').classList.remove('hid'); updRouterStatusBar();
+  setTimeout(()=>document.getElementById('rcli-in').focus(),60);
+  if(document.getElementById('rcli-out').children.length===0) {
+    rlog('s',''); rlog('s','Cisco IOS Software, Version 15.2(4)M5'); rlog('s','Router uptime is 0 minutes'); rlog('s',''); rlog('s','R1>');
+    R.mode='user'; updRPrompt();
+  } runChecks();
+}
+function rlog(cls,txt){ const out=document.getElementById('rcli-out'), line=document.createElement('div'); const clsMap={s:'ls',o:'lo',e:'le',i:'lr',w:'lw',c:'lc'}; line.className=clsMap[cls]||'ls'; line.textContent=txt; out.appendChild(line); out.scrollTop=out.scrollHeight; }
+function updRPrompt() { const p = document.getElementById('rcli-p'); const m = { user:'R1>', priv:'R1#', config:'R1(config)#', 'config-if':'R1(config-if)#' }; p.textContent = m[R.mode] || 'R1>'; }
+function updRouterStatusBar() {
+  const f0=R.interfaces['fa0/0'], f1=R.interfaces['fa0/1'];
+  const d0=document.getElementById('rif0-dot'), d1=document.getElementById('rif1-dot');
+  const i0=document.getElementById('rif0-ip'), i1=document.getElementById('rif1-ip');
+  if(d0){d0.classList.toggle('up',!f0.shutdown&&!!f0.ip);} if(d1){d1.classList.toggle('up',!f1.shutdown&&!!f1.ip);}
+  if(i0){i0.textContent=f0.ip?(f0.ip+(f0.shutdown?' [SHUTDOWN]':' [UP]')):'не настроен'; i0.style.color=!f0.shutdown&&f0.ip?'var(--c-green)':'var(--t3)';}
+  if(i1){i1.textContent=f1.ip?(f1.ip+(f1.shutdown?' [SHUTDOWN]':' [UP]')):'не настроен'; i1.style.color=!f1.shutdown&&f1.ip?'var(--c-green)':'var(--t3)';}
+}
+function onRCliKey(e) {
+  const inp=document.getElementById('rcli-in');
+  if(e.key==='Enter'){ const raw=inp.value.trim(); if(!raw)return; R.cliHistory.unshift(raw); if(R.cliHistory.length>50)R.cliHistory.pop(); R.cliHistIdx=-1; inp.value=''; rlog('c',document.getElementById('rcli-p').textContent+' '+raw); execRCmd(raw.toLowerCase().trim()); }
+  else if(e.key==='ArrowUp'){e.preventDefault();R.cliHistIdx=Math.min(R.cliHistIdx+1,R.cliHistory.length-1);inp.value=R.cliHistory[R.cliHistIdx]||'';}
+  else if(e.key==='ArrowDown'){e.preventDefault();R.cliHistIdx=Math.max(R.cliHistIdx-1,-1);inp.value=R.cliHistIdx>=0?R.cliHistory[R.cliHistIdx]:'';}
+}
+function execRCmd(raw) {
+  const parts = raw.split(/\s+/), cmd = parts[0];
+  if(R.mode==='user') {
+    if(cmd==='enable'){R.enableDone=true;R.mode='priv';rlog('o','R1#');updRPrompt();}
+    else if(cmd==='exit'||cmd==='quit'){closeModal('rcli-modal');}
+    else{rlog('e','% Unknown command. Try enable first.');} runChecks(); return;
+  }
+  if(R.mode==='priv') {
+    if(cmd==='configure'||cmd==='conf'){R.confTDone=true;R.mode='config';rlog('o','Enter configuration commands, one per line. End with CNTL/Z.');rlog('i','R1(config)#');updRPrompt();}
+    else if(raw==='show interfaces'||raw==='sh int'||raw==='sh interfaces'){ R.showIfDone=true; const f0=R.interfaces['fa0/0'],f1=R.interfaces['fa0/1']; rlog('i','FastEthernet0/0 is '+(f0.shutdown?'administratively down, line protocol is down':'up, line protocol is up')); rlog('s','  Hardware is MV96340 Ethernet, address is aa00.ff00.0001'); rlog('s','  '+(f0.ip?'Internet address is '+f0.ip+'/24':'Internet address not set')); rlog('i','FastEthernet0/1 is '+(f1.shutdown?'administratively down, line protocol is down':'up, line protocol is up')); rlog('s','  Hardware is MV96340 Ethernet, address is aa00.ff00.0002'); rlog('s','  '+(f1.ip?'Internet address is '+f1.ip+'/24':'Internet address not set')); }
+    else if(raw==='show ip interface brief'||raw==='sh ip int br'||raw==='sh ip interface brief'){ R.showIpBrief=true; const f0=R.interfaces['fa0/0'],f1=R.interfaces['fa0/1']; rlog('i','Interface          IP-Address       OK? Method Status     Protocol'); rlog(f0.ip&&!f0.shutdown?'o':'w','FastEthernet0/0    '+(f0.ip||'unassigned').padEnd(16)+(f0.ip?'YES':'NO ')+'  manual '+(f0.shutdown?'administratively down  down':'up                    up')); rlog(f1.ip&&!f1.shutdown?'o':'w','FastEthernet0/1    '+(f1.ip||'unassigned').padEnd(16)+(f1.ip?'YES':'NO ')+'  manual '+(f1.shutdown?'administratively down  down':'up                    up')); }
+    else if(raw==='show running-config'||raw==='sh run'){ R.showRunDone=true; rlog('i','Building configuration...'); rlog('s','hostname R1'); const f0=R.interfaces['fa0/0'],f1=R.interfaces['fa0/1']; rlog('s','interface FastEthernet0/0'); if(f0.ip)rlog('s',' ip address '+f0.ip+' '+f0.mask); rlog('s',' '+(f0.shutdown?'shutdown':'no shutdown')); rlog('s','interface FastEthernet0/1'); if(f1.ip)rlog('s',' ip address '+f1.ip+' '+f1.mask); rlog('s',' '+(f1.shutdown?'shutdown':'no shutdown')); rlog('s','end'); }
+    else if(cmd==='exit'){closeModal('rcli-modal');} else{rlog('e','% Unknown command: '+raw);} updRPrompt(); runChecks(); return;
+  }
+  if(R.mode==='config') {
+    if(raw==='interface fa0/0'||raw==='int fa0/0'||raw==='interface fastethernet0/0'||raw==='int fastethernet0/0'||raw==='interface fastethernet 0/0'){ R.if0Entered=true; R.mode='config-if'; R.currentIf='fa0/0'; rlog('o','Configuring interface FastEthernet0/0...'); }
+    else if(raw==='interface fa0/1'||raw==='int fa0/1'||raw==='interface fastethernet0/1'||raw==='int fastethernet0/1'||raw==='interface fastethernet 0/1'){ R.if1Entered=true; R.mode='config-if'; R.currentIf='fa0/1'; rlog('o','Configuring interface FastEthernet0/1...'); }
+    else if(cmd==='end'||raw==='end'){R.exitedConfig=true;R.mode='priv';rlog('s','R1#');} else if(cmd==='exit'){R.mode='priv';rlog('s','R1#');} else{rlog('e','% Unknown command in config mode');} updRPrompt(); runChecks(); return;
+  }
+  if(R.mode==='config-if') {
+    if(cmd==='ip'&&parts[1]==='address') { const ip=parts[2], mask=parts[3]||'255.255.255.0'; if(!validIP(ip)){rlog('e','% Invalid IP address: '+ip);updRPrompt();runChecks();return;} R.interfaces[R.currentIf].ip=ip; R.interfaces[R.currentIf].mask=mask; if(R.currentIf==='fa0/0'){R.ip0Set=true;} if(R.currentIf==='fa0/1'){R.ip1Set=true;} rlog('o','IP address set: '+ip+' / '+mask); }
+    else if(raw==='no shutdown'||raw==='no shut'){ R.interfaces[R.currentIf].shutdown=false; if(R.currentIf==='fa0/0')R.noShut0=true; if(R.currentIf==='fa0/1')R.noShut1=true; rlog('o','%LINK-5-CHANGED: Interface FastEthernet'+R.currentIf.slice(2)+', changed state to up'); rlog('o','%LINEPROTO-5-UPDOWN: Line protocol on Interface FastEthernet'+R.currentIf.slice(2)+', changed state to up'); }
+    else if(raw==='shutdown'){ R.interfaces[R.currentIf].shutdown=true; rlog('w','%LINK-5-CHANGED: Interface shutdown'); }
+    else if(cmd==='exit'){ if(R.currentIf==='fa0/0')R.if0Exited=true; if(R.currentIf==='fa0/1')R.if1Exited=true; R.mode='config';R.currentIf=null;} else if(cmd==='end'||raw==='end'){R.exitedConfig=true;R.mode='priv';R.currentIf=null;rlog('s','R1#');} else{rlog('e','% Unknown command: '+raw);} updRPrompt(); const r1 = getR1(); if(r1) updNodeDisplay(r1); updRouterStatusBar(); redrawConns(); renderDevList(); updInfoBar(); runChecks(); return;
+  } runChecks();
+}
+
+/* ═══════════════════════════════════════════════ CONSOLE ═══════════════════════════════════════════════ */
+function focusCin(){document.getElementById('cin').focus();}
+function setConDev(d){ G.conDev=d; const p=document.getElementById('cin-p'), lbl=document.getElementById('con-dev'); if(d){p.textContent=d.name+'>';lbl.textContent=d.name+(d.ip?' ['+d.ip+']':'');} else{p.textContent='C:\\>';lbl.textContent='нет устройства';} document.getElementById('ib-dev').textContent=d?d.name:'—'; }
+function clog(type,txt){ const out=document.getElementById('cout'), line=document.createElement('div'); const cls={c:'lc',o:'lo',e:'le',i:'li',w:'lw',s:'ls',p:'lip',t:'lt'}; line.className=cls[type]||'ls'; line.textContent=txt; out.appendChild(line); out.scrollTop=out.scrollHeight; }
+function clearCon(){document.getElementById('cout').innerHTML='';}
+function onCinKey(e){ const cin=document.getElementById('cin'); if(e.key==='Enter'){ const raw=cin.value.trim(); if(!raw)return; G.cmdHistory.unshift(raw); if(G.cmdHistory.length>50)G.cmdHistory.pop(); G.cmdHistIdx=-1; cin.value=''; clog('c',(G.conDev?G.conDev.name:'C:')+' > '+raw); execCmd(raw); } else if(e.key==='ArrowUp'){e.preventDefault();G.cmdHistIdx=Math.min(G.cmdHistIdx+1,G.cmdHistory.length-1);cin.value=G.cmdHistory[G.cmdHistIdx]||'';} else if(e.key==='ArrowDown'){e.preventDefault();G.cmdHistIdx=Math.max(G.cmdHistIdx-1,-1);cin.value=G.cmdHistIdx>=0?G.cmdHistory[G.cmdHistIdx]:'';} }
+function execCmd(raw){ const lraw=raw.toLowerCase(), parts=lraw.split(/\s+/), cmd=parts[0];
+  if(cmd==='help'){ G.helpRun=true; clog('t','┌────────────────────────────────────────────────────┐'); clog('t','│  КОМАНДЫ — NetSim Pro / Лаборатория 3              │'); clog('t','├──────────────────────┬─────────────────────────────┤'); clog('t','│ help                 │ Этот список                 │'); clog('t','│ devices              │ Все устройства              │'); clog('t','│ select <имя>         │ Выбрать устройство          │'); clog('t','│ ipconfig             │ IP + шлюз устройства        │'); clog('t','│ ipconfig /all        │ IP + маска + MAC            │'); clog('t','│ ping <IP>            │ Проверить связь             │'); clog('t','│ tracert <IP>         │ Трассировка маршрута        │'); clog('t','│ route print          │ Таблица маршрутов           │'); clog('t','│ arp -a               │ ARP-кэш                     │'); clog('t','│ clear / cls          │ Очистить консоль            │'); clog('t','└──────────────────────┴─────────────────────────────┘'); }
+  else if(cmd==='devices'){ G.devicesRun=true; clog('i','Устройства в сети:'); clog('t','  ИМЯ    ТИП                 ПОДСЕТЬ     IP               ШЛЮЗ'); clog('t','  ─────────────────────────────────────────────────────────────────'); G.devices.forEach(d=>{ const sn=d.type==='router'?'R':(''+d.subnet); const gwt=(d.type==='router'?'(интерфейсы)':d.gw||'не задан'); clog('t','  '+d.name.padEnd(6)+' '+typeLabel(d.type).padEnd(18)+' S'+sn+'      '+(d.ip||'не назначен').padEnd(16)+' '+gwt); }); clog('i','Роутер R1: fa0/0='+( R.interfaces['fa0/0'].ip||'—')+' fa0/1='+(R.interfaces['fa0/1'].ip||'—')); }
+  else if(cmd==='select'){ const name=raw.trim().slice(6).trim(); const found=name?G.devices.find(d=>d.name.toLowerCase()===name.toLowerCase()):null; if(found){ setConDev(found); selectDev(found.id); clog('o','Выбрано: '+found.name+(found.ip?' ['+found.ip+']':'[нет IP]')); if(found.id==='pc1')G.selectConsolePC1=true; if(found.id==='pc4')G.selectConsolePC4=true; if(found.id==='srv2')G.selectConsoleSrv=true; } else{ clog('e',name?'Устройство "'+name+'" не найдено. Введите devices.':'Укажите имя: select PC-1'); } }
+  else if(cmd==='ipconfig'){ if(!G.conDev){clog('e','Выберите устройство: select <имя>');return;} const d=G.conDev; const isAll=parts[1]==='/all'; G.ipconfigMultiple.add(d.id); if(d.id==='pc1'&&d.gw)G.ipconfigOnPC1WithGW=true; if(d.id==='pc4')G.ipconfigOnPC4=true; if(d.id==='srv2')G.ipconfigOnSrv=true; if(!d.ip){ clog('w',d.name+': IP-адрес не назначен'); clog('s','  IP-адрес . . . . : не назначен'); clog('s','  Шлюз по умолч. . : не задан'); } else{ clog('o',d.name+' — Конфигурация IP:'); clog('p','  IP-адрес . . . . : '+d.ip); clog('p','  Маска подсети . . : '+d.mask); clog('p','  Шлюз по умолч. . : '+(d.gw||'не задан')); if(isAll){clog('p','  MAC-адрес . . . . : '+d.mac);} } setConDev(d); }
+  else if(cmd==='ping'){ const toIP=parts[1]; if(!toIP){clog('e','Укажите IP: ping 192.168.1.2');return;} if(!validIP(toIP)){clog('e','Неверный IP-адрес: '+toIP);return;} if(!G.conDev||!G.conDev.ip){clog('e',(G.conDev?.name||'?')+': нет IP. Сначала настройте!');return;} doPing(G.conDev,toIP); }
+  else if(cmd==='tracert'||cmd==='traceroute'){ const toIP=parts[1]; if(!toIP){clog('e','Укажите IP: tracert 192.168.2.1');return;} if(!G.conDev||!G.conDev.ip){clog('e','Сначала выберите устройство с IP');return;} doTracert(G.conDev,toIP); }
+  else if(cmd==='route'){ G.routePrintRun=true; const d=G.conDev; clog('o','Таблица маршрутизации IPv4:'); clog('t','  Тип  Сеть назначения  Маска              Шлюз             Метрика'); clog('t','  ─────────────────────────────────────────────────────────────────'); if(d&&d.ip){ const pfx=d.ip.split('.').slice(0,3).join('.')+'.0'; clog('p','  C    '+pfx.padEnd(17)+'255.255.255.0      On-link          1'); if(d.gw)clog('p','  S    0.0.0.0          0.0.0.0            '+d.gw+'     1'); else clog('w','  (шлюз не настроен — межсетевая маршрутизация недоступна)'); } else{ clog('s','  (устройство не настроено)'); } }
+  else if(cmd==='arp'){ G.arpRun=true; const d=G.conDev; if(!d){clog('e','Выберите устройство');return;} const entries=G.arpTable[d.id]||[]; if(!entries.length)clog('w',d.name+': ARP-таблица пуста'); else{ clog('o',d.name+': ARP-кэш:'); clog('t','  IP-адрес         MAC-адрес          Имя'); entries.forEach(e=>clog('p','  '+e.ip.padEnd(17)+e.mac.padEnd(18)+e.name)); } }
+  else if(cmd==='clear'||cmd==='cls'){clearCon();} else{clog('e','Неизвестная команда: "'+cmd+'". Введите help.');} runChecks();
+}
+
+/* ═══════════════════════════════════════════════ PING ═══════════════════════════════════════════════ */
+async function doPing(from, toIP) {
+  const toDev = devByIP(toIP), self = toIP === from.ip, cross = isCrossSubnet(from, toIP); let success = false, failReason = '';
+  if(self) { success = true; } else if(!cross) { success = !!toDev && !!toDev.ip; if(!toDev) failReason = 'Устройство с IP '+toIP+' не найдено в сети'; }
+  else { if(!from.gw){ failReason='У '+from.name+' не настроен шлюз по умолчанию!'; G.noGWPingTried=true; } else if(!bothIfUp()){ failReason='Роутер R1 не настроен (нет активных интерфейсов)!'; } else if(!toDev){ failReason='Устройство с IP '+toIP+' не найдено в сети'; } else if(!toDev.gw&&toDev.type!=='router'){ failReason='У '+toDev.name+' не настроен шлюз!'; } else { success = true; } }
+  clog('i','Пинг '+toIP+' от '+from.name+' ['+from.ip+']:'); G.totalPings++;
+  if(!success && failReason) { clog('e','  Ошибка: '+failReason); clog('e','  Запрос не выполнен.'); G.pingLog.push({from:from.id,to:toIP,ok:false}); runChecks(); return; }
+  const times = []; for(let i=0;i<4;i++){ await new Promise(r=>setTimeout(r,260+Math.random()*160)); if(success){ const ms = cross?(2+Math.floor(Math.random()*4)):(1+Math.floor(Math.random()*2)); clog('o','  Ответ от '+toIP+': байт=32 время='+ms+'мс TTL='+(cross?'127':'128')); times.push(ms); if(i===0&&!self) animatePing(from, toIP, cross); } else{ clog('e','  Превышен интервал ожидания.'); } }
+  const recv=times.length, lost=4-recv; clog('s','  Пакетов: отпр.=4 получ.='+recv+' потеряно='+lost+' ('+Math.round(lost/4*100)+'% потерь)'); if(times.length){const avg=Math.round(times.reduce((a,b)=>a+b)/times.length);clog('s','  Время: мин.=1мс макс.='+Math.max(...times)+'мс сред.='+avg+'мс');} clog('s','');
+  G.pingLog.push({from:from.id,to:toIP,ok:success,cross}); if(success){G.successPings++;if(cross)G.crossPings++;}
+  if(success&&toDev&&!self&&toDev.mac){ if(!G.arpTable[from.id])G.arpTable[from.id]=[]; if(!G.arpTable[from.id].some(e=>e.ip===toIP)) G.arpTable[from.id].push({ip:toIP,mac:toDev.mac,name:toDev.name}); }
+  updInfoBar(); runChecks();
+}
+function animatePing(from, toIP, cross) {
+  const sw1=getSW1(), sw2=getSW2(), r1=getR1(), toDev = devByIP(toIP); if(!toDev||!sw1||!sw2||!r1) return; const svg=document.getElementById('conn-svg'); let pts;
+  if(cross) { const fromSW = from.subnet===1?sw1:sw2, toSW = from.subnet===1?sw2:sw1; pts=[{x:from.x,y:from.y},{x:fromSW.x,y:fromSW.y},{x:r1.x,y:r1.y},{x:toSW.x,y:toSW.y},{x:toDev.x||r1.x,y:toDev.y||r1.y},{x:toSW.x,y:toSW.y},{x:r1.x,y:r1.y},{x:fromSW.x,y:fromSW.y},{x:from.x,y:from.y}]; }
+  else { const sw = from.subnet===1?sw1:sw2; pts=[{x:from.x,y:from.y},{x:sw.x,y:sw.y},{x:toDev.x,y:toDev.y},{x:sw.x,y:sw.y},{x:from.x,y:from.y}]; }
+  const c=document.createElementNS('http://www.w3.org/2000/svg','circle'); c.setAttribute('r',cross?'6':'5'); c.setAttribute('fill',cross?'#c77dff':'#00e676'); c.setAttribute('filter','url(#glow)'); svg.appendChild(c); let seg=0,t=0;
+  function step(){ if(seg>=pts.length-1){c.remove();return;} t+=0.03; if(t>=1){t=0;seg++;if(seg>=pts.length-1){c.remove();return;}} const a=pts[seg],b=pts[seg+1]; c.setAttribute('cx',a.x+(b.x-a.x)*t);c.setAttribute('cy',a.y+(b.y-a.y)*t); requestAnimationFrame(step); } requestAnimationFrame(step);
+}
+
+/* ═══════════════════════════════════════════════ TRACERT ═══════════════════════════════════════════════ */
+async function doTracert(from, toIP) {
+  G.tracertRun = true; clog('i','Трассировка маршрута до '+toIP+' от '+from.name+':'); clog('s','Максимальное число прыжков (hops): 30'); clog('s',''); if(!from.ip){clog('e','У '+from.name+' нет IP-адреса');return;} const cross = isCrossSubnet(from, toIP), toDev = devByIP(toIP); let hop=1;
+  if(cross&&from.gw&&bothIfUp()){ await new Promise(r=>setTimeout(r,300)); clog('p','  '+hop+'   1мс   1мс   1мс   '+from.gw+'  (R1 — шлюз)'); G.tracertShownGW=true; hop++; }
+  if(toDev&&toDev.ip){ await new Promise(r=>setTimeout(r,300)); const ms=1+Math.floor(Math.random()*3); clog('o','  '+hop+'   '+ms+'мс   '+ms+'мс   '+ms+'мс   '+toIP+'  ('+toDev.name+')'); } else{ clog('w','  '+hop+'   *    *    *   Превышен интервал ожидания запроса.'); }
+  clog('s','');clog('s','Трассировка завершена.');clog('s',''); runChecks();
+}
+
+/* ═══════════════════════════════════════════════ INFO BAR ═══════════════════════════════════════════════ */
+function updInfoBar(){ const s1ready = subnet1().filter(d=>d.ip&&d.gw).length, s2ready = subnet2().filter(d=>d.ip&&d.gw).length; document.getElementById('ib-s1').textContent = s1ready+'/3'; document.getElementById('ib-s2').textContent = s2ready+'/3'; document.getElementById('ib-xping').textContent = G.crossPings; const f0=R.interfaces['fa0/0'],f1=R.interfaces['fa0/1']; const rtEl=document.getElementById('ib-rt'); if(bothIfUp()){rtEl.textContent='fa0/0 UP · fa0/1 UP';rtEl.className='ibv ok';} else if(f0.ip||f1.ip){rtEl.textContent='частично настроен';rtEl.className='ibv warn';} else{rtEl.textContent='не настроен';rtEl.className='ibv';} }
+
+/* ═══════════════════════════════════════════════ TASKS ═══════════════════════════════════════════════ */
+function renderTasks(){ const list=document.getElementById('tlist'); list.innerHTML=''; GROUPS.forEach(g=>{ const grp=document.createElement('div');grp.className='tgrp'; const hdr=document.createElement('div');hdr.className='tghdr';hdr.id='gh-'+g.id; hdr.innerHTML='<span class="tgico">'+g.icon+'</span><span class="tgname">'+g.name+'</span><span class="tgscore" id="gs-'+g.id+'">0/'+g.tasks.length+'</span>'; hdr.addEventListener('click',()=>grp.querySelector('.tgbody').classList.toggle('open')); grp.appendChild(hdr); const body=document.createElement('div');body.className='tgbody open'; g.tasks.forEach(t=>{ const item=document.createElement('div');item.className='titem';item.id='ti-'+t.id; item.innerHTML='<div class="tchk"></div><div class="tnum">'+t.id+'.</div><div class="ttext">'+t.t+'<div class="thint">💡 '+t.h+'</div></div>'; body.appendChild(item); }); grp.appendChild(body); list.appendChild(grp); }); }
+function runChecks(){ let done=0; GROUPS.forEach(g=>{ g.tasks.forEach(t=>{ let result=false; try{result=!!t.c();}catch(e){result=false;} const newVal = g.live ? result : (G.taskDone[t.id] || result); G.taskDone[t.id]=newVal; if(newVal)done++; }); }); const total=TASKS.length; document.getElementById('hdr-done').textContent=done; document.getElementById('hdr-tot').textContent=total; document.getElementById('tp-done').textContent=done; document.getElementById('tp-total').textContent=total; document.getElementById('tp-fill').style.width=(done/total*100)+'%'; for(let i=0;i<10;i++){const d=document.getElementById('hd'+i);if(d)d.classList.toggle('on',done>=(i+1)*5);} let firstActive=null; TASKS.forEach(t=>{ const el=document.getElementById('ti-'+t.id);if(!el)return; const ok=G.taskDone[t.id]; el.classList.toggle('done',ok);el.classList.remove('active'); const chk=el.querySelector('.tchk');if(chk)chk.textContent=ok?'✓':''; if(!ok&&!firstActive)firstActive=el; }); if(firstActive)firstActive.classList.add('active'); GROUPS.forEach(g=>{ const gdone=g.tasks.filter(t=>G.taskDone[t.id]).length; const sc=document.getElementById('gs-'+g.id); if(sc){sc.textContent=gdone+'/'+g.tasks.length;sc.className='tgscore'+(gdone===g.tasks.length?' done':'');} const hdr=document.getElementById('gh-'+g.id); if(hdr)hdr.classList.toggle('done',gdone===g.tasks.length); }); updInfoBar(); const nextLabThreshold=total-4, successThreshold=total-2; document.getElementById('btn-next').style.display=done>=nextLabThreshold?'block':'none'; if(done>=successThreshold&&G.prevDone<successThreshold){setTimeout(showSuccess,700);} G.prevDone=done; }
+function showSuccess(){ document.getElementById('s-xping').textContent=G.crossPings; document.getElementById('s-tasks').textContent=TASKS.filter(t=>G.taskDone[t.id]).length; document.getElementById('smod').classList.remove('hid'); }
+
+/* ═══════════════════════════════════════════════ RESET & HELP ═══════════════════════════════════════════════ */
+function resetLab(){ if(!confirm('Сбросить лаб. 3? Все настройки будут удалены.'))return; G.devices=JSON.parse(JSON.stringify(DEVS0)); G.connections=JSON.parse(JSON.stringify(CONS0)); Object.assign(R,{mode:'user',currentIf:null,interfaces:{'fa0/0':{ip:'',mask:'',shutdown:true},'fa0/1':{ip:'',mask:'',shutdown:true}},enableDone:false,showIfDone:false,showIpBrief:false,showRunDone:false,confTDone:false,if0Entered:false,if1Entered:false,ip0Set:false,ip1Set:false,noShut0:false,noShut1:false,if0Exited:false,if1Exited:false,exitedConfig:false,cliOpened:false,cliHistory:[],cliHistIdx:-1}); Object.assign(G,{selected:null,conDev:null,consoleClicked:false,helpRun:false,devicesRun:false,ipconfigMultiple:new Set(),ipconfigOnPC1WithGW:false,ipconfigOnPC4:false,ipconfigOnSrv:false,selectConsolePC1:false,selectConsolePC4:false,selectConsoleSrv:false,selectedRouter:false,routePrintRun:false,arpRun:false,tracertRun:false,tracertShownGW:false,invalidIPAttempted:false,duplicateIPAttempted:false,noGWPingTried:false,pingLog:[],successPings:0,crossPings:0,totalPings:0,arpTable:{},taskDone:{},prevDone:0,cmdHistory:[],cmdHistIdx:-1}); document.getElementById('canvas-nodes').innerHTML=''; document.getElementById('rcli-out').innerHTML=''; G.devices.forEach(renderDev); redrawConns(); renderDevList(); updInfoBar(); runChecks(); clearCon(); clog('w','Лабораторная сброшена.'); setConDev(G.devices[0]); }
+function showHelpDlg(){ alert('Лабораторная 3 — Маршрутизация\n\n1. Двойной клик на R1 → откройте терминал роутера\n2. Введите enable → conf t → interface fa0/0\n3. Назначьте IP 192.168.1.254 → no shutdown → exit\n4. Сделайте то же для fa0/1 (192.168.2.254)\n5. Настройте IP и ШЛЮЗ на каждом ПК/сервере\n6. Проверьте связь: select PC-1 → ping 192.168.2.1\n7. Попробуйте tracert для просмотра маршрута'); }
+
+window.addEventListener('DOMContentLoaded',init);
+
+/* ═══════════════════════════════════════════════ THEME TOGGLE SCRIPT ═══════════════════════════════════════════════ */
+(function() {
+  const toggle = document.createElement('button');
+  toggle.id = 'theme-toggle';
+  toggle.innerHTML = '☀️ День';
+  toggle.title = 'Переключить тему (День/Ночь)';
+  document.body.appendChild(toggle);
+  // По умолчанию — дневная тема (класс "day" уже на <body>). Настройка не
+  // сохраняется между открытиями страницы — это статичный HTML без бэкенда.
+  toggle.addEventListener('click', function() {
+    const isDay = document.body.classList.toggle('day');
+    toggle.innerHTML = isDay ? '☀️ День' : '🌙 Ночь';
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,2059 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Модуль: Финальный проект (30 шагов)</title>
+<style>
+:root{
+  --bg:#f3f7fb;
+  --surface:#ffffff;
+  --surface-2:#f8fafc;
+  --surface-3:#e2e8f0;
+  --line:#dbe5ef;
+  --text:#102033;
+  --text-soft:#1e293b;
+  --text-secondary:#475569;
+  --muted:#64748b;
+  --primary:#2563eb;
+  --primary-2:#1d4ed8;
+  --primary-soft:#eaf2ff;
+  --green:#059669;
+  --green-soft:#eafaf3;
+  --amber:#b7791f;
+  --amber-soft:#fff7df;
+  --red:#dc2626;
+  --red-soft:#fff0f0;
+  --violet:#6d28d9;
+  --violet-soft:#f4edff;
+  --shadow:0 16px 40px rgba(15,23,42,.08);
+  --radius:8px;
+  --top:58px;
+  --side:310px;
+  --font:Inter, "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+  --mono:"Cascadia Mono","SFMono-Regular",Consolas,"Liberation Mono",monospace;
+  --grid-line:#eef4fb;
+}
+/* ─── НОЧНАЯ ТЕМА (по умолчанию выключена — включается классом .night на <body>) ─── */
+body.night{
+  --bg:#0b0f16;
+  --surface:#121826;
+  --surface-2:#182030;
+  --surface-3:#232d40;
+  --line:#2a3548;
+  --text:#dbe6f5;
+  --text-soft:#dbe6f5;
+  --text-secondary:#9aa8bf;
+  --muted:#8291a8;
+  --primary:#3b82f6;
+  --primary-2:#2563eb;
+  --primary-soft:#16233d;
+  --green:#10b981;
+  --green-soft:#0f2b22;
+  --amber:#d99a2b;
+  --amber-soft:#3a2f10;
+  --red:#ef4444;
+  --red-soft:#3a1414;
+  --violet:#8b5cf6;
+  --violet-soft:#241b3a;
+  --shadow:0 16px 40px rgba(0,0,0,.45);
+  --grid-line:#1a2334;
+}
+body.night .btn{color:var(--text-soft);}
+body.night .btn.primary,body.night .btn.green,body.night .btn.red{color:#fff;}
+body.night .phase-tab{color:var(--text-secondary);}
+body.night .step-num{color:var(--text-secondary);}
+body.night .radio{color:var(--text-secondary);border-color:#3a4a6a;}
+body.night .node{box-shadow:0 8px 20px rgba(0,0,0,.35);}
+body.night .cmd-chip{border-color:var(--line);}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--text);
+  overflow:hidden;
+  letter-spacing:0;
+}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.app{height:100%;display:grid;grid-template-rows:var(--top) 1fr}
+.topbar{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:0 18px;
+  background:var(--surface);
+  border-bottom:1px solid var(--line);
+  box-shadow:0 1px 0 rgba(15,23,42,.03);
+  min-width:0;
+}
+.brand{display:flex;align-items:center;gap:10px;min-width:230px}
+.brand-mark{
+  width:34px;height:34px;border-radius:8px;
+  background:linear-gradient(135deg,#2563eb,#0f766e);
+  color:white;display:grid;place-items:center;font-weight:900;
+}
+.brand-title{font-weight:850;font-size:15px}
+.brand-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.phase-tabs{display:flex;gap:6px;align-items:center;overflow:auto;flex:1;padding-bottom:1px}
+.phase-tab{
+  border:1px solid var(--line);
+  background:var(--surface-2);
+  color:var(--text-soft);
+  border-radius:999px;
+  padding:7px 11px;
+  font-size:12px;
+  font-weight:750;
+  white-space:nowrap;
+}
+.phase-tab.active{background:var(--primary);border-color:var(--primary);color:white}
+.phase-tab.done{background:var(--green-soft);border-color:#b7ebd4;color:#047857}
+.top-stats{display:flex;align-items:center;gap:10px;min-width:220px;justify-content:flex-end}
+.progress-mini{width:120px;height:8px;border-radius:999px;background:var(--surface-3);overflow:hidden}
+.progress-mini span{display:block;height:100%;width:0;background:linear-gradient(90deg,#2563eb,#059669);transition:.25s}
+.score-chip{font-size:12px;font-weight:800;color:var(--text-soft);white-space:nowrap}
+.layout{display:grid;grid-template-columns:var(--side) 1fr;min-height:0}
+.sidebar{
+  background:var(--surface);
+  border-right:1px solid var(--line);
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+}
+.side-head{padding:16px;border-bottom:1px solid var(--line)}
+.side-kicker{font-size:11px;font-weight:850;color:var(--primary);text-transform:uppercase;letter-spacing:.5px}
+.side-title{font-size:17px;font-weight:850;margin-top:4px}
+.side-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.metric{
+  border:1px solid var(--line);
+  background:var(--surface-2);
+  border-radius:var(--radius);
+  padding:10px;
+}
+.metric strong{display:block;font-size:20px;color:var(--primary);line-height:1}
+.metric span{font-size:11px;color:var(--muted)}
+.steps{overflow:auto;padding:8px}
+.step-btn{
+  width:100%;
+  text-align:left;
+  display:grid;
+  grid-template-columns:32px 1fr auto;
+  gap:10px;
+  align-items:start;
+  border:1px solid transparent;
+  background:transparent;
+  border-radius:var(--radius);
+  padding:10px;
+  color:var(--text);
+}
+.step-btn:hover{background:var(--surface-2);border-color:#edf2f7}
+.step-btn.active{background:var(--primary-soft);border-color:#bfdbfe}
+.step-btn.done{background:var(--green-soft);border-color:#bbf7d0}
+.step-num{
+  width:28px;height:28px;border-radius:999px;
+  display:grid;place-items:center;
+  background:var(--surface-3);color:var(--text-secondary);
+  font-size:12px;font-weight:850;
+}
+.step-btn.active .step-num{background:var(--primary);color:white}
+.step-btn.done .step-num{background:var(--green);color:white}
+.step-name{font-size:13px;font-weight:800;line-height:1.25}
+.step-desc{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.3}
+.step-points{font-size:11px;font-weight:850;color:var(--primary);padding-top:5px}
+.workspace{display:grid;grid-template-rows:auto 1fr auto;min-width:0;min-height:0}
+.step-header{
+  background:var(--surface);
+  border-bottom:1px solid var(--line);
+  padding:16px 22px;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:18px;
+}
+.crumb{font-size:11px;font-weight:850;text-transform:uppercase;letter-spacing:.5px;color:var(--primary)}
+.step-title{font-size:22px;font-weight:900;margin:4px 0 4px}
+.step-summary{font-size:13px;color:var(--muted);max-width:900px;line-height:1.45}
+.header-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.content{overflow:auto;padding:20px 24px 28px}
+.content-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(330px,.8fr);gap:16px;align-items:start}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:0 1px 0 rgba(15,23,42,.02);
+  padding:16px;
+  margin-bottom:16px;
+}
+.card-title{font-size:15px;font-weight:900;margin-bottom:5px}
+.card-sub{font-size:12px;color:var(--muted);line-height:1.45;margin-bottom:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.field{margin-bottom:12px}
+.label{display:block;font-size:12px;font-weight:800;color:var(--text-soft);margin-bottom:5px}
+.input,.select,.textarea{
+  width:100%;
+  border:1px solid var(--line);
+  background:var(--surface);
+  color:var(--text);
+  border-radius:6px;
+  padding:9px 10px;
+  outline:none;
+  transition:.15s;
+}
+.textarea{min-height:90px;resize:vertical;line-height:1.45}
+.input:focus,.select:focus,.textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.btn{
+  border:1px solid var(--line);
+  background:var(--surface);
+  color:var(--text-soft);
+  border-radius:6px;
+  padding:8px 12px;
+  font-size:12px;
+  font-weight:850;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  min-height:34px;
+}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--primary);border-color:var(--primary);color:white}
+.btn.primary:hover{background:var(--primary-2)}
+.btn.green{background:var(--green);border-color:var(--green);color:white}
+.btn.red{background:var(--red);border-color:var(--red);color:white}
+.btn.small{padding:5px 9px;min-height:28px;font-size:11px}
+.btn.icon{width:34px;padding:0}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:850;border:1px solid var(--line);background:var(--surface)}
+.pill.blue{background:var(--primary-soft);border-color:#bfdbfe;color:#1d4ed8}
+.pill.green{background:var(--green-soft);border-color:#bbf7d0;color:#047857}
+.pill.amber{background:var(--amber-soft);border-color:#fde68a;color:#92400e}
+.pill.red{background:var(--red-soft);border-color:#fecaca;color:#b91c1c}
+.pill.violet{background:var(--violet-soft);border-color:#ddd6fe;color:#5b21b6}
+.table{width:100%;border-collapse:collapse}
+.table th,.table td{border-bottom:1px solid #edf2f7;padding:9px 8px;text-align:left;font-size:12px;vertical-align:top}
+.table th{color:var(--text-secondary);background:var(--surface-2);font-size:11px;text-transform:uppercase;letter-spacing:.35px}
+.option-list{display:grid;gap:8px}
+.option{
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  background:var(--surface);
+  padding:11px 12px;
+  cursor:pointer;
+  display:grid;
+  grid-template-columns:24px 1fr auto;
+  gap:10px;
+  align-items:start;
+}
+.option:hover{background:var(--surface-2);border-color:#bfdbfe}
+.option.selected{background:var(--primary-soft);border-color:#93c5fd}
+.option.good{background:var(--green-soft);border-color:#86efac}
+.option.bad{background:var(--red-soft);border-color:#fecaca}
+.radio{
+  width:22px;height:22px;border-radius:999px;border:2px solid #cbd5e1;
+  display:grid;place-items:center;font-size:11px;font-weight:900;color:#64748b;
+}
+.option.selected .radio,.option.good .radio{background:var(--primary);border-color:var(--primary);color:white}
+.option.good .radio{background:var(--green);border-color:var(--green)}
+.option-title{font-size:13px;font-weight:850}
+.option-text{font-size:12px;color:var(--text-secondary);margin-top:3px;line-height:1.45}
+.diagram{
+  min-height:310px;
+  border:1px solid var(--line);
+  background:
+    linear-gradient(var(--grid-line) 1px,transparent 1px),
+    linear-gradient(90deg,var(--grid-line) 1px,transparent 1px),
+    var(--surface);
+  background-size:22px 22px;
+  border-radius:var(--radius);
+  position:relative;
+  overflow:hidden;
+}
+.node{
+  position:absolute;
+  min-width:92px;
+  border:1px solid #cbd5e1;
+  background:var(--surface);
+  border-radius:8px;
+  padding:9px;
+  box-shadow:0 8px 20px rgba(15,23,42,.08);
+  text-align:center;
+}
+.node b{display:block;font-size:12px}
+.node span{font-size:10px;color:var(--muted)}
+.line{
+  position:absolute;height:2px;background:#94a3b8;transform-origin:left center;
+}
+.cli-shell{
+  background:#0b1220;
+  color:#d1e7ff;
+  border-radius:var(--radius);
+  overflow:hidden;
+  border:1px solid #111827;
+  box-shadow:var(--shadow);
+}
+.cli-top{
+  height:38px;display:flex;align-items:center;gap:8px;padding:0 12px;
+  background:#111827;color:#cbd5e1;font-size:12px;font-weight:800;
+}
+.cli-dot{width:10px;height:10px;border-radius:999px;background:#ef4444}
+.cli-dot:nth-child(2){background:#f59e0b}.cli-dot:nth-child(3){background:#10b981}
+.cli-output{
+  height:320px;
+  overflow:auto;
+  padding:12px;
+  font-family:var(--mono);
+  font-size:12px;
+  line-height:1.45;
+  white-space:pre-wrap;
+}
+.cli-input-row{display:flex;align-items:center;border-top:1px solid #1f2937;background:#0f172a}
+.cli-prompt{
+  color:#7dd3fc;
+  font-family:var(--mono);
+  font-size:12px;
+  padding-left:12px;
+  white-space:nowrap;
+}
+.cli-input{
+  flex:1;border:0;outline:0;background:transparent;color:#e5e7eb;
+  font-family:var(--mono);font-size:12px;padding:11px 12px;
+}
+.cli-help{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.cmd-chip{
+  border:1px solid #dbe5ef;background:var(--surface);border-radius:999px;
+  padding:5px 8px;font-size:11px;font-weight:800;color:var(--text-soft);cursor:pointer;
+}
+.cmd-chip:hover{background:var(--primary-soft);border-color:#bfdbfe;color:#1d4ed8}
+.task-panel{
+  background:var(--surface);
+  border-top:1px solid var(--line);
+  padding:12px 18px;
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:12px;
+  align-items:center;
+}
+.task-list{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.task-item{
+  display:flex;align-items:center;gap:6px;
+  border:1px solid var(--line);border-radius:999px;
+  background:var(--surface-2);padding:6px 9px;font-size:11px;font-weight:800;color:var(--text-soft);
+}
+.task-item.done{background:var(--green-soft);border-color:#bbf7d0;color:#047857}
+.log{max-height:170px;overflow:auto;border:1px solid var(--line);border-radius:var(--radius);background:#fbfdff;padding:9px}
+.log-line{font-family:var(--mono);font-size:11px;line-height:1.45;color:var(--text-secondary)}
+.log-line.good{color:#047857}.log-line.warn{color:#92400e}.log-line.bad{color:#b91c1c}
+.kbd{font-family:var(--mono);font-size:11px;background:#f1f5f9;border:1px solid #dbe5ef;border-radius:4px;padding:1px 5px}
+.alert{border-radius:var(--radius);padding:12px;border:1px solid var(--line);background:var(--surface);margin-bottom:12px;font-size:12px;line-height:1.45}
+.alert.blue{background:var(--primary-soft);border-color:#bfdbfe;color:#1e40af}
+.alert.green{background:var(--green-soft);border-color:#bbf7d0;color:#065f46}
+.alert.amber{background:var(--amber-soft);border-color:#fde68a;color:#78350f}
+.alert.red{background:var(--red-soft);border-color:#fecaca;color:#7f1d1d}
+.toast{
+  position:fixed;right:18px;bottom:18px;z-index:20;
+  width:min(420px,calc(100vw - 36px));
+  background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--primary);
+  border-radius:var(--radius);box-shadow:var(--shadow);padding:12px 14px;
+  font-size:12px;line-height:1.45;display:none;
+}
+.toast.show{display:block;animation:fade .18s ease-out}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.tabs-small{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tab-small{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 10px;font-size:12px;font-weight:850}
+.tab-small.active{background:var(--primary);border-color:var(--primary);color:#fff}
+.range-row{display:grid;grid-template-columns:1fr 72px;gap:10px;align-items:center}
+.range-row input[type=range]{width:100%}
+.footer-note{font-size:11px;color:var(--muted);line-height:1.45}
+.hidden{display:none!important}
+@media (max-width:1100px){
+  :root{--side:270px}
+  .content-grid{grid-template-columns:1fr}
+  .grid4{grid-template-columns:repeat(2,1fr)}
+  .top-stats{min-width:160px}
+}
+@media (max-width:760px){
+  body{overflow:auto}
+  .app{height:auto;min-height:100%;display:block}
+  .topbar{position:sticky;top:0;z-index:5;flex-wrap:wrap;height:auto;min-height:var(--top);padding:10px}
+  .brand{min-width:100%}
+  .top-stats{min-width:100%;justify-content:flex-start}
+  .layout{display:block}
+  .sidebar{height:auto;border-right:0;border-bottom:1px solid var(--line)}
+  .steps{display:grid;grid-template-columns:1fr 1fr;max-height:320px}
+  .workspace{display:block}
+  .step-header{display:block}
+  .header-actions{justify-content:flex-start;margin-top:12px}
+  .task-panel{grid-template-columns:1fr}
+  .grid2,.grid3,.grid4{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">IP</div>
+      <div>
+        <div class="brand-title">Модуль: Финальный проект</div>
+        <div class="brand-sub">Корпоративная сеть за 30 шагов</div>
+      </div>
+    </div>
+    <nav class="phase-tabs" id="phaseTabs"></nav>
+    <div class="top-stats">
+      <div class="progress-mini" title="Общий прогресс"><span id="topProgress"></span></div>
+      <div class="score-chip"><span id="doneCount">0</span>/<span id="totalStepsCount">30</span> шагов · <span id="scoreCount">0</span> баллов</div>
+      <button class="btn small" id="themeToggle" title="Переключить день/ночь">☀ День</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside class="sidebar">
+      <div class="side-head">
+        <div class="side-kicker" id="sideKicker">Этап</div>
+        <div class="side-title" id="sideTitle">Сбор требований</div>
+        <div class="side-meta">
+          <div class="metric"><strong id="phaseDone">0</strong><span>шагов этапа</span></div>
+          <div class="metric"><strong id="phaseScore">0</strong><span>баллов этапа</span></div>
+        </div>
+      </div>
+      <div class="steps" id="stepsList"></div>
+    </aside>
+
+    <section class="workspace">
+      <div class="step-header">
+        <div>
+          <div class="crumb" id="stepCrumb">Этап 1</div>
+          <h1 class="step-title" id="stepTitle">Шаг</h1>
+          <div class="step-summary" id="stepSummary"></div>
+        </div>
+        <div class="header-actions">
+          <button class="btn" id="btnExport">Экспорт отчёта</button>
+          <button class="btn" id="btnReset">Сбросить шаг</button>
+          <button class="btn primary" id="btnCheckTop">Проверить</button>
+        </div>
+      </div>
+      <div class="content" id="content"></div>
+      <div class="task-panel">
+        <div class="task-list" id="taskList"></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+          <button class="btn" id="btnPrev">Назад</button>
+          <button class="btn primary" id="btnCheckBottom">Проверить шаг</button>
+          <button class="btn" id="btnNext">Дальше</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+const STORAGE_KEY = "netacademy_final_project_30_ru_v3";
+const PASS = 70;
+
+const phases = [
+  {id:"req", title:"Сбор требований", short:"Требования", range:[1,4], color:"blue"},
+  {id:"design", title:"Проектирование", short:"Проектирование", range:[5,10], color:"violet"},
+  {id:"hq", title:"Главный офис", short:"Главный офис", range:[11,18], color:"green"},
+  {id:"branch", title:"Филиал", short:"Филиал", range:[19,22], color:"amber"},
+  {id:"services", title:"Сервисы", short:"Сервисы", range:[23,27], color:"blue"},
+  {id:"test", title:"Тестирование и защита", short:"Тестирование", range:[28,30], color:"red"}
+];
+
+const steps = [
+  {n:1, phase:"req", title:"Профиль компании", desc:"Описать бизнес, офисы, пользователей и критичные процессы.", pts:10, type:"company"},
+  {n:2, phase:"req", title:"Требования к сервисам", desc:"Выбрать приложения, SLA и нагрузку для расчёта сети.", pts:12, type:"services"},
+  {n:3, phase:"req", title:"Безопасность", desc:"Сформировать политику доступа, сегментацию и журналирование.", pts:14, type:"security"},
+  {n:4, phase:"req", title:"Бюджет и риски", desc:"Собрать бюджетный профиль и матрицу проектных рисков.", pts:12, type:"budget"},
+  {n:5, phase:"design", title:"Топология", desc:"Спроектировать логическую схему HQ, филиала, DMZ и WAN.", pts:15, type:"topology"},
+  {n:6, phase:"design", title:"IP-адресация", desc:"Разделить адресное пространство на подсети и шлюзы.", pts:16, type:"ip"},
+  {n:7, phase:"design", title:"VLAN-модель", desc:"Назначить VLAN, имена, подсети и зоны безопасности.", pts:15, type:"vlan"},
+  {n:8, phase:"design", title:"Маршрутизация", desc:"Выбрать OSPF, default route и область для филиала.", pts:14, type:"routing"},
+  {n:9, phase:"design", title:"Оборудование", desc:"Собрать BOM: коммутаторы, маршрутизаторы, firewall, UPS.", pts:12, type:"equipment"},
+  {n:10, phase:"design", title:"Диаграммы и HLD", desc:"Сформировать HLD-выжимку и карту зависимостей.", pts:12, type:"hld"},
+  {n:11, phase:"hq", title:"Switches: базовая настройка", desc:"Настроить имена, доступ и базовую защиту коммутаторов.", pts:14, type:"cli", device:"SW1"},
+  {n:12, phase:"hq", title:"VLAN и access-порты", desc:"Создать VLAN и назначить пользовательские порты.", pts:16, type:"cli", device:"SW1"},
+  {n:13, phase:"hq", title:"Trunking", desc:"Настроить trunk между access, distribution и L3.", pts:15, type:"cli", device:"SW1"},
+  {n:14, phase:"hq", title:"STP-защита", desc:"Выбрать root bridge и включить PortFast/BPDU Guard.", pts:15, type:"cli", device:"SW2"},
+  {n:15, phase:"hq", title:"L3 SVI и inter-VLAN", desc:"Поднять SVI, шлюзы VLAN и ip routing.", pts:18, type:"cli", device:"CORE1"},
+  {n:16, phase:"hq", title:"DHCP", desc:"Настроить DHCP-пулы и исключения адресов.", pts:16, type:"cli", device:"CORE1"},
+  {n:17, phase:"hq", title:"Firewall и NAT", desc:"Собрать базовую политику, PAT и публикацию DMZ.", pts:18, type:"cli", device:"FW1"},
+  {n:18, phase:"hq", title:"Site-to-Site VPN", desc:"Настроить IKE/IPsec между HQ и филиалом.", pts:18, type:"cli", device:"FW1"},
+  {n:19, phase:"branch", title:"Развертывание филиала", desc:"Базовая настройка BR-R1 и доступа филиала.", pts:14, type:"cli", device:"BR-R1"},
+  {n:20, phase:"branch", title:"VPN-клиент филиала", desc:"Поднять туннель до HQ и проверить доступ к сервисам.", pts:16, type:"cli", device:"BR-R1"},
+  {n:21, phase:"branch", title:"OSPF", desc:"Объявить сети филиала и туннель в OSPF.", pts:16, type:"cli", device:"BR-R1"},
+  {n:22, phase:"branch", title:"Резервирование каналов", desc:"Настроить floating route и IP SLA failover.", pts:16, type:"cli", device:"BR-R1"},
+  {n:23, phase:"services", title:"DNS", desc:"Добавить внутренние зоны и записи для HQ/DMZ.", pts:12, type:"dns"},
+  {n:24, phase:"services", title:"NTP", desc:"Синхронизировать устройства с внутренним NTP.", pts:10, type:"cli", device:"CORE1"},
+  {n:25, phase:"services", title:"Syslog", desc:"Централизовать события и уровни журналирования.", pts:12, type:"cli", device:"CORE1"},
+  {n:26, phase:"services", title:"SNMP и мониторинг", desc:"Добавить SNMPv3, traps и проверку мониторинга.", pts:14, type:"monitoring"},
+  {n:27, phase:"services", title:"Финальная безопасность", desc:"Проверить hardening, ACL, AAA, backup конфигураций.", pts:16, type:"hardening"},
+  {n:28, phase:"test", title:"Комплексное тестирование", desc:"Прогнать end-to-end матрицу тестов сети.", pts:16, type:"tests"},
+  {n:29, phase:"test", title:"Troubleshooting: 5 ошибок", desc:"Найти причины неисправностей и выбрать корректные исправления.", pts:20, type:"troubleshooting"},
+  {n:30, phase:"test", title:"Защита проекта", desc:"Итоговый экзамен и генерация отчёта по проекту.", pts:25, type:"defense"}
+];
+
+const cliLabs = {
+  11:{
+    intro:"Настройте базовую безопасность SW1: hostname, enable secret, локального администратора, SSH и баннер.",
+    required:[
+      "enable",
+      "configure terminal",
+      "hostname SW1",
+      "enable secret NetP@ss30",
+      "username admin privilege 15 secret Admin@2026",
+      "ip domain-name corp.local",
+      "crypto key generate rsa modulus 2048",
+      "line vty 0 4",
+      "transport input ssh",
+      "login local",
+      "service password-encryption",
+      "banner motd #Доступ только для авторизованных сотрудников#"
+    ],
+    show:["show running-config","show ip ssh","show users","show version"],
+    validate:["hostname SW1","enable secret","username admin","transport input ssh","login local","service password-encryption"]
+  },
+  12:{
+    intro:"Создайте VLAN 10, 20, 30, 40, 99 и назначьте access-порты для пользователей, серверов и управления.",
+    required:[
+      "enable","configure terminal",
+      "vlan 10","name USERS",
+      "vlan 20","name VOICE",
+      "vlan 30","name SERVERS",
+      "vlan 40","name GUEST",
+      "vlan 99","name MGMT",
+      "interface range gigabitEthernet0/1-12",
+      "switchport mode access",
+      "switchport access vlan 10",
+      "spanning-tree portfast"
+    ],
+    show:["show vlan brief","show interfaces status","show running-config"],
+    validate:["vlan 10","vlan 20","vlan 30","vlan 40","vlan 99","switchport mode access","switchport access vlan 10"]
+  },
+  13:{
+    intro:"Настройте trunk к CORE1, разрешите рабочие VLAN и задайте native VLAN 999.",
+    required:[
+      "enable","configure terminal",
+      "vlan 999","name NATIVE-BLACKHOLE",
+      "interface gigabitEthernet0/24",
+      "description TRUNK_TO_CORE1",
+      "switchport mode trunk",
+      "switchport trunk native vlan 999",
+      "switchport trunk allowed vlan 10,20,30,40,99",
+      "switchport nonegotiate"
+    ],
+    show:["show interfaces trunk","show vlan brief","show running-config interface gigabitEthernet0/24"],
+    validate:["switchport mode trunk","switchport trunk native vlan 999","switchport trunk allowed vlan 10,20,30,40,99","switchport nonegotiate"]
+  },
+  14:{
+    intro:"Сделайте SW2 резервным root для VLAN и включите защиту access-портов от BPDU.",
+    required:[
+      "enable","configure terminal",
+      "spanning-tree mode rapid-pvst",
+      "spanning-tree vlan 10,20,30,40,99 priority 8192",
+      "interface range gigabitEthernet0/1-20",
+      "spanning-tree portfast",
+      "spanning-tree bpduguard enable"
+    ],
+    show:["show spanning-tree root","show spanning-tree summary","show running-config"],
+    validate:["spanning-tree mode rapid-pvst","spanning-tree vlan 10,20,30,40,99 priority 8192","spanning-tree bpduguard enable"]
+  },
+  15:{
+    intro:"Поднимите маршрутизацию на CORE1: SVI для VLAN и включите inter-VLAN routing.",
+    required:[
+      "enable","configure terminal",
+      "ip routing",
+      "interface vlan 10","ip address 10.10.10.1 255.255.255.0","no shutdown",
+      "interface vlan 20","ip address 10.10.20.1 255.255.255.0","no shutdown",
+      "interface vlan 30","ip address 10.10.30.1 255.255.255.0","no shutdown",
+      "interface vlan 40","ip address 10.10.40.1 255.255.255.0","no shutdown",
+      "interface vlan 99","ip address 10.10.99.1 255.255.255.0","no shutdown"
+    ],
+    show:["show ip interface brief","show ip route connected","show running-config"],
+    validate:["ip routing","interface vlan 10","ip address 10.10.10.1 255.255.255.0","interface vlan 30","ip address 10.10.30.1 255.255.255.0","interface vlan 99"]
+  },
+  16:{
+    intro:"Настройте DHCP для USERS и GUEST, исключите адреса шлюзов и инфраструктуры.",
+    required:[
+      "enable","configure terminal",
+      "ip dhcp excluded-address 10.10.10.1 10.10.10.30",
+      "ip dhcp excluded-address 10.10.40.1 10.10.40.20",
+      "ip dhcp pool USERS",
+      "network 10.10.10.0 255.255.255.0",
+      "default-router 10.10.10.1",
+      "dns-server 10.10.30.10",
+      "ip dhcp pool GUEST",
+      "network 10.10.40.0 255.255.255.0",
+      "default-router 10.10.40.1",
+      "dns-server 8.8.8.8"
+    ],
+    show:["show ip dhcp pool","show ip dhcp binding","show running-config | section dhcp"],
+    validate:["ip dhcp pool USERS","network 10.10.10.0 255.255.255.0","default-router 10.10.10.1","ip dhcp pool GUEST","network 10.10.40.0 255.255.255.0"]
+  },
+  17:{
+    intro:"На FW1 настройте inside/outside, PAT для пользователей и публикацию web-сервера DMZ.",
+    required:[
+      "enable","configure terminal",
+      "interface gigabitEthernet0/0","nameif outside","security-level 0","ip address 203.0.113.2 255.255.255.252","no shutdown",
+      "interface gigabitEthernet0/1","nameif inside","security-level 100","ip address 10.10.254.2 255.255.255.252","no shutdown",
+      "object network INSIDE_NET","subnet 10.10.0.0 255.255.0.0","nat (inside,outside) dynamic interface",
+      "object network WEB_DMZ","host 10.10.30.20","nat (inside,outside) static 203.0.113.20 service tcp 80 80"
+    ],
+    show:["show nat","show access-list","show interface ip brief","show running-config nat"],
+    validate:["nameif outside","nameif inside","object network INSIDE_NET","nat (inside,outside) dynamic interface","object network WEB_DMZ","static 203.0.113.20"]
+  },
+  18:{
+    intro:"Соберите site-to-site VPN: IKEv2 policy, transform-set, crypto map и peer филиала.",
+    required:[
+      "enable","configure terminal",
+      "crypto ikev2 policy 10",
+      "encryption aes-256",
+      "integrity sha256",
+      "group 14",
+      "prf sha256",
+      "crypto ikev2 keyring BRANCH-KR",
+      "peer BR1",
+      "address 198.51.100.10",
+      "pre-shared-key NetVPN@2026",
+      "crypto ipsec transform-set TS esp-aes 256 esp-sha-hmac",
+      "crypto map CMAP 10 match address VPN-ACL",
+      "crypto map CMAP 10 set peer 198.51.100.10",
+      "crypto map CMAP 10 set transform-set TS"
+    ],
+    show:["show crypto ikev2 sa","show crypto ipsec sa","show running-config crypto"],
+    validate:["crypto ikev2 policy 10","encryption aes-256","integrity sha256","pre-shared-key NetVPN@2026","crypto map CMAP 10 set peer 198.51.100.10"]
+  },
+  19:{
+    intro:"Настройте BR-R1: hostname, WAN, LAN, SSH и default route к провайдеру.",
+    required:[
+      "enable","configure terminal",
+      "hostname BR-R1",
+      "interface gigabitEthernet0/0","description ISP_PRIMARY","ip address 198.51.100.10 255.255.255.252","no shutdown",
+      "interface gigabitEthernet0/1","description BRANCH_LAN","ip address 10.20.10.1 255.255.255.0","no shutdown",
+      "ip route 0.0.0.0 0.0.0.0 198.51.100.9",
+      "username admin privilege 15 secret Admin@2026",
+      "line vty 0 4","transport input ssh","login local"
+    ],
+    show:["show ip interface brief","show ip route","show running-config"],
+    validate:["hostname BR-R1","ip address 198.51.100.10 255.255.255.252","ip address 10.20.10.1 255.255.255.0","ip route 0.0.0.0 0.0.0.0 198.51.100.9"]
+  },
+  20:{
+    intro:"Настройте VPN-клиент/туннель филиала до HQ и protected ACL.",
+    required:[
+      "enable","configure terminal",
+      "ip access-list extended VPN-HQ",
+      "permit ip 10.20.10.0 0.0.0.255 10.10.0.0 0.0.255.255",
+      "crypto ikev2 proposal HQ-PROP",
+      "encryption aes-cbc-256",
+      "integrity sha256",
+      "group 14",
+      "crypto ikev2 keyring HQ-KR",
+      "peer HQ","address 203.0.113.2","pre-shared-key NetVPN@2026"
+    ],
+    show:["show crypto ikev2 sa","show crypto ipsec sa","show access-lists VPN-HQ"],
+    validate:["ip access-list extended VPN-HQ","permit ip 10.20.10.0 0.0.0.255 10.10.0.0 0.0.255.255","pre-shared-key NetVPN@2026"]
+  },
+  21:{
+    intro:"Включите OSPF area 0 для LAN филиала и туннельного сегмента.",
+    required:[
+      "enable","configure terminal",
+      "router ospf 10",
+      "router-id 20.20.20.20",
+      "passive-interface default",
+      "no passive-interface tunnel0",
+      "network 10.20.10.0 0.0.0.255 area 0",
+      "network 172.16.20.0 0.0.0.3 area 0",
+      "default-information originate"
+    ],
+    show:["show ip ospf neighbor","show ip route ospf","show running-config | section ospf"],
+    validate:["router ospf 10","router-id 20.20.20.20","network 10.20.10.0 0.0.0.255 area 0","network 172.16.20.0 0.0.0.3 area 0"]
+  },
+  22:{
+    intro:"Настройте резервный канал через ISP2: IP SLA, tracking и floating default route.",
+    required:[
+      "enable","configure terminal",
+      "ip sla 1",
+      "icmp-echo 8.8.8.8 source-interface gigabitEthernet0/0",
+      "frequency 10",
+      "ip sla schedule 1 life forever start-time now",
+      "track 1 ip sla 1 reachability",
+      "ip route 0.0.0.0 0.0.0.0 198.51.100.9 track 1",
+      "ip route 0.0.0.0 0.0.0.0 192.0.2.9 200"
+    ],
+    show:["show ip sla statistics","show track","show ip route 0.0.0.0"],
+    validate:["ip sla 1","icmp-echo 8.8.8.8","track 1 ip sla 1 reachability","192.0.2.9 200"]
+  },
+  24:{
+    intro:"Настройте NTP: внутренний сервер 10.10.30.10, timezone и authentication.",
+    required:[
+      "enable","configure terminal",
+      "clock timezone MSK 3 0",
+      "ntp authenticate",
+      "ntp authentication-key 1 md5 NtpKey2026",
+      "ntp trusted-key 1",
+      "ntp server 10.10.30.10 key 1 prefer"
+    ],
+    show:["show ntp status","show ntp associations","show clock detail"],
+    validate:["clock timezone MSK 3 0","ntp authenticate","ntp server 10.10.30.10 key 1 prefer"]
+  },
+  25:{
+    intro:"Настройте Syslog на 10.10.30.11 и уровни журналирования для аудита.",
+    required:[
+      "enable","configure terminal",
+      "service timestamps log datetime msec localtime show-timezone",
+      "logging host 10.10.30.11",
+      "logging trap warnings",
+      "logging source-interface vlan 99",
+      "archive","log config","logging enable","notify syslog"
+    ],
+    show:["show logging","show archive log config all","show running-config | include logging"],
+    validate:["service timestamps log datetime msec localtime show-timezone","logging host 10.10.30.11","logging trap warnings","logging source-interface vlan 99"]
+  }
+};
+
+const initialProject = {
+  company:{name:"",industry:"",hqUsers:180,branchUsers:35,remoteUsers:20,critical:"CRM, телефония, файловые сервисы, портал клиентов"},
+  services:{selected:["internet","dns","dhcp","vpn"],sla:99.5,peak:70,voice:true,dmz:true},
+  security:{mfa:true,guestIsolation:true,logging:true,backup:true,leastPrivilege:true,openText:""},
+  budget:{capex:4200000,opex:650000,riskTolerance:"balanced",risks:{}},
+  topology:{nodes:["internet","fw","core","dist","access","servers","branch"],redundancy:true,dmz:true},
+  ip:{base:"10.10.0.0/16",branch:"10.20.0.0/16",wan:"172.16.20.0/30"},
+  vlans:[
+    {id:10,name:"USERS",subnet:"10.10.10.0/24",gw:"10.10.10.1",zone:"inside"},
+    {id:20,name:"VOICE",subnet:"10.10.20.0/24",gw:"10.10.20.1",zone:"inside"},
+    {id:30,name:"SERVERS",subnet:"10.10.30.0/24",gw:"10.10.30.1",zone:"dmz"},
+    {id:40,name:"GUEST",subnet:"10.10.40.0/24",gw:"10.10.40.1",zone:"guest"},
+    {id:99,name:"MGMT",subnet:"10.10.99.0/24",gw:"10.10.99.1",zone:"mgmt"}
+  ],
+  routing:{protocol:"ospf",area:"0",defaultRoute:true,summarization:true},
+  equipment:{core:2,access:4,fw:2,router:2,ups:3,ap:12},
+  dns:{zone:"corp.local",records:{dns:"10.10.30.10",syslog:"10.10.30.11",web:"10.10.30.20",monitor:"10.10.30.12"}},
+  monitoring:{snmpv3:true,traps:true,dashboards:true,thresholds:true,community:""},
+  hardening:{aaa:true,sshOnly:true,disableUnused:true,backup:true,acl:true,firmware:true},
+  tests:{},
+  trouble:{},
+  defense:{answers:{},finished:false}
+};
+
+const serviceCatalog = [
+  {id:"internet",name:"Интернет-доступ",critical:true,bw:120},
+  {id:"dns",name:"DNS",critical:true,bw:5},
+  {id:"dhcp",name:"DHCP",critical:true,bw:2},
+  {id:"vpn",name:"VPN HQ-Branch",critical:true,bw:50},
+  {id:"voice",name:"IP-телефония",critical:false,bw:35},
+  {id:"crm",name:"CRM",critical:true,bw:45},
+  {id:"files",name:"Файловые сервисы",critical:false,bw:80},
+  {id:"guest",name:"Гостевой Wi-Fi",critical:false,bw:60},
+  {id:"monitoring",name:"Мониторинг",critical:true,bw:8},
+  {id:"backup",name:"Резервное копирование",critical:false,bw:100}
+];
+
+const equipmentCatalog = {
+  core:{name:"L3 Core Switch 24x10G",price:620000},
+  access:{name:"Access Switch 48 PoE",price:210000},
+  fw:{name:"Next-Gen Firewall",price:780000},
+  router:{name:"WAN Router",price:260000},
+  ups:{name:"UPS 3000VA",price:135000},
+  ap:{name:"Wi-Fi 6 Access Point",price:38000}
+};
+
+const tests = [
+  {id:"t1",name:"Клиент VLAN10 получает DHCP",cmd:"ipconfig /renew",expect:"10.10.10.x, gateway 10.10.10.1"},
+  {id:"t2",name:"Гость не видит серверы",cmd:"ping 10.10.30.20 from VLAN40",expect:"blocked by ACL"},
+  {id:"t3",name:"Пользователь открывает CRM",cmd:"curl http://crm.corp.local",expect:"HTTP 200"},
+  {id:"t4",name:"Филиал видит DNS HQ",cmd:"ping 10.10.30.10 from BR",expect:"success"},
+  {id:"t5",name:"NAT в интернет",cmd:"show nat translations",expect:"PAT translations"},
+  {id:"t6",name:"OSPF соседство",cmd:"show ip ospf neighbor",expect:"FULL"},
+  {id:"t7",name:"Syslog приходит",cmd:"show logging",expect:"10.10.30.11"},
+  {id:"t8",name:"Failover WAN",cmd:"shutdown primary ISP",expect:"floating route active"}
+];
+
+const troubleCases = [
+  {
+    id:"dhcp",
+    title:"ПК в VLAN10 не получает адрес",
+    output:"SW1# show vlan brief\n10 USERS active Gi0/1, Gi0/2\nCORE1# show ip dhcp pool USERS\nLeased addresses: 0\nCORE1# show run | sec dhcp\nip dhcp pool USERS\n network 10.10.1.0 255.255.255.0\n default-router 10.10.10.1",
+    causes:["Неверная сеть в DHCP pool USERS","Не создан VLAN 10 на SW1","Неправильный native VLAN trunk","Сломан DNS сервер"],
+    fixes:["network 10.10.10.0 255.255.255.0","switchport trunk native vlan 10","ip dns server","no ip routing"],
+    answer:[0,0],
+    exp:"Шлюз указан из 10.10.10.0/24, а DHCP выдаёт сеть 10.10.1.0/24. Нужно исправить network."
+  },
+  {
+    id:"trunk",
+    title:"Серверы VLAN30 недоступны с CORE1",
+    output:"SW1# show interfaces trunk\nPort Gi0/24 allowed vlans 10,20,40,99\nCORE1# show ip int brief\nVlan30 10.10.30.1 up/up",
+    causes:["VLAN30 не разрешён на trunk","OSPF area задана неверно","STP заблокировал root-порт","DHCP pool переполнен"],
+    fixes:["switchport trunk allowed vlan add 30","spanning-tree vlan 30 priority 61440","router ospf 30","ip dhcp excluded-address 10.10.30.1"],
+    answer:[0,0],
+    exp:"SVI поднят, но VLAN30 не проходит через trunk. Нужно добавить VLAN30 в allowed list."
+  },
+  {
+    id:"vpn",
+    title:"VPN HQ-Branch не поднимается",
+    output:"FW1# show crypto ikev2 sa\nNo IKEv2 SAs found\nBR-R1# show run | include pre-shared\npre-shared-key NetVpn@2026",
+    causes:["Не совпадает pre-shared-key","Неверный VLAN users","Нет BPDU Guard","Syslog level too low"],
+    fixes:["pre-shared-key NetVPN@2026","logging trap debugging","spanning-tree portfast trunk","switchport mode access"],
+    answer:[0,0],
+    exp:"Ключ чувствителен к регистру: NetVpn@2026 не совпадает с NetVPN@2026."
+  },
+  {
+    id:"ospf",
+    title:"Маршруты филиала не появляются в HQ",
+    output:"BR-R1# show ip ospf neighbor\nNeighbor ID Pri State Dead Time Address Interface\nCORE1# show ip route ospf\n% Network not in table\nBR-R1# show run | sec ospf\nrouter ospf 10\n passive-interface default\n network 10.20.10.0 0.0.0.255 area 0\n network 172.16.20.0 0.0.0.3 area 0",
+    causes:["Туннельный интерфейс оставлен passive","Неверный DNS record","PAT не настроен","Native VLAN совпадает"],
+    fixes:["no passive-interface tunnel0","ip nat inside source list 1 interface g0/0 overload","ip name-server 8.8.8.8","switchport trunk native vlan 999"],
+    answer:[0,0],
+    exp:"passive-interface default отключает отправку OSPF hello. Для туннеля нужно no passive-interface tunnel0."
+  },
+  {
+    id:"nat",
+    title:"Пользователи не выходят в интернет",
+    output:"FW1# show nat\nAuto NAT Policies\n1 (inside) to (outside) source static WEB_DMZ 203.0.113.20\nFW1# packet-tracer input inside tcp 10.10.10.50 50000 8.8.8.8 443\nResult: DROP no matching xlate",
+    causes:["Нет dynamic PAT для inside сети","Неверная OSPF area","DHCP DNS не задан","Нет SNMP trap"],
+    fixes:["nat (inside,outside) dynamic interface","router ospf 1","snmp-server enable traps","dns-server 10.10.30.10"],
+    answer:[0,0],
+    exp:"Опубликован только DMZ web. Для пользователей нужен PAT inside to outside."
+  }
+];
+
+const defenseQuestions = [
+  {q:"Какой принцип лучше всего объясняет разделение USERS, SERVERS, GUEST и MGMT по VLAN?", opts:["Минимизация широковещательных доменов и сегментация доступа","Увеличение MTU на trunk","Замена OSPF статикой","Ускорение DNS"], a:0},
+  {q:"Что обязательно проверить после настройки DHCP?", opts:["Наличие lease, gateway, DNS и исключённых адресов","Только hostname устройства","Только spanning-tree root","Только syslog level"], a:0},
+  {q:"Почему native VLAN лучше вынести в неиспользуемую VLAN 999?", opts:["Чтобы снизить риск VLAN hopping и случайного трафика","Чтобы DHCP работал быстрее","Чтобы OSPF стал area 0","Чтобы отключить STP"], a:0},
+  {q:"Что подтверждает корректную работу OSPF?", opts:["Соседство FULL и маршруты O в таблице","Только созданные VLAN","Только NAT translations","Только banner motd"], a:0},
+  {q:"Для чего нужен Syslog в финальном проекте?", opts:["Централизованный аудит и разбор инцидентов","Выдача IP клиентам","Шифрование VPN","Подмена default gateway"], a:0},
+  {q:"Какой минимум нужен для site-to-site VPN?", opts:["Совпадающие IKE/IPsec параметры, peer, ключ и ACL интересного трафика","Только VLAN 10","Только DHCP pool","Только SNMP community"], a:0},
+  {q:"Что опасно оставить в production?", opts:["Telnet и общие community strings","SSH only","SNMPv3","AAA"], a:0},
+  {q:"Что показывает успешный NAT/PAT?", opts:["Появляются translations для inside адресов","Все VLAN становятся native","OSPF выключается","DHCP удаляет leases"], a:0},
+  {q:"Что лучше включить на access-портах?", opts:["PortFast и BPDU Guard","Trunk all VLAN","No shutdown на VLAN999","Static NAT"], a:0},
+  {q:"Какой критерий защиты проекта наиболее сильный?", opts:["Доказуемые тесты, риски, схема, конфигурации и troubleshooting","Только красивая диаграмма","Только список оборудования","Только число VLAN"], a:0}
+];
+
+let state = loadState();
+let curStep = Number(state.ui.curStep || 1);
+let activePhase = stepByNumber(curStep).phase;
+let cliMode = "user";
+let cliContext = "";
+let currentDevice = "";
+
+function loadState(){
+  const fallback = {
+    done:[],
+    scores:{},
+    project:structuredCloneSafe(initialProject),
+    cli:{},
+    logs:[],
+    ui:{curStep:1}
+  };
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return fallback;
+    const parsed = JSON.parse(raw);
+    return mergeDeep(fallback, parsed);
+  }catch(e){
+    return fallback;
+  }
+}
+
+function saveState(){
+  state.ui.curStep = curStep;
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }catch(e){ /* хранилище недоступно — прогресс просто не сохранится между сессиями */ }
+}
+
+function mergeDeep(base, extra){
+  if(Array.isArray(base)) return Array.isArray(extra) ? extra : base;
+  if(base && typeof base === "object"){
+    const out = {...base};
+    if(extra && typeof extra === "object"){
+      Object.keys(extra).forEach(k => out[k] = mergeDeep(base[k], extra[k]));
+    }
+    return out;
+  }
+  return extra === undefined ? base : extra;
+}
+
+function structuredCloneSafe(obj){
+  return JSON.parse(JSON.stringify(obj));
+}
+
+function stepByNumber(n){return steps.find(s => s.n === Number(n)) || steps[0];}
+function phaseById(id){return phases.find(p => p.id === id) || phases[0];}
+function phaseSteps(id){return steps.filter(s => s.phase === id);}
+function isDone(n){return state.done.includes(Number(n));}
+function maxScore(){return steps.reduce((a,s)=>a+s.pts,0);}
+function currentScore(){return Object.values(state.scores).reduce((a,v)=>a+Number(v||0),0);}
+
+function log(msg, kind="info"){
+  const time = new Date().toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  state.logs.unshift({time,msg,kind,step:curStep});
+  state.logs = state.logs.slice(0,80);
+  saveState();
+}
+
+function toast(html, kind="blue"){
+  const t = document.getElementById("toast");
+  const color = kind === "good" ? "var(--green)" : kind === "bad" ? "var(--red)" : kind === "warn" ? "var(--amber)" : "var(--primary)";
+  t.style.borderLeftColor = color;
+  t.innerHTML = html;
+  t.classList.add("show");
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(()=>t.classList.remove("show"), 5200);
+}
+
+function esc(v){
+  return String(v ?? "").replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+
+function renderApp(){
+  const step = stepByNumber(curStep);
+  activePhase = step.phase;
+  renderPhases();
+  renderSidebar();
+  renderHeader();
+  renderContent();
+  renderTasks();
+  renderTopStats();
+  saveState();
+}
+
+function renderPhases(){
+  document.getElementById("phaseTabs").innerHTML = phases.map((p,i)=>{
+    const nums = phaseSteps(p.id).map(s=>s.n);
+    const done = nums.every(n=>isDone(n));
+    return `<button class="phase-tab ${p.id===activePhase?'active':''} ${done?'done':''}" data-phase="${p.id}">${i+1}. ${esc(p.short)}</button>`;
+  }).join("");
+  document.querySelectorAll(".phase-tab").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const p = phaseById(btn.dataset.phase);
+      curStep = p.range[0];
+      renderApp();
+    });
+  });
+}
+
+function renderSidebar(){
+  const p = phaseById(activePhase);
+  const list = phaseSteps(activePhase);
+  const done = list.filter(s=>isDone(s.n)).length;
+  const score = list.reduce((a,s)=>a+Number(state.scores[s.n]||0),0);
+  document.getElementById("sideKicker").textContent = `Этап ${phases.indexOf(p)+1}`;
+  document.getElementById("sideTitle").textContent = p.title;
+  document.getElementById("phaseDone").textContent = `${done}/${list.length}`;
+  document.getElementById("phaseScore").textContent = score;
+  document.getElementById("stepsList").innerHTML = list.map(s=>`
+    <button class="step-btn ${s.n===curStep?'active':''} ${isDone(s.n)?'done':''}" data-step="${s.n}">
+      <span class="step-num">${isDone(s.n) ? "✓" : s.n}</span>
+      <span>
+        <span class="step-name">${esc(s.title)}</span>
+        <span class="step-desc">${esc(s.desc)}</span>
+      </span>
+      <span class="step-points">${s.pts}</span>
+    </button>
+  `).join("");
+  document.querySelectorAll(".step-btn").forEach(btn=>{
+    btn.addEventListener("click",()=>{curStep = Number(btn.dataset.step); renderApp();});
+  });
+}
+
+function renderHeader(){
+  const s = stepByNumber(curStep);
+  const p = phaseById(s.phase);
+  document.getElementById("stepCrumb").textContent = `Этап ${phases.indexOf(p)+1}: ${p.title}`;
+  document.getElementById("stepTitle").textContent = `Шаг ${s.n}. ${s.title}`;
+  document.getElementById("stepSummary").textContent = s.desc;
+  document.getElementById("btnPrev").disabled = curStep <= 1;
+  document.getElementById("btnNext").disabled = curStep >= 30;
+  document.getElementById("btnCheckTop").textContent = isDone(curStep) ? "Перепроверить" : "Проверить";
+  document.getElementById("btnCheckBottom").textContent = isDone(curStep) ? "Шаг выполнен" : "Проверить шаг";
+}
+
+function renderTopStats(){
+  const done = state.done.length;
+  const pct = Math.round(done / steps.length * 100);
+  document.getElementById("topProgress").style.width = pct + "%";
+  document.getElementById("doneCount").textContent = done;
+  document.getElementById("totalStepsCount").textContent = steps.length;
+  document.getElementById("scoreCount").textContent = `${currentScore()}/${maxScore()}`;
+}
+
+function renderTasks(){
+  const issues = validateStep(curStep, false);
+  const s = stepByNumber(curStep);
+  const done = isDone(curStep);
+  const labels = done
+    ? ["Проверка пройдена", `${state.scores[curStep] || s.pts}/${s.pts} баллов`, "Прогресс сохранён"]
+    : issues.length
+      ? issues.slice(0,4)
+      : ["Заполните параметры", "Выполните настройки", "Нажмите проверку"];
+  document.getElementById("taskList").innerHTML = labels.map(x=>`<span class="task-item ${done?'done':''}">${done?'✓':'•'} ${esc(x)}</span>`).join("");
+}
+
+function renderContent(){
+  const s = stepByNumber(curStep);
+  const map = {
+    company:renderCompany,
+    services:renderServices,
+    security:renderSecurity,
+    budget:renderBudget,
+    topology:renderTopology,
+    ip:renderIp,
+    vlan:renderVlan,
+    routing:renderRouting,
+    equipment:renderEquipment,
+    hld:renderHld,
+    cli:renderCliLab,
+    dns:renderDns,
+    monitoring:renderMonitoring,
+    hardening:renderHardening,
+    tests:renderTests,
+    troubleshooting:renderTroubleshooting,
+    defense:renderDefense
+  };
+  document.getElementById("content").innerHTML = (map[s.type] || renderGeneric)(s);
+  bindContentEvents();
+  if(s.type === "cli") initCliForStep(s.n);
+}
+
+function renderGeneric(s){
+  return `<div class="card"><div class="card-title">${esc(s.title)}</div><div class="card-sub">${esc(s.desc)}</div></div>`;
+}
+
+function renderCompany(){
+  const c = state.project.company;
+  return `<div class="content-grid">
+    <div>
+      <div class="card">
+        <div class="card-title">Паспорт компании</div>
+        <div class="card-sub">Симулятор будет использовать эти данные в отчёте, бюджете и защите проекта.</div>
+        <div class="grid2">
+          ${field("company.name","Название компании",c.name,"Например: ООО «СеверТех»")}
+          ${field("company.industry","Отрасль",c.industry,"Финансы, ритейл, производство")}
+        </div>
+        <div class="grid3">
+          ${field("company.hqUsers","Пользователей HQ",c.hqUsers,"", "number")}
+          ${field("company.branchUsers","Пользователей филиала",c.branchUsers,"", "number")}
+          ${field("company.remoteUsers","Удалённых пользователей",c.remoteUsers,"", "number")}
+        </div>
+        ${textarea("company.critical","Критичные бизнес-процессы",c.critical)}
+      </div>
+      ${renderProjectSnapshot()}
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-title">Цель этапа</div>
+        <div class="alert blue">Опишите компанию так, чтобы сетевые решения были объяснимы: количество пользователей, роль филиала, критичные сервисы и требования к доступности.</div>
+        ${renderLog()}
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderServices(){
+  const p = state.project.services;
+  const selected = new Set(p.selected);
+  const bw = serviceCatalog.filter(s=>selected.has(s.id)).reduce((a,s)=>a+s.bw,0);
+  return `<div class="content-grid">
+    <div class="card">
+      <div class="card-title">Каталог сервисов</div>
+      <div class="card-sub">Выберите сервисы, которые сеть должна поддерживать. Критичные сервисы участвуют в проверке SLA.</div>
+      <div class="option-list">
+        ${serviceCatalog.map(s=>`
+          <div class="option ${selected.has(s.id)?'selected':''}" data-service="${s.id}">
+            <div class="radio">${selected.has(s.id)?"✓":""}</div>
+            <div>
+              <div class="option-title">${esc(s.name)}</div>
+              <div class="option-text">Оценка нагрузки: ${s.bw} Мбит/с ${s.critical ? "· критичный сервис" : ""}</div>
+            </div>
+            <span class="pill ${s.critical?'red':'blue'}">${s.critical?'критично':'обычно'}</span>
+          </div>`).join("")}
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-title">SLA и нагрузка</div>
+        <div class="field">
+          <label class="label">SLA, %</label>
+          <div class="range-row"><input data-path="services.sla" type="range" min="95" max="99.99" step=".01" value="${p.sla}"><input class="input" data-path="services.sla" type="number" min="95" max="99.99" step=".01" value="${p.sla}"></div>
+        </div>
+        <div class="field">
+          <label class="label">Пиковая загрузка канала, %</label>
+          <div class="range-row"><input data-path="services.peak" type="range" min="10" max="95" step="1" value="${p.peak}"><input class="input" data-path="services.peak" type="number" min="10" max="95" value="${p.peak}"></div>
+        </div>
+        <div class="alert ${bw>450?'amber':'green'}">Расчётная суммарная нагрузка: <b>${bw} Мбит/с</b>. Рекомендуемый WAN с запасом 30%: <b>${Math.ceil(bw*1.3)} Мбит/с</b>.</div>
+      </div>
+      ${renderProjectSnapshot()}
+    </div>
+  </div>`;
+}
+
+function renderSecurity(){
+  const s = state.project.security;
+  return `<div class="content-grid">
+    <div class="card">
+      <div class="card-title">Политика безопасности</div>
+      <div class="card-sub">Отметьте обязательные меры и допишите контекст организации.</div>
+      ${check("security.mfa","MFA для администраторов и VPN",s.mfa)}
+      ${check("security.guestIsolation","Гостевая сеть изолирована от inside/servers",s.guestIsolation)}
+      ${check("security.logging","Централизованный сбор логов",s.logging)}
+      ${check("security.backup","Резервные копии конфигураций",s.backup)}
+      ${check("security.leastPrivilege","Минимально необходимые права доступа",s.leastPrivilege)}
+      ${textarea("security.openText","Дополнительные требования ИБ",s.openText || "ACL между VLAN, SSH only, SNMPv3, запрет неиспользуемых портов.")}
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-title">Матрица зон</div>
+        <table class="table">
+          <tr><th>Зона</th><th>Доступ</th><th>Контроль</th></tr>
+          <tr><td>USERS</td><td>CRM, DNS, Internet</td><td>ACL, NAT</td></tr>
+          <tr><td>SERVERS</td><td>Только нужные порты</td><td>Firewall, Syslog</td></tr>
+          <tr><td>GUEST</td><td>Только Internet</td><td>ACL deny inside</td></tr>
+          <tr><td>MGMT</td><td>Администрирование</td><td>SSH, AAA, SNMPv3</td></tr>
+        </table>
+      </div>
+      ${renderLog()}
+    </div>
+  </div>`;
+}
+
+function renderBudget(){
+  const b = state.project.budget;
+  const hw = equipmentTotal();
+  return `<div class="content-grid">
+    <div class="card">
+      <div class="card-title">Бюджетный профиль</div>
+      <div class="grid2">
+        ${field("budget.capex","CAPEX, ₽",b.capex,"","number")}
+        ${field("budget.opex","OPEX в год, ₽",b.opex,"","number")}
+      </div>
+      <div class="field"><label class="label">Отношение к риску</label>
+        <select class="select" data-path="budget.riskTolerance">
+          ${["conservative","balanced","aggressive"].map(v=>`<option value="${v}" ${b.riskTolerance===v?"selected":""}>${v==="conservative"?"Консервативно":v==="balanced"?"Баланс":"Экономия"}</option>`).join("")}
+        </select>
+      </div>
+      <div class="alert ${hw>b.capex?'red':'green'}">Текущий расчёт BOM: <b>${money(hw)}</b>. Доступный CAPEX: <b>${money(b.capex)}</b>.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Матрица рисков</div>
+      ${riskRow("isp","Отказ основного провайдера")}
+      ${riskRow("vpn","Несовпадение VPN-параметров")}
+      ${riskRow("loop","Петля L2/STP incident")}
+      ${riskRow("budget","Превышение бюджета")}
+      ${riskRow("security","Недостаточная сегментация")}
+    </div>
+  </div>`;
+}
+
+function renderTopology(){
+  return `<div class="content-grid">
+    <div class="card">
+      <div class="card-title">Логическая топология</div>
+      <div class="card-sub">Схема строится из выбранных компонентов. Для зачёта нужны Internet, FW, Core, Access, Servers и Branch.</div>
+      ${drawTopology()}
+      <div class="cli-help">
+        ${["internet","fw","core","dist","access","servers","dmz","branch","monitoring"].map(n=>`<button class="cmd-chip" data-node="${n}">${state.project.topology.nodes.includes(n)?"−":"+"} ${labelNode(n)}</button>`).join("")}
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-title">Параметры схемы</div>
+        ${check("topology.redundancy","Резервирование core/firewall/WAN",state.project.topology.redundancy)}
+        ${check("topology.dmz","Выделенная DMZ для публичных сервисов",state.project.topology.dmz)}
+        <div class="alert blue">Схема не просто картинка: от неё зависят проверки NAT, VPN, OSPF, мониторинга и финального отчёта.</div>
+      </div>
+      ${renderProjectSnapshot()}
+    </div>
+  </div>`;
+}
+
+function drawTopology(){
+  const nodes = state.project.topology.nodes;
+  const pos = {
+    internet:[42,130], fw:[180,130], core:[330,130], dist:[480,78], access:[630,78],
+    servers:[480,198], dmz:[630,198], branch:[330,255], monitoring:[650,255]
+  };
+  const links = [["internet","fw"],["fw","core"],["core","dist"],["dist","access"],["core","servers"],["servers","dmz"],["fw","branch"],["core","monitoring"]];
+  const activeLinks = links.filter(([a,b])=>nodes.includes(a)&&nodes.includes(b));
+  return `<div class="diagram">
+    ${activeLinks.map(([a,b])=>line(pos[a],pos[b])).join("")}
+    ${nodes.map(n=>`<div class="node" style="left:${pos[n][0]}px;top:${pos[n][1]}px"><b>${esc(labelNode(n))}</b><span>${esc(nodeHint(n))}</span></div>`).join("")}
+  </div>`;
+}
+
+function line(a,b){
+  const dx=b[0]-a[0], dy=b[1]-a[1], len=Math.sqrt(dx*dx+dy*dy), deg=Math.atan2(dy,dx)*180/Math.PI;
+  return `<div class="line" style="left:${a[0]+46}px;top:${a[1]+30}px;width:${len}px;transform:rotate(${deg}deg)"></div>`;
+}
+
+function labelNode(n){
+  return ({internet:"Internet",fw:"Firewall",core:"Core L3",dist:"Distribution",access:"Access",servers:"Servers",dmz:"DMZ",branch:"Branch",monitoring:"Monitoring"}[n] || n);
+}
+function nodeHint(n){
+  return ({internet:"ISP",fw:"NAT/VPN",core:"SVI/OSPF",dist:"trunks",access:"users",servers:"DNS DHCP",dmz:"web",branch:"BR-R1",monitoring:"SNMP Syslog"}[n] || "");
+}
+
+function renderIp(){
+  const p = state.project.ip;
+  return `<div class="content-grid">
+    <div class="card">
+      <div class="card-title">Адресный план</div>
+      <div class="grid3">
+        ${field("ip.base","HQ summary",p.base)}
+        ${field("ip.branch","Branch summary",p.branch)}
+        ${field("ip.wan","VPN/WAN transit",p.wan)}
+      </div>
+      <table class="table">
+        <tr><th>Назначение</th><th>Подсеть</th><th>Шлюз</th><th>Комментарий</th></tr>
+        ${state.project.vlans.map(v=>`<tr><td>VLAN ${v.id} ${esc(v.name)}</td><td>${esc(v.subnet)}</td><td>${esc(v.gw)}</td><td>${esc(v.zone)}</td></tr>`).join("")}
+        <tr><td>Филиал LAN</td><td>10.20.10.0/24</td><td>10.20.10.1</td><td>branch users</td></tr>
+        <tr><td>WAN tunnel</td><td>${esc(p.wan)}</td><td>172.16.20.1/2</td><td>OSPF adjacency</td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-title">Проверки плана</div>
+        ${ipCheckLine("HQ summary должен быть /16", /\/16$/.test(p.base))}
+        ${ipCheckLine("Branch summary должен отличаться от HQ", p.branch !== p.base)}
+        ${ipCheckLine("WAN transit должен быть /30", /\/30$/.test(p.wan))}
+        ${ipCheckLine("Все шлюзы VLAN уникальны", new Set(state.project.vlans.map(v=>v.gw)).size === state.project.vlans.length)}
+      </div>
+      ${renderProjectSnapshot()}
+    </div>
+  </div>`;
+}
+
+function renderVlan(){
+  return `<div class="card">
+    <div class="card-title">VLAN-модель</div>
+    <div class="card-sub">Редактируйте имена, подсети и зоны. Минимум для проекта: USERS, VOICE, SERVERS, GUEST, MGMT.</div>
+    <table class="table">
+      <tr><th>ID</th><th>Имя</th><th>Подсеть</th><th>Шлюз</th><th>Зона</th><th></th></tr>
+      ${state.project.vlans.map((v,i)=>`<tr>
+        <td><input class="input" data-vlan="${i}" data-k="id" type="number" value="${v.id}"></td>
+        <td><input class="input" data-vlan="${i}" data-k="name" value="${esc(v.name)}"></td>
+        <td><input class="input" data-vlan="${i}" data-k="subnet" value="${esc(v.subnet)}"></td>
+        <td><input class="input" data-vlan="${i}" data-k="gw" value="${esc(v.gw)}"></td>
+        <td><input class="input" data-vlan="${i}" data-k="zone" value="${esc(v.zone)}"></td>
+        <td><button class="btn small red" data-del-vlan="${i}">Удалить</button></td>
+      </tr>`).join("")}
+    </table>
+    <button class="btn primary" id="addVlan" style="margin-top:12px">Добавить VLAN</button>
+  </div>`;
+}
+
+function renderRouting(){
+  const r = state.project.routing;
+  return `<div class="content-grid">
+    <div class="card">
+      <div class="card-title">Дизайн маршрутизации</div>
+      <div class="field"><label class="label">Протокол</label>
+        <select class="select" data-path="routing.protocol">
+          ${["ospf","static","eigrp"].map(v=>`<option value="${v}" ${r.protocol===v?"selected":""}>${v.toUpperCase()}</option>`).join("")}
+        </select>
+      </div>
+      ${field("routing.area","OSPF area",r.area)}
+      ${check("routing.defaultRoute","Default route распространяется в филиал",r.defaultRoute)}
+      ${check("routing.summarization","Суммаризация HQ и Branch включена в HLD",r.summarization)}
+    </div>
+    <div class="card">
+      <div class="card-title">Ожидаемая таблица маршрутизации</div>
+      <pre class="alert blue" style="font-family:var(--mono);white-space:pre-wrap">O 10.20.10.0/24 [110/20] via 172.16.20.2, Tunnel0
+C 10.10.10.0/24 is directly connected, Vlan10
+C 10.10.30.0/24 is directly connected, Vlan30
+S* 0.0.0.0/0 [1/0] via 10.10.254.2</pre>
+    </div>
+  </div>`;
+}
+
+function renderEquipment(){
+  const eq = state.project.equipment;
+  return `<div class="content-grid">
+    <div class="card">
+      <div class="card-title">BOM оборудования</div>
+      <table class="table">
+        <tr><th>Позиция</th><th>Цена</th><th>Кол-во</th><th>Итого</th></tr>
+        ${Object.keys(equipmentCatalog).map(k=>{
+          const item=equipmentCatalog[k], q=Number(eq[k]||0);
+          return `<tr><td><b>${esc(item.name)}</b><br><span style="color:var(--muted)">${esc(k)}</span></td><td>${money(item.price)}</td><td><input class="input" style="width:80px" data-eq="${k}" type="number" min="0" value="${q}"></td><td>${money(item.price*q)}</td></tr>`;
+        }).join("")}
+      </table>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-title">Итог BOM</div>
+        <div class="metric"><strong>${money(equipmentTotal())}</strong><span>плановая закупка</span></div>
+        <div style="height:10px"></div>
+        <div class="alert ${equipmentTotal()>state.project.budget.capex?'red':'green'}">${equipmentTotal()>state.project.budget.capex?'Бюджет превышен. Уменьшите BOM или CAPEX.':'BOM укладывается в CAPEX.'}</div>
+      </div>
+      ${renderProjectSnapshot()}
+    </div>
+  </div>`;
+}
+
+function renderHld(){
+  return `<div class="content-grid">
+    <div class="card">
+      <div class="card-title">High Level Design</div>
+      ${textarea("hld","Краткое проектное решение", state.project.hld || makeHldText())}
+      <button class="btn" id="regenHld">Собрать HLD из текущих данных</button>
+    </div>
+    <div>
+      ${renderProjectSnapshot()}
+      <div class="card">
+        <div class="card-title">Что должно быть в HLD</div>
+        <div class="alert blue">Топология, адресный план, VLAN, маршрутизация, безопасность, BOM, риски и план тестирования. Этот текст попадёт в итоговый отчёт.</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderCliLab(s){
+  const lab = cliLabs[s.n];
+  const device = s.device || "R1";
+  const hist = getCli(s.n).output || `Добро пожаловать в IOS CLI Simulator.\nВведите enable, затем configure terminal.\n`;
+  return `<div class="content-grid">
+    <div>
+      <div class="card">
+        <div class="card-title">Лабораторная работа: ${esc(device)}</div>
+        <div class="card-sub">${esc(lab.intro)}</div>
+        <div class="cli-shell">
+          <div class="cli-top"><span class="cli-dot"></span><span class="cli-dot"></span><span class="cli-dot"></span><span id="cliTitle">${esc(device)} console</span></div>
+          <div class="cli-output" id="cliOutput">${esc(hist)}</div>
+          <div class="cli-input-row">
+            <span class="cli-prompt" id="cliPrompt">${esc(promptText(device))}</span>
+            <input class="cli-input" id="cliInput" autocomplete="off" spellcheck="false" placeholder="Введите команду IOS и нажмите Enter">
+          </div>
+        </div>
+        <div class="cli-help">
+          ${lab.show.map(c=>`<button class="cmd-chip" data-cmd="${esc(c)}">${esc(c)}</button>`).join("")}
+          <button class="cmd-chip" data-cmd="end">end</button>
+          <button class="cmd-chip" data-cmd="write memory">write memory</button>
+          <button class="cmd-chip" data-cmd="?">?</button>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-title">Требуемые команды</div>
+        <div class="card-sub">Синтаксис валидируется по смысловым строкам. Регистр не важен, но IP и параметры должны совпадать.</div>
+        ${lab.required.map(cmd=>cmdStatus(s.n,cmd)).join("")}
+      </div>
+      <div class="card">
+        <div class="card-title">Show-команды</div>
+        <div class="card-sub">Поддерживаются show running-config, show ip interface brief, show vlan brief, show interfaces trunk, show ip route, show crypto..., show logging, show ntp..., show ip ospf... и контекстная помощь ?.</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderDns(){
+  const d = state.project.dns;
+  return `<div class="content-grid">
+    <div class="card">
+      <div class="card-title">DNS-зона</div>
+      ${field("dns.zone","Зона",d.zone)}
+      <table class="table">
+        <tr><th>Запись</th><th>IP</th><th>Назначение</th></tr>
+        ${Object.keys(d.records).map(k=>`<tr><td>${esc(k)}.${esc(d.zone)}</td><td><input class="input" data-dns="${k}" value="${esc(d.records[k])}"></td><td>${dnsHint(k)}</td></tr>`).join("")}
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">Проверка резолвинга</div>
+      <pre class="alert blue" style="font-family:var(--mono);white-space:pre-wrap">nslookup web.${esc(d.zone)}
+Server:  ${esc(d.records.dns)}
+Address: ${esc(d.records.web)}
+
+nslookup monitor.${esc(d.zone)}
+Address: ${esc(d.records.monitor)}</pre>
+    </div>
+  </div>`;
+}
+
+function renderMonitoring(){
+  const m = state.project.monitoring;
+  return `<div class="content-grid">
+    <div class="card">
+      <div class="card-title">SNMP и мониторинг</div>
+      ${check("monitoring.snmpv3","Используется SNMPv3, не community v2c",m.snmpv3)}
+      ${check("monitoring.traps","Traps отправляются на 10.10.30.12",m.traps)}
+      ${check("monitoring.dashboards","Есть дашборды CPU, RAM, interfaces, VPN",m.dashboards)}
+      ${check("monitoring.thresholds","Настроены пороги аварий",m.thresholds)}
+      ${field("monitoring.community","Legacy community должна быть пустой",m.community)}
+    </div>
+    <div class="card">
+      <div class="card-title">Пример конфигурации</div>
+      <pre class="alert blue" style="font-family:var(--mono);white-space:pre-wrap">snmp-server group NETOPS v3 priv
+snmp-server user monitor NETOPS v3 auth sha AuthKey2026 priv aes 256 PrivKey2026
+snmp-server host 10.10.30.12 version 3 priv monitor
+snmp-server enable traps</pre>
+    </div>
+  </div>`;
+}
+
+function renderHardening(){
+  const h = state.project.hardening;
+  return `<div class="content-grid">
+    <div class="card">
+      <div class="card-title">Финальный hardening checklist</div>
+      ${check("hardening.aaa","AAA/локальный fallback настроен",h.aaa)}
+      ${check("hardening.sshOnly","Telnet отключён, SSH only",h.sshOnly)}
+      ${check("hardening.disableUnused","Неиспользуемые порты shutdown + blackhole VLAN",h.disableUnused)}
+      ${check("hardening.backup","Конфигурации сохранены и зарезервированы",h.backup)}
+      ${check("hardening.acl","ACL между зонами проверены",h.acl)}
+      ${check("hardening.firmware","Версии ПО и уязвимости проверены",h.firmware)}
+    </div>
+    <div class="card">
+      <div class="card-title">Итоговый security score</div>
+      ${securityScoreBlock()}
+    </div>
+  </div>`;
+}
+
+function renderTests(){
+  return `<div class="content-grid">
+    <div class="card">
+      <div class="card-title">Матрица комплексного тестирования</div>
+      <div class="card-sub">Отметьте результат каждого теста. Для зачёта нужно не меньше 7 успешных из 8.</div>
+      <table class="table">
+        <tr><th>Тест</th><th>Команда</th><th>Ожидание</th><th>Результат</th></tr>
+        ${tests.map(t=>`<tr>
+          <td><b>${esc(t.name)}</b></td><td><span class="kbd">${esc(t.cmd)}</span></td><td>${esc(t.expect)}</td>
+          <td><select class="select" data-test="${t.id}"><option value="">не проверено</option><option value="pass" ${state.project.tests[t.id]==="pass"?"selected":""}>pass</option><option value="fail" ${state.project.tests[t.id]==="fail"?"selected":""}>fail</option></select></td>
+        </tr>`).join("")}
+      </table>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-title">Сводка</div>
+        ${testSummaryBlock()}
+      </div>
+      ${renderLog()}
+    </div>
+  </div>`;
+}
+
+function renderTroubleshooting(){
+  return `<div class="card">
+    <div class="card-title">Troubleshooting: 5 ошибок</div>
+    <div class="card-sub">Для каждого кейса выберите корневую причину и корректную команду исправления.</div>
+    ${troubleCases.map((c,idx)=>troubleCard(c,idx)).join("")}
+  </div>`;
+}
+
+function renderDefense(){
+  const d = state.project.defense;
+  if(d.finished) return renderDefenseResults();
+  const answered = Object.keys(d.answers).length;
+  const q = defenseQuestions[answered];
+  if(!q){
+    return `<div class="card" style="text-align:center;padding:34px">
+      <div class="card-title">Все вопросы отвечены</div>
+      <div class="card-sub">Можно завершить защиту и получить итоговую оценку.</div>
+      <button class="btn primary" id="finishDefense">Завершить защиту</button>
+    </div>`;
+  }
+  return `<div class="content-grid">
+    <div class="card">
+      <div class="card-title">Вопрос ${answered+1} из ${defenseQuestions.length}</div>
+      <div class="card-sub">Итоговая защита проверяет понимание проектных решений, а не запоминание интерфейса симулятора.</div>
+      <div style="font-size:18px;font-weight:900;line-height:1.35;margin-bottom:14px">${esc(q.q)}</div>
+      <div class="option-list">
+        ${q.opts.map((o,i)=>`<div class="option" data-defense="${i}"><div class="radio">${String.fromCharCode(65+i)}</div><div><div class="option-title">${esc(o)}</div></div></div>`).join("")}
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-title">Прогресс защиты</div>
+        <div class="progress-mini" style="width:100%;height:12px"><span style="width:${Math.round(answered/defenseQuestions.length*100)}%"></span></div>
+        <div style="height:12px"></div>
+        <div class="alert blue">${answered}/${defenseQuestions.length} вопросов отвечено.</div>
+      </div>
+      ${renderProjectSnapshot()}
+    </div>
+  </div>`;
+}
+
+function field(path,label,value,placeholder="",type="text"){
+  return `<div class="field"><label class="label">${esc(label)}</label><input class="input" data-path="${esc(path)}" type="${type}" value="${esc(value)}" placeholder="${esc(placeholder)}"></div>`;
+}
+
+function textarea(path,label,value){
+  return `<div class="field"><label class="label">${esc(label)}</label><textarea class="textarea" data-path="${esc(path)}">${esc(value)}</textarea></div>`;
+}
+
+function check(path,label,val){
+  return `<label class="option ${val?'selected':''}" style="grid-template-columns:24px 1fr;margin-bottom:8px">
+    <input class="hidden" data-path="${esc(path)}" type="checkbox" ${val?'checked':''}>
+    <span class="radio">${val?'✓':''}</span>
+    <span><span class="option-title">${esc(label)}</span></span>
+  </label>`;
+}
+
+function riskRow(id,label){
+  const r = state.project.budget.risks[id] || {p:2,i:2};
+  const score = Number(r.p) * Number(r.i);
+  const cls = score >= 12 ? "red" : score >= 8 ? "amber" : score >= 4 ? "blue" : "green";
+  return `<div class="card" style="box-shadow:none;margin-bottom:8px;padding:10px">
+    <div style="display:flex;justify-content:space-between;gap:10px;margin-bottom:8px"><b style="font-size:13px">${esc(label)}</b><span class="pill ${cls}">${score}</span></div>
+    <div class="grid2">
+      <div><label class="label">Вероятность</label><input data-risk="${id}" data-risk-k="p" type="range" min="1" max="5" value="${r.p}"></div>
+      <div><label class="label">Влияние</label><input data-risk="${id}" data-risk-k="i" type="range" min="1" max="5" value="${r.i}"></div>
+    </div>
+  </div>`;
+}
+
+function ipCheckLine(label, ok){
+  return `<div class="task-item ${ok?'done':''}" style="border-radius:8px;margin-bottom:8px">${ok?'✓':'•'} ${esc(label)}</div>`;
+}
+
+function renderProjectSnapshot(){
+  const c = state.project.company;
+  const totalUsers = Number(c.hqUsers||0)+Number(c.branchUsers||0)+Number(c.remoteUsers||0);
+  return `<div class="card">
+    <div class="card-title">Снимок проекта</div>
+    <table class="table">
+      <tr><td>Компания</td><td><b>${esc(c.name || "не задана")}</b></td></tr>
+      <tr><td>Пользователи</td><td>${totalUsers}</td></tr>
+      <tr><td>VLAN</td><td>${state.project.vlans.length}</td></tr>
+      <tr><td>Бюджет BOM</td><td>${money(equipmentTotal())}</td></tr>
+      <tr><td>Готовность</td><td>${state.done.length}/${steps.length} шагов</td></tr>
+    </table>
+  </div>`;
+}
+
+function renderLog(){
+  const lines = state.logs.slice(0,12);
+  return `<div class="card">
+    <div class="card-title">Журнал симулятора</div>
+    <div class="log">${lines.length ? lines.map(l=>`<div class="log-line ${l.kind}">[${esc(l.time)}] Шаг ${l.step}: ${esc(l.msg)}</div>`).join("") : `<div class="footer-note">Журнал пока пуст.</div>`}</div>
+  </div>`;
+}
+
+function money(n){
+  return new Intl.NumberFormat("ru-RU",{style:"currency",currency:"RUB",maximumFractionDigits:0}).format(Number(n||0));
+}
+
+function equipmentTotal(){
+  return Object.keys(equipmentCatalog).reduce((a,k)=>a + Number(state.project.equipment[k]||0) * equipmentCatalog[k].price, 0);
+}
+
+function makeHldText(){
+  const c = state.project.company;
+  return `Проект корпоративной сети для ${c.name || "компании"} включает главный офис, филиал, DMZ и защищённый WAN.
+В HQ используется L3 Core с inter-VLAN routing, VLAN 10/20/30/40/99, DHCP и централизованные сервисы DNS/NTP/Syslog/SNMP.
+Филиал подключается через site-to-site VPN, маршрутизация между площадками выполняется OSPF area 0.
+Гостевая сеть изолирована ACL, доступ в интернет выполняется через NAT/PAT на firewall.
+Эксплуатация покрыта мониторингом, журналированием, резервным копированием конфигураций и финальной матрицей тестов.`;
+}
+
+function securityScoreBlock(){
+  const h = state.project.hardening;
+  const keys = Object.keys(h);
+  const ok = keys.filter(k=>h[k]).length;
+  const pct = Math.round(ok/keys.length*100);
+  return `<div class="metric"><strong>${pct}%</strong><span>${ok}/${keys.length} мер включено</span></div>
+  <div style="height:12px"></div>
+  <div class="alert ${pct>=85?'green':pct>=65?'amber':'red'}">${pct>=85?'Hardening готов к защите.':pct>=65?'Нужно закрыть оставшиеся пункты.':'Слишком много базовых мер отключено.'}</div>`;
+}
+
+function testSummaryBlock(){
+  const values = tests.map(t=>state.project.tests[t.id]);
+  const pass = values.filter(v=>v==="pass").length;
+  const fail = values.filter(v=>v==="fail").length;
+  return `<div class="metric"><strong>${pass}/${tests.length}</strong><span>успешных тестов</span></div>
+  <div style="height:12px"></div>
+  <div class="alert ${pass>=7?'green':fail>1?'red':'amber'}">${pass>=7?'Матрица тестирования готова.':'Для зачёта нужно минимум 7 pass.'}</div>`;
+}
+
+function dnsHint(k){
+  return ({dns:"внутренний DNS",syslog:"сервер журналов",web:"публичный web в DMZ",monitor:"мониторинг"}[k] || "");
+}
+
+function troubleCard(c,idx){
+  const st = state.project.trouble[c.id] || {};
+  const causeDone = st.cause !== undefined;
+  const fixDone = st.fix !== undefined;
+  const solved = st.cause === c.answer[0] && st.fix === c.answer[1];
+  return `<div class="card" style="box-shadow:none;border-color:${solved?'#86efac':'var(--line)'}">
+    <div style="display:flex;justify-content:space-between;gap:10px"><div class="card-title">${idx+1}. ${esc(c.title)}</div>${solved?'<span class="pill green">решено</span>':''}</div>
+    <pre class="alert blue" style="font-family:var(--mono);white-space:pre-wrap">${esc(c.output)}</pre>
+    <div class="grid2">
+      <div>
+        <div class="label">Корневая причина</div>
+        ${c.causes.map((x,i)=>`<div class="option ${causeDone && i===c.answer[0]?'good':''} ${causeDone && st.cause===i && i!==c.answer[0]?'bad':''}" data-trouble="${c.id}" data-kind="cause" data-choice="${i}">
+          <div class="radio">${String.fromCharCode(65+i)}</div><div><div class="option-text">${esc(x)}</div></div>
+        </div>`).join("")}
+      </div>
+      <div>
+        <div class="label">Исправление</div>
+        ${c.fixes.map((x,i)=>`<div class="option ${fixDone && i===c.answer[1]?'good':''} ${fixDone && st.fix===i && i!==c.answer[1]?'bad':''}" data-trouble="${c.id}" data-kind="fix" data-choice="${i}">
+          <div class="radio">${String.fromCharCode(65+i)}</div><div><div class="option-text"><span class="kbd">${esc(x)}</span></div></div>
+        </div>`).join("")}
+      </div>
+    </div>
+    ${solved?`<div class="alert green">${esc(c.exp)}</div>`:""}
+  </div>`;
+}
+
+function renderDefenseResults(){
+  const answers = state.project.defense.answers;
+  const correct = defenseQuestions.filter((q,i)=>answers[i]===q.a).length;
+  const pct = Math.round(correct / defenseQuestions.length * 100);
+  const totalPct = Math.round(currentScore()/maxScore()*100);
+  return `<div class="content-grid">
+    <div class="card" style="text-align:center;padding:30px">
+      <div style="font-size:42px;font-weight:950;color:${pct>=PASS?'var(--green)':'var(--red)'}">${pct}%</div>
+      <div class="card-title">${pct>=PASS?'Защита пройдена':'Защиту нужно повторить'}</div>
+      <div class="card-sub">Правильных ответов: ${correct}/${defenseQuestions.length}. Общий прогресс проекта: ${state.done.length}/30, баллы: ${currentScore()}/${maxScore()} (${totalPct}%).</div>
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+        <button class="btn primary" id="downloadReport">Скачать отчёт HTML</button>
+        <button class="btn" id="restartDefense">Повторить защиту</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Разбор ответов</div>
+      ${defenseQuestions.map((q,i)=>`<div class="alert ${answers[i]===q.a?'green':'red'}"><b>${i+1}. ${esc(q.q)}</b><br>Ваш ответ: ${answers[i]!==undefined?esc(q.opts[answers[i]]):"нет"}<br>Верно: ${esc(q.opts[q.a])}</div>`).join("")}
+    </div>
+  </div>`;
+}
+
+function bindContentEvents(){
+  document.querySelectorAll("[data-path]").forEach(el=>{
+    el.addEventListener("input", handlePathInput);
+    el.addEventListener("change", handlePathInput);
+  });
+  document.querySelectorAll(".option input[type=checkbox]").forEach(input=>{
+    input.closest(".option").addEventListener("click", e=>{
+      if(e.target.tagName !== "INPUT") input.checked = !input.checked;
+      setByPath(input.dataset.path, input.checked);
+      renderApp();
+    });
+  });
+  document.querySelectorAll("[data-service]").forEach(el=>el.addEventListener("click",()=>{
+    const id = el.dataset.service;
+    const arr = state.project.services.selected;
+    const i = arr.indexOf(id);
+    if(i>=0) arr.splice(i,1); else arr.push(id);
+    log(`Сервис ${id} ${i>=0?"убран":"добавлен"}.`);
+    renderApp();
+  }));
+  document.querySelectorAll("[data-node]").forEach(el=>el.addEventListener("click",()=>{
+    const id = el.dataset.node;
+    const arr = state.project.topology.nodes;
+    const i = arr.indexOf(id);
+    if(i>=0) arr.splice(i,1); else arr.push(id);
+    renderApp();
+  }));
+  document.querySelectorAll("[data-risk]").forEach(el=>el.addEventListener("input",()=>{
+    const id=el.dataset.risk, k=el.dataset.riskK;
+    state.project.budget.risks[id] ||= {p:2,i:2};
+    state.project.budget.risks[id][k] = Number(el.value);
+    saveState(); renderContent(); renderTasks();
+  }));
+  document.querySelectorAll("[data-vlan]").forEach(el=>el.addEventListener("input",()=>{
+    const i=Number(el.dataset.vlan), k=el.dataset.k;
+    state.project.vlans[i][k] = k==="id" ? Number(el.value) : el.value;
+    saveState(); renderTasks();
+  }));
+  document.querySelectorAll("[data-del-vlan]").forEach(el=>el.addEventListener("click",()=>{
+    state.project.vlans.splice(Number(el.dataset.delVlan),1);
+    renderApp();
+  }));
+  document.getElementById("addVlan")?.addEventListener("click",()=>{
+    const next = Math.max(1,...state.project.vlans.map(v=>Number(v.id)||1))+10;
+    state.project.vlans.push({id:next,name:"NEW",subnet:`10.10.${next}.0/24`,gw:`10.10.${next}.1`,zone:"inside"});
+    renderApp();
+  });
+  document.querySelectorAll("[data-eq]").forEach(el=>el.addEventListener("input",()=>{
+    state.project.equipment[el.dataset.eq] = Number(el.value);
+    saveState(); renderApp();
+  }));
+  document.getElementById("regenHld")?.addEventListener("click",()=>{
+    state.project.hld = makeHldText();
+    renderApp();
+  });
+  document.querySelectorAll("[data-dns]").forEach(el=>el.addEventListener("input",()=>{
+    state.project.dns.records[el.dataset.dns] = el.value;
+    saveState(); renderTasks();
+  }));
+  document.querySelectorAll("[data-test]").forEach(el=>el.addEventListener("change",()=>{
+    state.project.tests[el.dataset.test] = el.value;
+    saveState(); renderApp();
+  }));
+  document.querySelectorAll("[data-trouble]").forEach(el=>el.addEventListener("click",()=>{
+    const id=el.dataset.trouble, kind=el.dataset.kind, choice=Number(el.dataset.choice);
+    state.project.trouble[id] ||= {};
+    state.project.trouble[id][kind] = choice;
+    saveState(); renderApp();
+  }));
+  document.querySelectorAll("[data-defense]").forEach(el=>el.addEventListener("click",()=>{
+    const idx = Object.keys(state.project.defense.answers).length;
+    state.project.defense.answers[idx] = Number(el.dataset.defense);
+    saveState(); renderApp();
+  }));
+  document.getElementById("finishDefense")?.addEventListener("click",()=>{
+    state.project.defense.finished = true;
+    saveState(); checkStep();
+    renderApp();
+  });
+  document.getElementById("restartDefense")?.addEventListener("click",()=>{
+    state.project.defense = {answers:{},finished:false};
+    saveState(); renderApp();
+  });
+  document.getElementById("downloadReport")?.addEventListener("click",downloadReport);
+}
+
+function handlePathInput(e){
+  const el = e.currentTarget;
+  let val = el.type === "checkbox" ? el.checked : el.value;
+  if(el.type === "number" || el.type === "range") val = Number(val);
+  setByPath(el.dataset.path, val);
+  saveState();
+  if(el.type === "range") renderApp(); else renderTasks();
+}
+
+function setByPath(path,value){
+  const parts = path.split(".");
+  let obj = state.project;
+  for(let i=0;i<parts.length-1;i++){
+    obj[parts[i]] ||= {};
+    obj = obj[parts[i]];
+  }
+  obj[parts.at(-1)] = value;
+}
+
+function getByPath(path){
+  return path.split(".").reduce((o,k)=>o?.[k], state.project);
+}
+
+function initCliForStep(n){
+  const s = stepByNumber(n);
+  currentDevice = s.device || "R1";
+  const cli = getCli(n);
+  cliMode = cli.mode || "user";
+  cliContext = cli.context || "";
+  const input = document.getElementById("cliInput");
+  const output = document.getElementById("cliOutput");
+  document.getElementById("cliPrompt").textContent = promptText(currentDevice);
+  output.scrollTop = output.scrollHeight;
+  input?.focus();
+  input?.addEventListener("keydown", e=>{
+    if(e.key === "Enter"){
+      const cmd = input.value.trim();
+      input.value = "";
+      runCliCommand(n, cmd);
+    }
+  });
+  document.querySelectorAll("[data-cmd]").forEach(btn=>btn.addEventListener("click",()=>{
+    runCliCommand(n, btn.dataset.cmd);
+  }));
+}
+
+function getCli(n){
+  state.cli[n] ||= {commands:[],output:"",mode:"user",context:"",device:stepByNumber(n).device || "R1"};
+  return state.cli[n];
+}
+
+function promptText(device=currentDevice){
+  if(cliMode === "config") return `${device}(config)#`;
+  if(cliMode === "interface") return `${device}(config-if)#`;
+  if(cliMode === "line") return `${device}(config-line)#`;
+  if(cliMode === "router") return `${device}(config-router)#`;
+  if(cliMode === "acl") return `${device}(config-ext-nacl)#`;
+  if(cliMode === "object") return `${device}(config-network-object)#`;
+  if(cliMode === "crypto") return `${device}(config-crypto)#`;
+  if(cliMode === "priv") return `${device}#`;
+  return `${device}>`;
+}
+
+function runCliCommand(n, raw){
+  if(!raw) return;
+  const cli = getCli(n);
+  const cmd = normalizeCmd(raw);
+  let out = `${promptText(currentDevice)} ${raw}\n`;
+  const result = evalCli(n, cmd, raw);
+  out += result + (result.endsWith("\n") ? "" : "\n");
+  cli.output = (cli.output || "") + out;
+  cli.commands.push(raw);
+  cli.mode = cliMode;
+  cli.context = cliContext;
+  saveState();
+  renderContent();
+}
+
+function normalizeCmd(cmd){
+  return cmd.trim().replace(/\s+/g," ").toLowerCase();
+}
+
+function evalCli(n, cmd, raw){
+  if(cmd === "?") return cliHelp();
+  if(cmd === "enable" || cmd === "en") {cliMode="priv"; return "";}
+  if(cmd === "disable") {cliMode="user"; return "";}
+  if(cmd === "configure terminal" || cmd === "conf t") {
+    if(cliMode === "user") return "% Privileged mode required";
+    cliMode="config"; return "Enter configuration commands, one per line. End with CNTL/Z.";
+  }
+  if(cmd === "end") {cliMode="priv"; cliContext=""; return "";}
+  if(cmd === "exit") {
+    if(cliMode === "user") return "";
+    if(cliMode === "priv") {cliMode="user"; return "";}
+    cliMode="config"; cliContext=""; return "";
+  }
+  if(cmd === "write memory" || cmd === "wr" || cmd === "copy running-config startup-config") {
+    return "Building configuration...\n[OK]";
+  }
+  if(cmd.startsWith("show ")) return showCommand(n, cmd);
+  if(cliMode === "user") return "% Invalid input detected. Use 'enable' first.";
+  if(cmd.startsWith("interface range ")) {cliMode="interface"; cliContext=raw; return "";}
+  if(cmd.startsWith("interface ")) {cliMode="interface"; cliContext=raw; return "";}
+  if(cmd.startsWith("line ")) {cliMode="line"; cliContext=raw; return "";}
+  if(cmd.startsWith("router ")) {cliMode="router"; cliContext=raw; return "";}
+  if(cmd.startsWith("ip access-list ")) {cliMode="acl"; cliContext=raw; return "";}
+  if(cmd.startsWith("object network ")) {cliMode="object"; cliContext=raw; return "";}
+  if(cmd.startsWith("crypto ") && !cmd.includes(" map ") && !cmd.startsWith("crypto key generate")) {cliMode="crypto"; cliContext=raw; return "";}
+  const known = isKnownConfigCommand(n, cmd);
+  if(!known) return "% Command accepted by simulator with warning: check syntax for real IOS.";
+  return "";
+}
+
+function isKnownConfigCommand(n, cmd){
+  const lab = cliLabs[n];
+  if(!lab) return true;
+  const flat = lab.required.map(normalizeCmd);
+  if(flat.includes(cmd)) return true;
+  const prefixes = ["hostname ","enable secret ","username ","ip domain-name ","crypto key generate rsa","transport input ","login local","service password-encryption","banner motd",
+    "vlan ","name ","switchport ","spanning-tree ","description ","ip routing","ip address ","no shutdown","ip dhcp ","network ","default-router ","dns-server ",
+    "nameif ","security-level ","subnet ","host ","nat ","encryption ","integrity ","group ","prf ","peer ","address ","pre-shared-key ","permit ip ",
+    "router-id ","passive-interface ","no passive-interface ","default-information ","icmp-echo ","frequency ","ip sla ","track ","ip route ","clock timezone ",
+    "ntp ","logging ","archive","notify syslog"];
+  return prefixes.some(p=>cmd.startsWith(p));
+}
+
+function cliHelp(){
+  return [
+    "Доступные режимы: user > enable > configure terminal.",
+    "Контексты: interface, interface range, line, router, access-list, object network, crypto.",
+    "Show: show running-config, show ip interface brief, show vlan brief, show interfaces trunk, show ip route, show ip ospf neighbor, show crypto ikev2 sa, show logging, show ntp status.",
+    "Проверка шага учитывает ключевые команды лабораторной работы."
+  ].join("\n");
+}
+
+function showCommand(n, cmd){
+  const cli = getCli(n);
+  const commands = cli.commands.map(normalizeCmd);
+  const has = frag => commands.some(c=>c.includes(frag));
+  if(cmd.includes("running-config")){
+    return `Building configuration...\n!\nhostname ${currentDevice}\n${cli.commands.filter(c=>!normalizeCmd(c).startsWith("show ")).join("\n")}\nend`;
+  }
+  if(cmd.includes("vlan brief")){
+    return state.project.vlans.map(v=>`${String(v.id).padEnd(5)} ${v.name.padEnd(14)} active`).join("\n");
+  }
+  if(cmd.includes("interfaces trunk")){
+    return has("switchport mode trunk") ? "Port Gi0/24 Mode on Encapsulation 802.1q Status trunking\nVlans allowed: 10,20,30,40,99" : "No trunk ports configured";
+  }
+  if(cmd.includes("ip interface brief")){
+    return state.project.vlans.map(v=>`Vlan${String(v.id).padEnd(8)} ${v.gw.padEnd(15)} YES manual up up`).join("\n") + "\nGigabitEthernet0/0 203.0.113.2 YES manual up up";
+  }
+  if(cmd.includes("ip route")){
+    return "Gateway of last resort is 10.10.254.2\nC 10.10.10.0/24 is directly connected, Vlan10\nC 10.10.30.0/24 is directly connected, Vlan30\nO 10.20.10.0/24 [110/20] via 172.16.20.2, Tunnel0\nS* 0.0.0.0/0 [1/0] via 10.10.254.2";
+  }
+  if(cmd.includes("dhcp pool")) return "Pool USERS: total addresses 224, leased 18\nPool GUEST: total addresses 234, leased 6";
+  if(cmd.includes("dhcp binding")) return "10.10.10.51 0100.50aa.1122.33 Automatic\n10.10.40.22 01b8.27eb.4455.66 Automatic";
+  if(cmd.includes("spanning-tree")) return "Root ID Priority 8192 Address 0011.2233.4455\nRapid PVST enabled\nPortfast BPDU Guard enabled";
+  if(cmd.includes("crypto ikev2 sa")) return has("pre-shared-key netvpn@2026") ? "Tunnel-id Local Remote Status\n1 203.0.113.2/500 198.51.100.10/500 READY" : "No IKEv2 SAs found";
+  if(cmd.includes("crypto ipsec sa")) return has("crypto map cmap 10 set peer") ? "pkts encaps: 128, pkts decaps: 126, transform: esp-aes-256 esp-sha-hmac" : "No IPsec security associations";
+  if(cmd.includes("nat")) return has("dynamic interface") ? "1 (inside) to (outside) source dynamic INSIDE_NET interface\n2 static WEB_DMZ 203.0.113.20" : "No dynamic NAT rules configured";
+  if(cmd.includes("logging")) return has("logging host 10.10.30.11") ? "Syslog logging: enabled\nTrap logging: warnings\nLogging to 10.10.30.11" : "Syslog logging: disabled";
+  if(cmd.includes("ntp status")) return has("ntp server 10.10.30.10") ? "Clock is synchronized, stratum 3, reference is 10.10.30.10" : "Clock is unsynchronized";
+  if(cmd.includes("ntp associations")) return "*~10.10.30.10 .GPS. 3 64 377 12.4 ms";
+  if(cmd.includes("ospf neighbor")) return has("no passive-interface tunnel0") ? "Neighbor ID Pri State Dead Time Address Interface\n10.10.10.10 1 FULL/ - 00:00:34 172.16.20.1 Tunnel0" : "";
+  if(cmd.includes("ospf")) return "Routing Process ospf 10 with ID 20.20.20.20\nArea BACKBONE(0)";
+  if(cmd.includes("ip sla")) return "Latest operation return code: OK\nLatest RTT: 14 ms";
+  if(cmd.includes("track")) return "Track 1\n  IP SLA 1 reachability\n  Reachability is Up";
+  if(cmd.includes("ip ssh")) return has("crypto key generate rsa") ? "SSH Enabled - version 2.0\nAuthentication methods: publickey,password" : "SSH Disabled";
+  if(cmd.includes("users")) return "Line User Host(s) Idle Location\n* 0 con 0 admin idle";
+  if(cmd.includes("version")) return "Cisco IOS Software Simulator, NetAcademy build 30.0";
+  return "% Unrecognized show command in simulator";
+}
+
+function cmdStatus(n, cmd){
+  const commands = getCli(n).commands.map(normalizeCmd);
+  const ok = commands.some(c => c === normalizeCmd(cmd) || c.includes(normalizeCmd(cmd)));
+  return `<div class="task-item ${ok?'done':''}" style="border-radius:8px;margin-bottom:6px;font-family:var(--mono)">${ok?'✓':'•'} ${esc(cmd)}</div>`;
+}
+
+function validateStep(n, noisy=true){
+  const s = stepByNumber(n);
+  const issues = [];
+  const p = state.project;
+  if(s.type === "company"){
+    if(!p.company.name.trim()) issues.push("Укажите название компании.");
+    if(!p.company.industry.trim()) issues.push("Укажите отрасль.");
+    if(Number(p.company.hqUsers) < 20) issues.push("HQ должен иметь реалистичное число пользователей.");
+    if(!p.company.critical.trim()) issues.push("Опишите критичные процессы.");
+  }
+  if(s.type === "services"){
+    const selected = p.services.selected;
+    ["internet","dns","dhcp","vpn"].forEach(x=>{if(!selected.includes(x)) issues.push(`Добавьте критичный сервис: ${x}.`);});
+    if(Number(p.services.sla) < 99) issues.push("Для финального проекта SLA должен быть не ниже 99%.");
+    if(Number(p.services.peak) > 85) issues.push("Пиковая загрузка выше 85% — нужен запас канала.");
+  }
+  if(s.type === "security"){
+    ["mfa","guestIsolation","logging","backup","leastPrivilege"].forEach(k=>{if(!p.security[k]) issues.push(`Включите меру безопасности: ${k}.`);});
+  }
+  if(s.type === "budget"){
+    if(equipmentTotal() > Number(p.budget.capex)) issues.push("BOM превышает CAPEX.");
+    if(Object.keys(p.budget.risks).length < 3) issues.push("Оцените минимум 3 риска.");
+  }
+  if(s.type === "topology"){
+    ["internet","fw","core","access","servers","branch"].forEach(x=>{if(!p.topology.nodes.includes(x)) issues.push(`На схеме отсутствует ${labelNode(x)}.`);});
+    if(!p.topology.redundancy) issues.push("Включите резервирование.");
+  }
+  if(s.type === "ip"){
+    if(!/\/16$/.test(p.ip.base)) issues.push("HQ summary должен быть /16.");
+    if(!/\/16$/.test(p.ip.branch)) issues.push("Branch summary должен быть /16.");
+    if(!/\/30$/.test(p.ip.wan)) issues.push("WAN transit должен быть /30.");
+  }
+  if(s.type === "vlan"){
+    [10,20,30,40,99].forEach(id=>{if(!p.vlans.some(v=>Number(v.id)===id)) issues.push(`Нужен VLAN ${id}.`);});
+    const ids = p.vlans.map(v=>Number(v.id));
+    if(new Set(ids).size !== ids.length) issues.push("ID VLAN должны быть уникальными.");
+  }
+  if(s.type === "routing"){
+    if(p.routing.protocol !== "ospf") issues.push("Для проекта выбран OSPF.");
+    if(String(p.routing.area) !== "0") issues.push("Backbone area должна быть 0.");
+    if(!p.routing.defaultRoute) issues.push("Нужна default route.");
+  }
+  if(s.type === "equipment"){
+    if(Number(p.equipment.core) < 2) issues.push("Нужно минимум 2 core switch для отказоустойчивости.");
+    if(Number(p.equipment.fw) < 2) issues.push("Нужно минимум 2 firewall.");
+    if(Number(p.equipment.access) < 2) issues.push("Нужно минимум 2 access switch.");
+  }
+  if(s.type === "hld"){
+    if(String(p.hld || "").trim().length < 250) issues.push("HLD должен быть содержательным: минимум 250 символов.");
+  }
+  if(s.type === "cli"){
+    const lab = cliLabs[n];
+    const commands = getCli(n).commands.map(normalizeCmd);
+    lab.validate.forEach(v=>{
+      const nv = normalizeCmd(v);
+      if(!commands.some(c=>c.includes(nv))) issues.push(`CLI: нет ключевой команды "${v}".`);
+    });
+  }
+  if(s.type === "dns"){
+    if(!p.dns.zone.includes(".")) issues.push("DNS-зона должна быть FQDN, например corp.local.");
+    Object.entries(p.dns.records).forEach(([k,v])=>{if(!/^\d{1,3}(\.\d{1,3}){3}$/.test(v)) issues.push(`DNS запись ${k} должна быть IPv4.`);});
+  }
+  if(n === 24 || n === 25){
+    const lab = cliLabs[n];
+    const commands = getCli(n).commands.map(normalizeCmd);
+    lab.validate.forEach(v=>{if(!commands.some(c=>c.includes(normalizeCmd(v)))) issues.push(`CLI: нет "${v}".`);});
+  }
+  if(s.type === "monitoring"){
+    ["snmpv3","traps","dashboards","thresholds"].forEach(k=>{if(!p.monitoring[k]) issues.push(`Мониторинг: включите ${k}.`);});
+    if(p.monitoring.community.trim()) issues.push("Legacy community должна быть пустой.");
+  }
+  if(s.type === "hardening"){
+    Object.keys(p.hardening).forEach(k=>{if(!p.hardening[k]) issues.push(`Hardening: включите ${k}.`);});
+  }
+  if(s.type === "tests"){
+    const pass = tests.filter(t=>p.tests[t.id]==="pass").length;
+    if(pass < 7) issues.push("Нужно минимум 7 успешных тестов из 8.");
+  }
+  if(s.type === "troubleshooting"){
+    troubleCases.forEach(c=>{
+      const st=p.trouble[c.id]||{};
+      if(st.cause!==c.answer[0] || st.fix!==c.answer[1]) issues.push(`Не решён кейс: ${c.title}.`);
+    });
+  }
+  if(s.type === "defense"){
+    if(!p.defense.finished) issues.push("Завершите итоговую защиту.");
+    else {
+      const correct = defenseQuestions.filter((q,i)=>p.defense.answers[i]===q.a).length;
+      if(Math.round(correct/defenseQuestions.length*100) < PASS) issues.push("Нужно набрать минимум 70% на защите.");
+    }
+  }
+  if(noisy && issues.length) toast(`<b>Шаг пока не принят.</b><br>${issues.slice(0,5).map(esc).join("<br>")}`, "bad");
+  return issues;
+}
+
+function checkStep(){
+  const issues = validateStep(curStep, true);
+  const s = stepByNumber(curStep);
+  if(issues.length) {
+    log(`Проверка не пройдена: ${issues[0]}`, "bad");
+    renderTasks();
+    return false;
+  }
+  if(!state.done.includes(curStep)) state.done.push(curStep);
+  state.done.sort((a,b)=>a-b);
+  state.scores[curStep] = s.pts;
+  log(`Шаг "${s.title}" выполнен. Начислено ${s.pts} баллов.`, "good");
+  toast(`<b>Отлично, шаг ${curStep} принят.</b><br>Начислено ${s.pts} баллов.`, "good");
+  saveState();
+  renderApp();
+  return true;
+}
+
+function resetStep(){
+  const s = stepByNumber(curStep);
+  if(s.type === "cli") delete state.cli[curStep];
+  if(s.type === "defense") state.project.defense = {answers:{},finished:false};
+  if(s.type === "troubleshooting") state.project.trouble = {};
+  if(s.type === "tests") state.project.tests = {};
+  state.done = state.done.filter(n=>n!==curStep);
+  delete state.scores[curStep];
+  log(`Шаг ${curStep} сброшен.`, "warn");
+  saveState();
+  renderApp();
+}
+
+function exportReportHtml(){
+  const c = state.project.company;
+  const rows = steps.map(s=>`<tr><td>${s.n}</td><td>${esc(s.title)}</td><td>${isDone(s.n)?"выполнено":"не выполнено"}</td><td>${state.scores[s.n]||0}/${s.pts}</td></tr>`).join("");
+  return `<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><title>Отчёт проекта ${esc(c.name||"")}</title>
+  <style>body{font-family:Segoe UI,Arial,sans-serif;margin:32px;color:#102033}table{border-collapse:collapse;width:100%}td,th{border:1px solid #dbe5ef;padding:8px;text-align:left}th{background:#f3f7fb}pre{white-space:pre-wrap;background:#f8fafc;border:1px solid #dbe5ef;padding:14px}</style></head><body>
+  <h1>Финальный проект: корпоративная сеть</h1>
+  <p><b>Компания:</b> ${esc(c.name||"не задана")} · <b>Отрасль:</b> ${esc(c.industry||"не задана")}</p>
+  <p><b>Пользователи:</b> HQ ${esc(c.hqUsers)}, филиал ${esc(c.branchUsers)}, удалённые ${esc(c.remoteUsers)}</p>
+  <p><b>Прогресс:</b> ${state.done.length}/30 · <b>Баллы:</b> ${currentScore()}/${maxScore()}</p>
+  <h2>HLD</h2><pre>${esc(state.project.hld || makeHldText())}</pre>
+  <h2>VLAN</h2><table><tr><th>ID</th><th>Имя</th><th>Подсеть</th><th>Шлюз</th><th>Зона</th></tr>${state.project.vlans.map(v=>`<tr><td>${v.id}</td><td>${esc(v.name)}</td><td>${esc(v.subnet)}</td><td>${esc(v.gw)}</td><td>${esc(v.zone)}</td></tr>`).join("")}</table>
+  <h2>Шаги</h2><table><tr><th>Шаг</th><th>Название</th><th>Статус</th><th>Баллы</th></tr>${rows}</table>
+  </body></html>`;
+}
+
+function downloadReport(){
+  const blob = new Blob([exportReportHtml()], {type:"text/html;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `netacademy-final-project-${new Date().toISOString().slice(0,10)}.html`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 500);
+}
+
+document.getElementById("btnPrev").addEventListener("click",()=>{if(curStep>1){curStep--;renderApp();}});
+document.getElementById("btnNext").addEventListener("click",()=>{if(curStep<steps.length){curStep++;renderApp();}});
+document.getElementById("btnCheckTop").addEventListener("click",checkStep);
+document.getElementById("btnCheckBottom").addEventListener("click",checkStep);
+document.getElementById("btnReset").addEventListener("click",resetStep);
+document.getElementById("btnExport").addEventListener("click",downloadReport);
+
+// ─── ТЕМА: ДЕНЬ / НОЧЬ (по умолчанию — день) ───
+function toggleTheme(){
+  const isNight = document.body.classList.toggle("night");
+  document.getElementById("themeToggle").textContent = isNight ? "☾ Ночь" : "☀ День";
+}
+document.getElementById("themeToggle").addEventListener("click",toggleTheme);
+
+renderApp();
+</script>
+</body>
+</html>

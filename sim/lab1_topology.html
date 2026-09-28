@@ -1,0 +1,2335 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NetSim Pro — Лаб. 1: Топология сети</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Exo+2:wght@300;400;600;700&display=swap');
+
+/* ─── ПЕРЕМЕННЫЕ ─── */
+:root {
+  --bg0:#07090f; --bg1:#0d0f18; --bg2:#111420; --bg3:#161929; --bg4:#1c2035;
+  --bgh:#1f2540; --bga:#252b48;
+  --c-blue:#0d6efd; --c-cyan:#00c8ff; --c-green:#00e676; --c-orange:#ff9100;
+  --c-red:#ff3d3d; --c-yellow:#ffd600; --c-purple:#9c27b0;
+  --t1:#ccd8f0; --t2:#6e80a0; --t3:#323d5a; --t4:#1e2438;
+  --bd:#1a1f35; --bd2:#222840; --bd3:#2c3558;
+  --dev-pc:#2e7d32; --dev-sw:#1565c0; --dev-rt:#e65100; --dev-srv:#7b1fa2;
+  --task-h:38px;
+  /* Консоль и подсказки-тултипы всегда тёмные ("терминал"), независимо от темы */
+  --con-bg:#050710; --con-text:#ccd8f0; --con-muted:#323d5a;
+  --tooltip-bg:#111827; --tooltip-text:#ccd8f0;
+  --grid-line:rgba(255,255,255,.018);
+}
+
+/* ─── ДНЕВНАЯ ТЕМА (включена по умолчанию классом .day на <body>; кнопка в шапке переключает на ночную) ─── */
+body.day {
+  --bg0:#f3f5fa; --bg1:#ffffff; --bg2:#eef1f8; --bg3:#e6e9f4; --bg4:#dbe0ee;
+  --bgh:#e9edf9; --bga:#dde3f5;
+  --c-blue:#0d6efd; --c-cyan:#0888ab; --c-green:#1a9850; --c-orange:#d9600b;
+  --c-red:#dc2626; --c-yellow:#b98900; --c-purple:#9c27b0;
+  --t1:#1b2033; --t2:#5a6685; --t3:#98a2c2; --t4:#c4cbe2;
+  --bd:#dde1ee; --bd2:#ccd2e6; --bd3:#b7bfd9;
+  --grid-line:rgba(20,30,60,.05);
+}
+/* Точечные правки для эффектов, "зашитых" под белый цвет поверх тёмного фона —
+   на светлом фоне такая полупрозрачная белая подсветка не видна */
+body.day .hmb:hover { background:rgba(20,30,60,.05); }
+body.day .tgroup-hdr:hover { background:rgba(20,30,60,.04); }
+body.day .titem:hover { background:rgba(20,30,60,.035); }
+body.day .prow { border-bottom-color:rgba(20,30,60,.07); }
+body.day .titem { border-bottom-color:rgba(20,30,60,.06); }
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;}
+body{
+  font-family:'Exo 2',sans-serif;
+  background:var(--bg0); color:var(--t1);
+  display:flex; flex-direction:column;
+  user-select:none;
+}
+
+/* ─── HEADER ─── */
+#hdr {
+  height:38px; flex-shrink:0;
+  background:linear-gradient(180deg,#0c0f1c 0%,#0a0d19 100%);
+  border-bottom:1px solid var(--bd);
+  display:flex; align-items:center; padding:0 14px; gap:0;
+  position:relative; z-index:50;
+}
+.logo {
+  font-family:'Rajdhani',sans-serif; font-size:18px; font-weight:700;
+  color:var(--c-cyan); letter-spacing:3px;
+  display:flex; align-items:center; gap:8px; margin-right:20px;
+}
+.logo-gem {
+  width:22px; height:22px;
+  background:linear-gradient(135deg,#0d6efd,#00c8ff);
+  clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+  display:flex; align-items:center; justify-content:center;
+  font-size:10px; font-weight:900; color:#fff;
+}
+.hdr-menu { display:flex; gap:2px; }
+.hmb {
+  background:none; border:none; color:var(--t2);
+  font-family:'Exo 2',sans-serif; font-size:11px; font-weight:600;
+  padding:4px 10px; cursor:pointer; letter-spacing:.5px;
+  text-transform:uppercase; transition:color .15s;
+  border-radius:2px;
+}
+.hmb:hover { color:var(--t1); background:rgba(255,255,255,.04); }
+.hdr-right {
+  margin-left:auto; display:flex; align-items:center; gap:12px;
+}
+.lab-badge {
+  font-family:'Rajdhani',sans-serif; font-size:10px; font-weight:700;
+  color:var(--c-cyan); letter-spacing:2px; padding:3px 12px;
+  border:1px solid rgba(0,200,255,.35);
+  background:rgba(0,200,255,.06);
+}
+.progress-mini {
+  display:flex; align-items:center; gap:8px;
+  font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--t2);
+}
+.progress-mini span { color:var(--c-green); font-weight:700; }
+#hdr-dots { display:flex; gap:3px; }
+.hdot {
+  width:7px; height:7px; border-radius:50%;
+  background:var(--bg4); border:1px solid var(--bd2);
+  transition:all .3s;
+}
+.hdot.on { background:var(--c-green); border-color:var(--c-green); box-shadow:0 0 5px var(--c-green); }
+
+/* ─── THEME TOGGLE ─── */
+#theme-toggle {
+  display:flex; align-items:center; gap:6px;
+  background:var(--bg3); border:1px solid var(--bd2);
+  color:var(--t2); font-family:'Share Tech Mono',monospace; font-size:10px;
+  letter-spacing:1px; padding:4px 10px; border-radius:2px; cursor:pointer;
+  transition:all .2s;
+}
+#theme-toggle:hover { background:var(--bgh); border-color:var(--bd3); color:var(--t1); }
+#theme-icon { font-size:11px; line-height:1; }
+
+/* ─── TOOLBAR ─── */
+#tlb {
+  height:44px; flex-shrink:0;
+  background:var(--bg2); border-bottom:1px solid var(--bd);
+  display:flex; align-items:center; padding:0 12px; gap:2px;
+}
+.tlbl {
+  font-size:9px; font-family:'Rajdhani',sans-serif; font-weight:700;
+  color:var(--t3); letter-spacing:2px; padding:0 8px; text-transform:uppercase;
+}
+.tbtn {
+  width:36px; height:34px; background:transparent;
+  border:1px solid transparent; color:var(--t2);
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  border-radius:3px; transition:all .15s; position:relative; flex-shrink:0;
+}
+.tbtn svg { pointer-events:none; }
+.tbtn:hover { background:var(--bgh); border-color:var(--bd2); color:var(--t1); }
+.tbtn.on { background:rgba(13,110,253,.2); border-color:var(--c-blue); color:var(--c-cyan); }
+.tbtn:hover::after {
+  content:attr(data-tip);
+  position:absolute; bottom:-30px; left:50%;
+  transform:translateX(-50%); white-space:nowrap;
+  background:var(--tooltip-bg); border:1px solid var(--bd2);
+  color:var(--tooltip-text); font-size:10px; padding:3px 8px;
+  font-family:'Exo 2',sans-serif; z-index:200; pointer-events:none;
+  border-radius:2px;
+}
+.tsep { width:1px; height:24px; background:var(--bd2); margin:0 6px; }
+#mode-pill {
+  margin-left:auto; font-family:'Share Tech Mono',monospace; font-size:10px;
+  color:var(--c-green); padding:4px 12px;
+  border:1px solid rgba(0,230,118,.25); background:rgba(0,230,118,.04);
+  letter-spacing:.5px;
+}
+.kbd {
+  display:inline-block; font-family:'Share Tech Mono',monospace;
+  font-size:9px; color:var(--t3); border:1px solid var(--bd2);
+  background:var(--bg3); padding:0px 4px; border-radius:2px;
+  margin-left:4px;
+}
+
+/* ─── MAIN ─── */
+#main { flex:1; display:flex; overflow:hidden; min-height:0; }
+
+/* ─── LEFT: DEVICE PANEL ─── */
+#devp {
+  width:130px; flex-shrink:0;
+  background:var(--bg1); border-right:1px solid var(--bd);
+  display:flex; flex-direction:column; overflow-y:auto;
+}
+.dp-head {
+  padding:8px 10px 6px;
+  font-family:'Rajdhani',sans-serif; font-size:9px; font-weight:700;
+  color:var(--t3); letter-spacing:2.5px; text-transform:uppercase;
+  border-bottom:1px solid var(--bd); background:rgba(0,0,0,.2);
+}
+.dp-cat { border-bottom:1px solid var(--bd); padding:6px 0 4px; }
+.dp-cat-lbl {
+  font-size:8px; font-family:'Rajdhani',sans-serif; font-weight:700;
+  color:var(--t3); letter-spacing:1.5px; padding:0 10px 5px;
+  text-transform:uppercase; display:block; opacity:.8;
+}
+.ditem {
+  display:flex; flex-direction:column; align-items:center;
+  padding:7px 8px 6px; cursor:grab; gap:5px;
+  transition:background .15s, border-color .15s;
+  border-left:2px solid transparent;
+  position:relative;
+}
+.ditem:hover { background:var(--bgh); }
+.ditem:active { cursor:grabbing; }
+.ditem:hover .ditem-badge { opacity:1; }
+.ditem-badge {
+  position:absolute; top:4px; right:6px;
+  font-size:8px; color:var(--c-cyan); opacity:0;
+  font-family:'Share Tech Mono',monospace; transition:opacity .2s;
+}
+.ditem-label {
+  font-size:9px; font-family:'Rajdhani',sans-serif; font-weight:700;
+  color:var(--t2); letter-spacing:.5px; text-align:center;
+  line-height:1.2;
+}
+.ditem:hover .ditem-label { color:var(--t1); }
+.ditem-desc {
+  font-size:7.5px; color:var(--t3); text-align:center;
+  font-family:'Exo 2',sans-serif; line-height:1.2;
+  display:none;
+}
+.ditem:hover .ditem-desc { display:block; }
+.ditem-icon { width:52px; height:44px; display:flex; align-items:center; justify-content:center; }
+/* hover highlight border by type */
+.ditem[data-type="pc"]:hover { border-left-color:var(--dev-pc); }
+.ditem[data-type="switch"]:hover { border-left-color:var(--dev-sw); }
+.ditem[data-type="router"]:hover { border-left-color:var(--dev-rt); }
+.ditem[data-type="server"]:hover { border-left-color:var(--dev-srv); }
+
+/* drag ghost */
+#ghost {
+  position:fixed; pointer-events:none; z-index:9999;
+  opacity:.65; transform:translate(-50%,-50%);
+  display:none;
+}
+
+/* ─── CANVAS ─── */
+#canvas-wrap {
+  flex:1; position:relative; overflow:hidden;
+  background-color:var(--bg0);
+  background-image:
+    radial-gradient(ellipse at 50% 0%, rgba(13,110,253,.06) 0%, transparent 60%),
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size:auto, 26px 26px, 26px 26px;
+}
+#canvas-wrap.tool-cable { cursor:crosshair; }
+#canvas-wrap.tool-delete { cursor:cell; }
+
+/* Canvas SVG for connections */
+#conn-svg {
+  position:absolute; top:0; left:0; width:100%; height:100%;
+  pointer-events:none; z-index:1;
+}
+/* DELETE MODE: enable pointer events on SVG so lines become clickable */
+#conn-svg.deletable {
+  pointer-events:all;
+  cursor:crosshair;
+}
+/* Wide transparent hit-area (only active when SVG is deletable) */
+.chit {
+  stroke:transparent;
+  stroke-width:20;
+  fill:none;
+  pointer-events:none;
+  cursor:crosshair;
+}
+#conn-svg.deletable .chit {
+  pointer-events:stroke;
+}
+.cline {
+  stroke:#00aaff;
+  stroke-width:3;
+  stroke-linecap:round;
+  pointer-events:none;
+  filter:drop-shadow(0 0 4px rgba(0,170,255,.55));
+  transition:stroke .15s, stroke-width .15s;
+}
+/* In delete mode highlight cable on hover via JS */
+.cline.del-hover {
+  stroke:var(--c-red);
+  stroke-width:5;
+  filter:drop-shadow(0 0 8px rgba(255,60,60,.7));
+}
+/* cable preview while drawing */
+#prev-line {
+  stroke:rgba(0,230,118,.7);
+  stroke-width:2.5;
+  stroke-dasharray:9 5;
+  pointer-events:none;
+  display:none;
+  filter:drop-shadow(0 0 5px rgba(0,230,118,.5));
+}
+/* connection label */
+.cport {
+  fill:rgba(10,15,30,.8); stroke:var(--bd2); stroke-width:.5;
+}
+.cport-text { fill:var(--t3); font-size:8px; font-family:'Share Tech Mono',monospace; }
+
+/* ─── CABLE DELETE OVERLAYS (HTML divs, z-index выше всего) ─── */
+#cable-overlays {
+  position:absolute; top:0; left:0; width:100%; height:100%;
+  pointer-events:none; z-index:20; display:none;
+}
+#cable-overlays.active { display:block; }
+.cable-hit {
+  position:absolute;
+  transform-origin:0 50%;
+  pointer-events:auto;
+  cursor:crosshair;
+  background:transparent;
+  height:18px;
+  display:flex; align-items:center; justify-content:center;
+}
+.cable-hit::after {
+  content:'';
+  position:absolute;
+  left:0; right:0;
+  height:6px;
+  background:rgba(255,60,60,0);
+  border-radius:3px;
+  transition:background .15s, height .15s;
+}
+.cable-hit:hover::after {
+  background:rgba(255,60,60,.7);
+  height:8px;
+  box-shadow:0 0 12px rgba(255,60,60,.6);
+}
+/* Label badge on hover */
+.cable-hit:hover .cable-hit-lbl { opacity:1; }
+.cable-hit-lbl {
+  position:absolute;
+  top:-22px; left:50%; transform:translateX(-50%);
+  background:rgba(200,20,20,.85);
+  color:#fff; font-size:9px;
+  font-family:'Share Tech Mono',monospace;
+  padding:2px 6px; border-radius:2px;
+  white-space:nowrap; pointer-events:none;
+  opacity:0; transition:opacity .15s;
+}
+
+/* Device node */
+#canvas-nodes { position:absolute; top:0; left:0; width:100%; height:100%; z-index:2; }
+.dnode {
+  position:absolute; display:flex; flex-direction:column; align-items:center;
+  gap:3px; transform:translate(-50%,-50%); cursor:move; z-index:10;
+  transition:filter .15s;
+}
+.dnode:hover { filter:brightness(1.25); }
+.dnode.sel .dnode-body { box-shadow:0 0 0 2px var(--c-cyan), 0 0 16px rgba(0,200,255,.3); }
+/* Первое устройство выбрано в режиме кабеля */
+.dnode.cable-src .dnode-body {
+  box-shadow:0 0 0 3px var(--c-green), 0 0 20px rgba(0,230,118,.5);
+  animation: pulse-green .7s ease-in-out infinite alternate;
+}
+@keyframes pulse-green {
+  from { box-shadow:0 0 0 2px var(--c-green), 0 0 12px rgba(0,230,118,.3); }
+  to   { box-shadow:0 0 0 3px var(--c-green), 0 0 22px rgba(0,230,118,.6); }
+}
+.dnode.cbl-tgt .dnode-body { cursor:pointer; }
+.dnode.cbl-tgt:hover .dnode-body { box-shadow:0 0 0 2px var(--c-cyan), 0 0 14px rgba(0,200,255,.35); }
+
+.dnode-body {
+  display:flex; align-items:center; justify-content:center;
+  border-radius:4px; position:relative;
+  border:1px solid transparent; transition:box-shadow .2s, border-color .2s;
+  padding:4px;
+}
+.dnode-status {
+  position:absolute; top:4px; right:4px; width:6px; height:6px;
+  border-radius:50%; background:var(--c-green); box-shadow:0 0 4px var(--c-green);
+}
+.dnode-name {
+  font-family:'Share Tech Mono',monospace; font-size:10px;
+  color:var(--t1); text-align:center; max-width:90px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  background:rgba(7,9,16,.9); padding:1px 5px;
+  border:1px solid var(--bd2); border-radius:1px;
+}
+.dnode-renamed { border-color:rgba(0,200,255,.3); color:var(--c-cyan); }
+.dnode-port {
+  font-family:'Share Tech Mono',monospace; font-size:8px; color:var(--t3);
+  text-align:center;
+}
+
+/* ─── RIGHT PANEL ─── */
+#rp {
+  width:290px; flex-shrink:0;
+  background:var(--bg1); border-left:1px solid var(--bd);
+  display:flex; flex-direction:column; overflow:hidden;
+}
+
+/* Properties strip */
+#prop-strip {
+  background:var(--bg2); border-bottom:1px solid var(--bd);
+  flex-shrink:0; overflow:hidden;
+}
+.prop-hdr {
+  display:flex; align-items:center; padding:5px 10px;
+  cursor:pointer; background:rgba(0,0,0,.15);
+}
+.prop-hdr-t {
+  font-family:'Rajdhani',sans-serif; font-size:9px; font-weight:700;
+  color:var(--t3); letter-spacing:2px; text-transform:uppercase; flex:1;
+}
+.prop-arr { color:var(--t3); font-size:11px; transition:transform .2s; }
+.prop-arr.open { transform:rotate(90deg); }
+#prop-body { padding:6px 10px 8px; display:none; }
+#prop-body.open { display:block; }
+.prow {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:2px 0; border-bottom:1px solid rgba(255,255,255,.03);
+}
+.pk { font-size:8.5px; font-family:'Rajdhani',sans-serif; font-weight:700; color:var(--t3); letter-spacing:.5px; }
+.pv { font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--t1); }
+.pv.ok { color:var(--c-green); }
+.pv.warn { color:var(--c-orange); }
+.pv.ip { color:var(--c-cyan); }
+#prop-nosel { font-size:10px; color:var(--t3); font-family:'Share Tech Mono',monospace; padding:2px 0 3px; }
+.open-cfg-btn {
+  width:100%; margin-top:7px; padding:5px;
+  background:rgba(13,110,253,.1); border:1px solid rgba(13,110,253,.4);
+  color:var(--c-cyan); font-family:'Rajdhani',sans-serif; font-weight:700;
+  font-size:10px; letter-spacing:1px; cursor:pointer; text-transform:uppercase;
+  transition:background .15s;
+}
+.open-cfg-btn:hover { background:rgba(13,110,253,.25); }
+
+/* Tasks panel */
+#tasks-panel { flex:1; display:flex; flex-direction:column; overflow:hidden; min-height:0; }
+
+#tasks-hdr {
+  padding:8px 10px 6px; flex-shrink:0;
+  background:var(--bg2); border-bottom:1px solid var(--bd);
+}
+.th-lab { font-family:'Rajdhani',sans-serif; font-size:9px; font-weight:700; color:var(--c-blue); letter-spacing:2px; text-transform:uppercase; }
+.th-title { font-family:'Rajdhani',sans-serif; font-size:15px; font-weight:700; color:var(--t1); line-height:1.1; margin:2px 0 6px; }
+.th-sub { font-size:9px; color:var(--t2); font-family:'Share Tech Mono',monospace; margin-bottom:7px; }
+.prog-bar { height:5px; background:var(--bg4); border-radius:1px; overflow:hidden; }
+.prog-fill { height:100%; background:linear-gradient(90deg,var(--c-blue),var(--c-cyan)); border-radius:1px; transition:width .5s cubic-bezier(.4,0,.2,1); }
+.prog-text { display:flex; justify-content:space-between; margin-top:4px; font-family:'Rajdhani',sans-serif; font-size:9px; font-weight:700; }
+.prog-done { color:var(--c-green); }
+.prog-total { color:var(--t3); }
+
+/* Task scroll */
+#tasks-scroll { flex:1; overflow-y:auto; overflow-x:hidden; }
+::-webkit-scrollbar { width:5px; }
+::-webkit-scrollbar-track { background:var(--bg0); }
+::-webkit-scrollbar-thumb { background:var(--bd2); border-radius:3px; }
+::-webkit-scrollbar-thumb:hover { background:var(--bd3); }
+
+.tgroup { border-bottom:1px solid var(--bd); }
+.tgroup-hdr {
+  display:flex; align-items:center; gap:6px;
+  padding:5px 10px; cursor:pointer;
+  background:rgba(0,0,0,.2); position:sticky; top:0; z-index:5;
+  transition:background .15s;
+}
+.tgroup-hdr:hover { background:rgba(255,255,255,.03); }
+.tgroup-icon { font-size:10px; transition:transform .2s; color:var(--t3); }
+.tgroup-icon.open { transform:rotate(90deg); }
+.tgroup-name { font-family:'Rajdhani',sans-serif; font-size:10px; font-weight:700; color:var(--t2); letter-spacing:1px; text-transform:uppercase; flex:1; }
+.tgroup-score {
+  font-family:'Share Tech Mono',monospace; font-size:9px;
+  padding:1px 6px; border-radius:10px;
+  background:var(--bg3); color:var(--t3); border:1px solid var(--bd2);
+  transition:all .3s;
+}
+.tgroup-score.full { background:rgba(0,230,118,.12); color:var(--c-green); border-color:rgba(0,230,118,.3); }
+.tgroup-body {}
+
+.titem {
+  display:flex; gap:0; align-items:flex-start;
+  padding:5px 10px 5px 8px; border-bottom:1px solid rgba(255,255,255,.025);
+  transition:background .2s; cursor:default; position:relative;
+}
+.titem:hover { background:rgba(255,255,255,.025); }
+.titem.done { background:rgba(0,230,118,.04); }
+.titem.active-now { background:rgba(0,200,255,.06); }
+
+.t-num {
+  font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--t4);
+  width:18px; flex-shrink:0; padding-top:2px; text-align:right; margin-right:6px;
+}
+.t-num.done-n { color:var(--c-green); }
+
+.t-check {
+  width:14px; height:14px; border-radius:2px;
+  border:1px solid var(--bd2); background:var(--bg3);
+  flex-shrink:0; margin-top:2px; margin-right:7px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:9px; transition:all .25s;
+}
+.titem.done .t-check { background:var(--c-green); border-color:var(--c-green); color:#000; font-weight:900; }
+
+.t-content { flex:1; min-width:0; }
+.t-main { font-size:10px; color:var(--t2); line-height:1.35; transition:color .2s; }
+.titem.done .t-main { color:var(--t1); text-decoration:none; }
+.t-hint {
+  font-size:9px; color:var(--t3); line-height:1.3; margin-top:3px;
+  font-style:italic; display:flex; gap:4px; align-items:flex-start;
+}
+.titem.done .t-hint { display:none; }
+.t-hint::before { content:'→'; flex-shrink:0; color:var(--c-orange); opacity:.7; }
+
+/* Task footer */
+#tasks-footer {
+  flex-shrink:0; padding:8px 10px; border-top:1px solid var(--bd);
+  background:var(--bg2); display:flex; flex-direction:column; gap:5px;
+}
+.btn-check {
+  padding:8px; border:1px solid var(--c-green);
+  background:rgba(0,230,118,.08); color:var(--c-green);
+  font-family:'Rajdhani',sans-serif; font-weight:700; font-size:11px;
+  letter-spacing:1.5px; text-transform:uppercase; cursor:pointer; transition:all .15s;
+}
+.btn-check:hover { background:rgba(0,230,118,.2); }
+.btn-next {
+  padding:7px; border:1px solid var(--c-blue);
+  background:rgba(13,110,253,.1); color:var(--c-cyan);
+  font-family:'Rajdhani',sans-serif; font-weight:700; font-size:11px;
+  letter-spacing:1.5px; text-transform:uppercase; cursor:pointer; transition:all .15s;
+  display:none;
+}
+.btn-next.show { display:block; }
+.btn-next:hover { background:rgba(13,110,253,.25); }
+
+/* ─── CONSOLE ─── */
+#con {
+  height:155px; flex-shrink:0;
+  background:var(--con-bg); border-top:2px solid var(--bd);
+  display:flex; flex-direction:column;
+}
+#con-bar {
+  display:flex; align-items:center; padding:4px 12px;
+  border-bottom:1px solid var(--bd); background:rgba(0,0,0,.3); flex-shrink:0;
+}
+.con-title {
+  font-family:'Rajdhani',sans-serif; font-size:9px; font-weight:700;
+  color:var(--con-muted); letter-spacing:2px; text-transform:uppercase; flex:1;
+}
+.con-hint { font-size:9px; color:var(--con-muted); font-family:'Share Tech Mono',monospace; margin-right:10px; }
+.con-cl {
+  background:none; border:1px solid var(--bd2); color:var(--con-muted);
+  font-size:9px; padding:2px 8px; cursor:pointer; font-family:'Share Tech Mono',monospace;
+  transition:color .15s;
+}
+.con-cl:hover { color:var(--con-text); border-color:var(--bd3); }
+#cout {
+  flex:1; overflow-y:auto; padding:5px 14px;
+  font-family:'Share Tech Mono',monospace; font-size:10.5px; line-height:1.6;
+}
+.cl { display:flex; gap:8px; }
+.cl.cmd { color:var(--con-text); }
+.cl.ok  { color:var(--c-green); }
+.cl.er  { color:var(--c-red); }
+.cl.in  { color:var(--c-cyan); }
+.cl.wn  { color:var(--c-orange); }
+.cl.sy  { color:var(--con-muted); font-style:italic; }
+#cin-row {
+  display:flex; align-items:center; padding:4px 14px 6px; gap:8px;
+  border-top:1px solid var(--bd); flex-shrink:0;
+}
+.con-prompt { font-family:'Share Tech Mono',monospace; font-size:12px; color:var(--c-green); }
+#cin {
+  flex:1; background:none; border:none; outline:none;
+  font-family:'Share Tech Mono',monospace; font-size:10.5px;
+  color:var(--c-green); caret-color:var(--c-green);
+}
+#cin::placeholder { color:var(--con-muted); }
+
+/* ─── CONFIG MODAL ─── */
+.overlay {
+  position:fixed; top:0; left:0; right:0; bottom:0;
+  background:rgba(0,0,0,.75); z-index:1000;
+  display:flex; align-items:center; justify-content:center;
+}
+.overlay.hid { display:none; }
+.mbox {
+  background:var(--bg3); border:1px solid var(--bd3);
+  box-shadow:0 24px 70px rgba(0,0,0,.9), 0 0 0 1px rgba(0,200,255,.07);
+  width:440px; max-height:80vh; display:flex; flex-direction:column;
+}
+.m-hdr {
+  display:flex; align-items:center; padding:11px 15px;
+  border-bottom:1px solid var(--bd2); background:var(--bg2);
+}
+.m-type {
+  font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--t2);
+  padding:2px 8px; border:1px solid var(--bd2); margin-right:10px;
+}
+.m-title {
+  font-family:'Rajdhani',sans-serif; font-size:14px; font-weight:700;
+  color:var(--c-cyan); letter-spacing:1px; text-transform:uppercase; flex:1;
+}
+.m-close { background:none; border:none; color:var(--t2); font-size:18px; cursor:pointer; padding:2px 6px; }
+.m-close:hover { color:var(--c-red); }
+.m-body { padding:16px; overflow-y:auto; }
+.fg { margin-bottom:12px; }
+.fl {
+  display:block; font-size:9px; font-family:'Rajdhani',sans-serif; font-weight:700;
+  color:var(--t2); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:4px;
+}
+.fi {
+  width:100%; padding:7px 10px; background:var(--bg2); border:1px solid var(--bd2);
+  color:var(--t1); font-family:'Share Tech Mono',monospace; font-size:12px;
+  outline:none; transition:border-color .15s; border-radius:2px;
+}
+.fi:focus { border-color:var(--c-blue); box-shadow:0 0 0 2px rgba(13,110,253,.1); }
+.m-info {
+  background:rgba(0,200,255,.05); border:1px solid rgba(0,200,255,.15);
+  border-left:3px solid var(--c-cyan); padding:10px 12px;
+  font-size:10px; color:var(--t2); line-height:1.6; margin-top:8px;
+}
+.m-info b { color:var(--c-cyan); }
+.m-ftr {
+  padding:11px 15px; border-top:1px solid var(--bd2);
+  display:flex; gap:8px; justify-content:flex-end;
+}
+.btn-sv {
+  padding:7px 20px; background:rgba(13,110,253,.18);
+  border:1px solid var(--c-blue); color:var(--c-cyan);
+  font-family:'Rajdhani',sans-serif; font-weight:700; font-size:12px;
+  letter-spacing:1px; cursor:pointer; text-transform:uppercase; transition:all .15s;
+}
+.btn-sv:hover { background:rgba(13,110,253,.35); }
+.btn-cn {
+  padding:7px 16px; background:transparent; border:1px solid var(--bd2);
+  color:var(--t2); font-family:'Rajdhani',sans-serif; font-weight:600;
+  font-size:12px; letter-spacing:1px; cursor:pointer; text-transform:uppercase;
+}
+.btn-cn:hover { color:var(--t1); border-color:var(--bd3); }
+
+/* ─── SUCCESS MODAL ─── */
+#smod .mbox { width:380px; text-align:center; }
+.s-ico { font-size:54px; margin:22px 0 10px; }
+.s-ttl { font-family:'Rajdhani',sans-serif; font-size:22px; font-weight:700; color:var(--c-green); letter-spacing:3px; margin-bottom:8px; }
+.s-sub { font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--t3); margin-bottom:10px; }
+.s-dsc { font-size:11px; color:var(--t2); line-height:1.65; padding:0 20px 18px; }
+
+/* ─── MISC ─── */
+.badge-new {
+  display:inline-block; font-size:8px; font-family:'Rajdhani',sans-serif;
+  font-weight:700; padding:1px 5px; letter-spacing:1px; text-transform:uppercase;
+  background:rgba(0,200,255,.1); color:var(--c-cyan); border:1px solid rgba(0,200,255,.3);
+  margin-left:5px; vertical-align:middle;
+}
+/* Ping packet animation */
+.ping-dot {
+  position:absolute; width:8px; height:8px; border-radius:50%;
+  background:var(--c-cyan); box-shadow:0 0 8px var(--c-cyan);
+  pointer-events:none; z-index:20;
+  animation:ping-anim .6s ease-out forwards;
+}
+@keyframes ping-anim { from{opacity:1;transform:scale(1)} to{opacity:0;transform:scale(.2)} }
+/* ═══════════════════════════════════════════════ FIX: RIGHT PANEL VISIBLE ═══════════════════════════════════════════════ */
+/* Было: селектор #taskp не существовал в разметке (правая панель называется #rp),
+   поэтому z-index никогда не применялся. Исправлено на реальный id. */
+#rp {
+  position: relative;
+  z-index: 1001 !important;
+}
+
+/* 290px ширина панели + 1px border-left = 291px */
+.overlay {
+  right: 291px !important;
+  width: auto !important;
+  left: 0 !important;
+}
+
+/* Адаптация для маленьких экранов */
+@media (max-width: 1200px) {
+  .overlay {
+    right: 0 !important;
+  }
+  #rp {
+    z-index: 1000 !important;
+  }
+}
+</style>
+</head>
+<body class="day">
+
+<!-- ═══════════════════════════ HEADER ═══════════════════════════ -->
+<div id="hdr">
+  <div class="logo">
+    <div class="logo-gem">N</div>
+    NetSim Pro
+  </div>
+  <div class="hdr-menu">
+    <button class="hmb">Файл</button>
+    <button class="hmb">Топология</button>
+    <button class="hmb">Вид</button>
+    <button class="hmb" onclick="clearAll()">Сбросить</button>
+    <button class="hmb">Справка</button>
+  </div>
+  <div class="hdr-right">
+    <div class="progress-mini">
+      Выполнено: <span id="hdr-done">0</span>/50
+    </div>
+    <div id="hdr-dots"></div>
+    <button id="theme-toggle" onclick="toggleTheme()" title="Переключить день/ночь">
+      <span id="theme-icon">☀</span><span id="theme-label">День</span>
+    </button>
+    <div class="lab-badge">ЛАБ 1 / 6 — ТОПОЛОГИЯ</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ TOOLBAR ═══════════════════════════ -->
+<div id="tlb">
+  <span class="tlbl">Инструмент:</span>
+
+  <button class="tbtn on" id="tsel" data-tip="Выбор и перемещение устройств"
+    onclick="setTool('select')" onmouseenter="trackHover('tool-select')">
+    <svg width="14" height="15" viewBox="0 0 14 15" fill="currentColor">
+      <path d="M2 1 L12 8 L7.5 9.5 L5.5 14 Z"/>
+    </svg>
+  </button>
+
+  <button class="tbtn" id="tcab" data-tip="Проложить кабель между устройствами [C]"
+    onclick="setTool('cable')" onmouseenter="trackHover('tool-cable')">
+    <svg width="16" height="12" viewBox="0 0 16 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+      <circle cx="2" cy="6" r="1.8" fill="currentColor" stroke="none"/>
+      <circle cx="14" cy="6" r="1.8" fill="currentColor" stroke="none"/>
+      <path d="M3.8 6 Q8 1 12.2 6" stroke-dasharray="2.5 2"/>
+      <path d="M3.8 6 Q8 11 12.2 6" stroke-dasharray="2.5 2"/>
+    </svg>
+  </button>
+
+  <button class="tbtn" id="tdel" data-tip="Удалить устройство или кабель [D]"
+    onclick="setTool('delete')" onmouseenter="trackHover('tool-delete')">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <path d="M2 2 L12 12 M12 2 L2 12"/>
+    </svg>
+  </button>
+
+  <div class="tsep"></div>
+
+  <button class="tbtn" data-tip="Очистить холст" onclick="clearAll()">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+      <rect x="1" y="1" width="12" height="12" rx="1"/>
+      <path d="M4 4 L10 10 M10 4 L4 10"/>
+    </svg>
+  </button>
+
+  <button class="tbtn" data-tip="Настроить выбранное устройство [Enter]" onclick="openCfgSelected()">
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="currentColor">
+      <circle cx="7.5" cy="7.5" r="2.2"/>
+      <path d="M7.5 1v2M7.5 12v2M1 7.5h2M12 7.5h2M2.9 2.9l1.4 1.4M10.7 10.7l1.4 1.4M2.9 12.1l1.4-1.4M10.7 4.3l1.4-1.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+    </svg>
+  </button>
+
+  <div class="tsep"></div>
+  <span class="tlbl" style="font-size:8px; color:var(--t3)">
+    Горячие клавиши: <span class="kbd">V</span> выбор <span class="kbd">C</span> кабель <span class="kbd">D</span> удалить <span class="kbd">Enter</span> настройки
+  </span>
+  <div id="mode-pill">● РЕАЛЬНОЕ ВРЕМЯ</div>
+</div>
+
+<!-- ─── CABLE STATUS BAR (скрыт в обычном режиме) ─── -->
+<div id="cable-status-bar" style="
+  display:none; height:28px; flex-shrink:0;
+  background:rgba(0,230,118,.08); border-bottom:2px solid rgba(0,230,118,.4);
+  align-items:center; padding:0 14px; gap:10px;
+">
+  <span style="font-size:14px">🔌</span>
+  <span id="cable-status-text" style="
+    font-family:'Share Tech Mono',monospace; font-size:11px;
+    color:var(--c-green); letter-spacing:.5px;
+  ">Кабель: кликните на первое устройство</span>
+  <span style="
+    margin-left:auto; font-size:10px; font-family:'Exo 2',sans-serif;
+    color:var(--t3);
+  ">Нажмите ESC для отмены</span>
+</div>
+
+<!-- ═══════════════════════════ MAIN ═══════════════════════════ -->
+<div id="main">
+
+  <!-- ── LEFT PANEL ── -->
+  <div id="devp">
+    <div class="dp-head">Устройства</div>
+
+    <div class="dp-cat">
+      <span class="dp-cat-lbl">Конечные узлы</span>
+
+      <div class="ditem" data-type="pc"
+        onmouseenter="trackHover('panel-pc')"
+        onmousedown="startPanelDrag(event,'pc')">
+        <div class="ditem-badge">→ перетащить</div>
+        <div class="ditem-icon" id="panel-pc-icon">
+          <svg width="50" height="40" viewBox="0 0 50 40">
+            <rect x="3" y="2" width="44" height="29" rx="2.5" fill="#0b1a0b" stroke="#2e7d32" stroke-width="1.5"/>
+            <rect x="5" y="4" width="40" height="25" rx="1" fill="#050e05"/>
+            <text x="25" y="20" text-anchor="middle" fill="#2e7d32" font-size="11" font-family="monospace">&gt;_</text>
+            <rect x="18" y="32" width="14" height="4" rx="1" fill="#1a3a1a"/>
+            <rect x="10" y="36" width="30" height="3" rx="1" fill="#0b1a0b" stroke="#2e7d32" stroke-width="1"/>
+            <circle cx="44" cy="7" r="2.5" fill="#00e676"/>
+          </svg>
+        </div>
+        <div class="ditem-label">ПК</div>
+        <div class="ditem-desc">Рабочая станция</div>
+      </div>
+
+      <div class="ditem" data-type="server"
+        onmouseenter="trackHover('panel-server')"
+        onmousedown="startPanelDrag(event,'server')">
+        <div class="ditem-badge">→ перетащить</div>
+        <div class="ditem-icon">
+          <svg width="36" height="46" viewBox="0 0 36 46">
+            <rect x="3" y="1" width="30" height="44" rx="2.5" fill="#0f0622" stroke="#7b1fa2" stroke-width="1.5"/>
+            <rect x="5" y="5" width="26" height="9" rx="1" fill="#070314" stroke="#7b1fa2" stroke-width=".7"/>
+            <rect x="5" y="17" width="26" height="9" rx="1" fill="#070314" stroke="#7b1fa2" stroke-width=".7"/>
+            <rect x="5" y="29" width="26" height="9" rx="1" fill="#070314" stroke="#7b1fa2" stroke-width=".7"/>
+            <circle cx="27" cy="9.5" r="2" fill="#00e676"/>
+            <circle cx="27" cy="21.5" r="2" fill="#00e676"/>
+            <circle cx="27" cy="33.5" r="2" fill="#ffd600"/>
+            <rect x="7" y="7" width="14" height="5" rx=".5" fill="#190840"/>
+          </svg>
+        </div>
+        <div class="ditem-label">Сервер</div>
+        <div class="ditem-desc">Файловый сервер</div>
+      </div>
+    </div>
+
+    <div class="dp-cat">
+      <span class="dp-cat-lbl">Сетевые устройства</span>
+
+      <div class="ditem" data-type="switch"
+        onmouseenter="trackHover('panel-switch')"
+        onmousedown="startPanelDrag(event,'switch')">
+        <div class="ditem-badge">→ перетащить</div>
+        <div class="ditem-icon">
+          <svg width="56" height="30" viewBox="0 0 56 30">
+            <rect x="1" y="7" width="54" height="16" rx="2.5" fill="#040d1e" stroke="#1565c0" stroke-width="1.5"/>
+            <rect x="3" y="9" width="50" height="12" rx="1" fill="#020810"/>
+            <line x1="13" y1="8" x2="13" y2="22" stroke="#1565c0" stroke-width=".5" opacity=".8"/>
+            <line x1="25" y1="8" x2="25" y2="22" stroke="#1565c0" stroke-width=".5" opacity=".8"/>
+            <line x1="37" y1="8" x2="37" y2="22" stroke="#1565c0" stroke-width=".5" opacity=".8"/>
+            <line x1="47" y1="8" x2="47" y2="22" stroke="#1565c0" stroke-width=".5" opacity=".8"/>
+            <path d="M6 16 L10 12 L16 16 L20 12 L26 16 L30 12 L36 16 L40 12 L46 16 L50 12" stroke="#1565c0" fill="none" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="7" cy="4" r="2.5" fill="#00c8ff" opacity=".9"/>
+            <circle cx="16" cy="4" r="2.5" fill="#00e676" opacity=".9"/>
+            <circle cx="25" cy="4" r="2.5" fill="#00e676" opacity=".9"/>
+            <circle cx="34" cy="4" r="2.5" fill="#00e676" opacity=".9"/>
+            <circle cx="43" cy="4" r="2.5" fill="#2196f3" opacity=".9"/>
+          </svg>
+        </div>
+        <div class="ditem-label">Коммутатор</div>
+        <div class="ditem-desc">Switch L2</div>
+      </div>
+
+      <div class="ditem" data-type="router"
+        onmouseenter="trackHover('panel-router')"
+        onmousedown="startPanelDrag(event,'router')">
+        <div class="ditem-badge">→ перетащить</div>
+        <div class="ditem-icon">
+          <svg width="50" height="50" viewBox="0 0 50 50">
+            <circle cx="25" cy="25" r="22" fill="#160a00" stroke="#e65100" stroke-width="1.5"/>
+            <circle cx="25" cy="25" r="14" fill="#0d0600" stroke="#e65100" stroke-width=".8" stroke-dasharray="3.5 3"/>
+            <line x1="25" y1="3" x2="25" y2="47" stroke="#e65100" stroke-width=".8" opacity=".35"/>
+            <line x1="3" y1="25" x2="47" y2="25" stroke="#e65100" stroke-width=".8" opacity=".35"/>
+            <ellipse cx="25" cy="25" rx="14" ry="5" fill="none" stroke="#e65100" stroke-width=".6" opacity=".35"/>
+            <circle cx="25" cy="25" r="4" fill="#e65100"/>
+            <path d="M19 20 L25 14 L31 20" stroke="#ff9100" fill="none" stroke-width="2" stroke-linecap="round"/>
+            <path d="M19 30 L25 36 L31 30" stroke="#ff9100" fill="none" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="ditem-label">Маршрутизатор</div>
+        <div class="ditem-desc">Router L3</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CANVAS ── -->
+  <div id="canvas-wrap"
+    onmousemove="onCanvasMove(event)"
+    onmouseup="onCanvasUp(event)"
+    onclick="onCanvasClick(event)">
+
+    <svg id="conn-svg" xmlns="http://www.w3.org/2000/svg">
+      <line id="prev-line" x1="0" y1="0" x2="0" y2="0"/>
+    </svg>
+    <div id="canvas-nodes"></div>
+    <!-- HTML cable hitboxes for delete mode — z-index above everything -->
+    <div id="cable-overlays"></div>
+  </div>
+
+  <!-- ── RIGHT PANEL ── -->
+  <div id="rp">
+
+    <!-- Properties -->
+    <div id="prop-strip">
+      <div class="prop-hdr" onclick="togglePropBody()">
+        <span class="prop-hdr-t">▸ Свойства устройства</span>
+        <span class="prop-arr" id="prop-arr">▶</span>
+      </div>
+      <div id="prop-body">
+        <div id="prop-nosel">Выберите устройство</div>
+        <div id="prop-data" style="display:none"></div>
+      </div>
+    </div>
+
+    <!-- Tasks -->
+    <div id="tasks-panel">
+      <div id="tasks-hdr">
+        <div class="th-lab">Лабораторная работа 1 / 6</div>
+        <div class="th-title">Топология сети</div>
+        <div class="th-sub">Топология «Звезда» — 5 ПК + Коммутатор + Сервер</div>
+        <div class="prog-bar">
+          <div class="prog-fill" id="prog-fill" style="width:0%"></div>
+        </div>
+        <div class="prog-text">
+          <span class="prog-done" id="prog-done">0 выполнено</span>
+          <span class="prog-total" id="prog-total">из 50 заданий</span>
+        </div>
+      </div>
+
+      <div id="tasks-scroll"></div>
+
+      <div id="tasks-footer">
+        <button class="btn-check" onclick="manualCheck()">✓ Проверить прогресс</button>
+        <button class="btn-next" id="btn-next">→ Перейти к Лабораторной 2</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ CONSOLE ═══════════════════════════ -->
+<div id="con">
+  <div id="con-bar">
+    <span class="con-title">■ Консоль / Терминал</span>
+    <span class="con-hint">Команды: devices | select [имя] | help | clear</span>
+    <button class="con-cl" onclick="clearCon()">cls</button>
+  </div>
+  <div id="cout"></div>
+  <div id="cin-row">
+    <span class="con-prompt" id="con-prompt">NetSim&gt;</span>
+    <input id="cin" type="text" placeholder="Введите команду и нажмите Enter..."
+      autocomplete="off" spellcheck="false" onkeydown="onConKey(event)">
+  </div>
+</div>
+
+<!-- ═══════════════════════════ CONFIG MODAL ═══════════════════════════ -->
+<div class="overlay hid" id="cfg-modal">
+  <div class="mbox">
+    <div class="m-hdr">
+      <span class="m-type" id="m-type-badge">PC</span>
+      <span class="m-title" id="m-title">Конфигурация устройства</span>
+      <button class="m-close" onclick="closeModal('cfg-modal')">✕</button>
+    </div>
+    <div class="m-body" id="m-body"></div>
+    <div class="m-ftr">
+      <button class="btn-cn" onclick="closeModal('cfg-modal')">Отмена</button>
+      <button class="btn-sv" onclick="saveCfg()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ SUCCESS MODAL ═══════════════════════════ -->
+<div class="overlay hid" id="smod">
+  <div class="mbox">
+    <div class="m-hdr">
+      <span class="m-title">🎯 Лабораторная завершена!</span>
+      <button class="m-close" onclick="closeModal('smod')">✕</button>
+    </div>
+    <div class="m-body" style="text-align:center">
+      <div class="s-ico">🎉</div>
+      <div class="s-ttl">ОТЛИЧНО!</div>
+      <div class="s-sub">ЛАБОРАТОРНАЯ РАБОТА 1 / 6</div>
+      <div class="s-dsc">
+        Вы успешно построили топологию «Звезда» — базовую архитектуру большинства
+        офисных сетей. Все 5 рабочих станций подключены к центральному коммутатору,
+        сервер интегрирован в сеть. В Лабораторной 2 мы настроим IP-адресацию
+        и проверим связь между устройствами командой <b style="color:var(--c-cyan)">ping</b>.
+      </div>
+    </div>
+    <div class="m-ftr" style="justify-content:center">
+      <button class="btn-sv" onclick="closeModal('smod')">Продолжить работу</button>
+    </div>
+  </div>
+</div>
+
+<!-- Ghost for drag -->
+<div id="ghost"></div>
+
+<!-- ═══════════════════════════ SCRIPT ═══════════════════════════ -->
+<script>
+'use strict';
+
+// ─────────────────────────────────────────────────────
+//  ГЛОБАЛЬНОЕ СОСТОЯНИЕ
+// ─────────────────────────────────────────────────────
+const G = {
+  // Устройства и соединения
+  devices: [],
+  connections: [],
+  nextId: 1,
+
+  // Активный инструмент
+  tool: 'select',
+
+  // Drag
+  dragging: null,      // id устройства
+  dragOff: {x:0, y:0},
+  everMoved: false,    // хоть одно устройство было перемещено
+
+  // Cable
+  cableFrom: null,
+
+  // Выбор
+  selected: null,      // id выбранного устройства
+
+  // Конфигурация
+  cfgDevice: null,     // устройство в модалке
+
+  // ── ОТСЛЕЖИВАНИЕ ДЕЙСТВИЙ ──
+  hoveredTools: new Set(),    // 'tool-select','tool-cable','tool-delete'
+  hoveredPanel: new Set(),    // 'panel-pc','panel-switch','panel-router','panel-server'
+  toolsActivated: new Set(['select']),
+  openedCfg: new Set(),       // id устройств, чьи настройки открывали
+  selectedTypes: new Set(),   // типы устройств, которые выбирали
+
+  // Delete/restore кабелей
+  deletedCableOnce: false,
+  connPeakBeforeDelete: 0,
+  restoredAfterDelete: false, // после удаления снова достигли 6+
+  prevConnCount: 0,
+  wasBelow6AfterDelete: false,
+
+  // Статус заданий
+  taskDone: {},
+
+  // Завершение лабораторной
+  labComplete: false,
+};
+
+// ─────────────────────────────────────────────────────
+//  ЗАДАНИЯ — 50 штук, разбитых на 8 групп
+// ─────────────────────────────────────────────────────
+const GROUPS = [
+  {
+    name: 'Знакомство с интерфейсом',
+    icon: '🖥',
+    tasks: [
+      {
+        id:'t01',
+        text:'Наведите курсор на кнопку «Кабель» — прочитайте подсказку',
+        hint:'Подержите курсор на второй кнопке в панели инструментов — появится всплывающая подсказка',
+        check:()=> G.hoveredTools.has('tool-cable'),
+      },
+      {
+        id:'t02',
+        text:'Наведите курсор на кнопку «Удалить» — прочитайте подсказку',
+        hint:'Кнопка «Удалить» — третья в панели инструментов (иконка ×)',
+        check:()=> G.hoveredTools.has('tool-delete'),
+      },
+      {
+        id:'t03',
+        text:'Изучите устройство «ПК» в левой панели (наведите курсор)',
+        hint:'Наведите на значок ПК в левой панели — появится название и описание',
+        check:()=> G.hoveredPanel.has('panel-pc'),
+      },
+      {
+        id:'t04',
+        text:'Изучите устройство «Коммутатор» в левой панели',
+        hint:'Наведите курсор на значок коммутатора (Switch) в левой панели',
+        check:()=> G.hoveredPanel.has('panel-switch'),
+      },
+      {
+        id:'t05',
+        text:'Изучите устройства «Маршрутизатор» и «Сервер» в левой панели',
+        hint:'Осмотрите оба устройства — они понадобятся в следующих лабораторных',
+        check:()=> G.hoveredPanel.has('panel-router') && G.hoveredPanel.has('panel-server'),
+      },
+    ]
+  },
+  {
+    name: 'Добавление рабочих станций',
+    icon: '💻',
+    tasks: [
+      {
+        id:'t06',
+        text:'Перетащите 1-й ПК с левой панели на холст',
+        hint:'Нажмите и удерживайте кнопку мыши на значке «ПК» в левой панели → перетащите на рабочую область',
+        check:()=> pcs().length >= 1,
+      },
+      {
+        id:'t07',
+        text:'Добавьте 2-й ПК на холст',
+        hint:'Перетащите ещё один ПК из панели. Разместите его рядом с первым',
+        check:()=> pcs().length >= 2,
+      },
+      {
+        id:'t08',
+        text:'Добавьте 3-й ПК на холст',
+        hint:'Расставляйте ПК полукругом — позже к ним будет удобно прокладывать кабели',
+        check:()=> pcs().length >= 3,
+      },
+      {
+        id:'t09',
+        text:'Добавьте 4-й ПК на холст',
+        check:()=> pcs().length >= 4,
+      },
+      {
+        id:'t10',
+        text:'Добавьте 5-й ПК на холст',
+        hint:'Пять рабочих станций — типичная конфигурация небольшого офиса',
+        check:()=> pcs().length >= 5,
+      },
+      {
+        id:'t11',
+        text:'Разместите ПК в виде дуги — оставьте место в центре для коммутатора',
+        hint:'Перетащите устройства, выбрав инструмент «Выбор» (V). Расположите ПК вокруг центра холста',
+        check:()=> pcs().length >= 5,
+      },
+      {
+        id:'t12',
+        text:'✔ Все 5 рабочих станций добавлены на холст',
+        hint:'Должно быть ровно 5 значков ПК на рабочей области',
+        check:()=> pcs().length >= 5,
+      },
+    ]
+  },
+  {
+    name: 'Сетевое оборудование',
+    icon: '🔀',
+    tasks: [
+      {
+        id:'t13',
+        text:'Добавьте коммутатор (Switch) в центр холста',
+        hint:'Перетащите значок «Коммутатор» из секции «Сетевые устройства» в центр рабочей области',
+        check:()=> switches().length >= 1,
+      },
+      {
+        id:'t14',
+        text:'Добавьте сервер на холст (файловый сервер офиса)',
+        hint:'Перетащите значок «Сервер» из панели. Разместите его в стороне от ПК',
+        check:()=> servers().length >= 1,
+      },
+      {
+        id:'t15',
+        text:'✔ На холсте 7 устройств: 5 ПК + 1 коммутатор + 1 сервер',
+        hint:'Посмотрите на холст — должно быть 7 устройств. Введите команду devices в консоли',
+        check:()=> pcs().length >= 5 && switches().length >= 1 && servers().length >= 1 && G.devices.length >= 7,
+      },
+    ]
+  },
+  {
+    name: 'Именование устройств',
+    icon: '✏️',
+    tasks: [
+      {
+        id:'t16',
+        text:'Откройте настройки 1-го ПК (двойной клик по значку)',
+        hint:'Быстро дважды кликните по значку ПК на холсте — откроется окно конфигурации',
+        check:()=> G.openedCfg.size >= 1,
+      },
+      {
+        id:'t17',
+        text:'Переименуйте 1-й ПК (пример: «Бухгалтерия-1» или «Иванов-ПК»)',
+        hint:'В поле «Имя устройства» в окне конфигурации введите новое осмысленное имя и нажмите «Сохранить»',
+        check:()=> renamedPCs() >= 1,
+      },
+      {
+        id:'t18',
+        text:'Переименуйте 2-й ПК (пример: «Бухгалтерия-2»)',
+        hint:'Дважды кликните по второму ПК → измените имя → Сохранить',
+        check:()=> renamedPCs() >= 2,
+      },
+      {
+        id:'t19',
+        text:'Переименуйте 3-й ПК (пример: «Менеджмент-1»)',
+        check:()=> renamedPCs() >= 3,
+      },
+      {
+        id:'t20',
+        text:'Переименуйте 4-й ПК (пример: «Менеджмент-2»)',
+        check:()=> renamedPCs() >= 4,
+      },
+      {
+        id:'t21',
+        text:'Переименуйте 5-й ПК (пример: «Директор» или «Руководитель»)',
+        hint:'Имя должно отличаться от стандартного PC0, PC1... Придумайте реалистичное название',
+        check:()=> renamedPCs() >= 5,
+      },
+      {
+        id:'t22',
+        text:'Переименуйте коммутатор (пример: «SW-Офис» или «SW-Core»)',
+        hint:'Дважды кликните на коммутатор → введите имя вроде «SW-Офис» → Сохранить',
+        check:()=> switches().some(d=> isRenamed(d,'switch')),
+      },
+      {
+        id:'t23',
+        text:'Переименуйте сервер (пример: «File-Server» или «SRV-Офис»)',
+        hint:'Серверам принято давать имена, отражающие их роль: File-Server, DNS-Server, SRV-Бух',
+        check:()=> servers().some(d=> isRenamed(d,'server')),
+      },
+      {
+        id:'t24',
+        text:'✔ Все 7 устройств имеют осмысленные имена',
+        hint:'Проверьте: ни одно устройство не должно называться PC0, PC1, SW0, SRV0...',
+        check:()=> renamedPCs() >= 5 && switches().some(d=>isRenamed(d,'switch')) && servers().some(d=>isRenamed(d,'server')),
+      },
+    ]
+  },
+  {
+    name: 'Прокладка кабелей',
+    icon: '🔌',
+    tasks: [
+      {
+        id:'t25',
+        text:'Активируйте инструмент «Кабель» (нажмите кнопку или клавишу C)',
+        hint:'Выберите инструмент «Кабель» на панели инструментов — курсор изменится на перекрестие',
+        check:()=> G.toolsActivated.has('cable'),
+      },
+      {
+        id:'t26',
+        text:'Соедините 1-й ПК с коммутатором кабелем',
+        hint:'Инструмент «Кабель»: кликните на ПК (появится выделение) → кликните на коммутатор → кабель проложен!',
+        check:()=> pcConnectedToSw(0),
+      },
+      {
+        id:'t27',
+        text:'Соедините 2-й ПК с коммутатором кабелем',
+        hint:'Повторите: кликните на 2-й ПК, затем на коммутатор',
+        check:()=> pcConnectedToSw(1),
+      },
+      {
+        id:'t28',
+        text:'Соедините 3-й ПК с коммутатором кабелем',
+        check:()=> pcConnectedToSw(2),
+      },
+      {
+        id:'t29',
+        text:'Соедините 4-й ПК с коммутатором кабелем',
+        check:()=> pcConnectedToSw(3),
+      },
+      {
+        id:'t30',
+        text:'Соедините 5-й ПК с коммутатором кабелем',
+        check:()=> pcConnectedToSw(4),
+      },
+      {
+        id:'t31',
+        text:'Соедините сервер с коммутатором кабелем',
+        hint:'Сервер тоже подключается к коммутатору, как и ПК — это стандартная схема',
+        check:()=> isConnectedToSwitch('server'),
+      },
+      {
+        id:'t32',
+        text:'✔ Коммутатор имеет 6 подключённых устройств (5 ПК + 1 сервер)',
+        hint:'Нажмите на коммутатор — в правой панели «Свойства» проверьте количество соединений',
+        check:()=> swConnCount() >= 6,
+      },
+      {
+        id:'t33',
+        text:'Вернитесь к инструменту «Выбор» (клавиша V или кнопка)',
+        hint:'После прокладки кабелей всегда возвращайтесь к инструменту выбора для работы с устройствами',
+        check:()=> G.toolsActivated.has('cable') && G.tool === 'select',
+      },
+    ]
+  },
+  {
+    name: 'Управление топологией',
+    icon: '⚙️',
+    tasks: [
+      {
+        id:'t34',
+        text:'Активируйте инструмент «Удалить» (клавиша D)',
+        hint:'Инструмент «Удалить» позволяет удалять как кабели, так и устройства. Кликните на кабель для его удаления.',
+        check:()=> G.toolsActivated.has('delete'),
+      },
+      {
+        id:'t35',
+        text:'Удалите один кабель (кликните на линию соединения)',
+        hint:'Наведите курсор на линию кабеля — она покраснеет. Кликните для удаления.',
+        check:()=> G.deletedCableOnce,
+      },
+      {
+        id:'t36',
+        text:'Восстановите удалённый кабель (проложите заново)',
+        hint:'Переключитесь на инструмент «Кабель» (C) и заново соедините разъединённые устройства',
+        check:()=> G.restoredAfterDelete && swConnCount() >= 6,
+      },
+      {
+        id:'t37',
+        text:'Переместите любое устройство на новое место',
+        hint:'Переключитесь на «Выбор» (V) → нажмите и перетащите устройство в другое место холста',
+        check:()=> G.everMoved,
+      },
+      {
+        id:'t38',
+        text:'✔ Убедитесь: все 6 кабелей на месте (топология полная)',
+        hint:'В правой панели выберите коммутатор — поле «Соединений» должно показывать 6',
+        check:()=> swConnCount() >= 6 && G.connections.length >= 6,
+      },
+    ]
+  },
+  {
+    name: 'Изучение свойств устройств',
+    icon: '🔍',
+    tasks: [
+      {
+        id:'t39',
+        text:'Выберите коммутатор одиночным кликом — изучите панель свойств',
+        hint:'Кликните по коммутатору → в правой панели «Свойства» появится информация об устройстве',
+        check:()=> G.selectedTypes.has('switch'),
+      },
+      {
+        id:'t40',
+        text:'Выберите сервер и изучите его свойства в правой панели',
+        hint:'Кликните по серверу → обратите внимание на имя, тип и количество соединений',
+        check:()=> G.selectedTypes.has('server'),
+      },
+      {
+        id:'t41',
+        text:'Выберите любой ПК и изучите его свойства',
+        hint:'Кликните по ПК → изучите информацию. IP-адрес пока пуст — настроим в Лаб. 2!',
+        check:()=> G.selectedTypes.has('pc'),
+      },
+      {
+        id:'t42',
+        text:'Откройте настройки коммутатора (двойной клик)',
+        hint:'Дважды кликните по коммутатору — в настройках увидите информацию об устройстве',
+        check:()=> G.openedCfg.size > 0 && [...G.openedCfg].some(id=>{const d=G.devices.find(x=>x.id===id);return d&&d.type==='switch';}),
+      },
+      {
+        id:'t43',
+        text:'Откройте настройки сервера (двойной клик)',
+        hint:'Дважды кликните по серверу — обратите внимание на поля конфигурации',
+        check:()=> [...G.openedCfg].some(id=>{const d=G.devices.find(x=>x.id===id);return d&&d.type==='server';}),
+      },
+      {
+        id:'t44',
+        text:'Всего открыто настроек 4+ разных устройств',
+        hint:'Откройте настройки (двойной клик) минимум 4 разных устройств для изучения интерфейса',
+        check:()=> G.openedCfg.size >= 4,
+      },
+    ]
+  },
+  {
+    name: 'Итоговая проверка топологии',
+    icon: '✅',
+    live: true, // проверки этой группы не "залипают" и всегда отражают текущее состояние топологии
+    tasks: [
+      {
+        id:'t45',
+        text:'✔ На холсте размещены 5 рабочих станций (ПК)',
+        hint:'Введите devices в консоли для просмотра всех устройств',
+        check:()=> pcs().length >= 5,
+      },
+      {
+        id:'t46',
+        text:'✔ Все 5 ПК имеют осмысленные имена (не PC0, PC1 и т.д.)',
+        hint:'Проверьте каждый ПК: имена должны отражать роль пользователя или отдел',
+        check:()=> renamedPCs() >= 5,
+      },
+      {
+        id:'t47',
+        text:'✔ Все 5 ПК подключены к коммутатору кабелями',
+        hint:'Выберите коммутатор → в свойствах должно быть 6 соединений',
+        check:()=> allPCsConnectedToSw(),
+      },
+      {
+        id:'t48',
+        text:'✔ Сервер подключён к коммутатору кабелем',
+        hint:'Убедитесь, что от сервера идёт линия к коммутатору',
+        check:()=> isConnectedToSwitch('server'),
+      },
+      {
+        id:'t49',
+        text:'✔ Коммутатор — центральный узел топологии (6 соединений)',
+        hint:'Это и есть топология «Звезда»: все устройства подключены к одному центральному коммутатору',
+        check:()=> swConnCount() >= 6,
+      },
+      {
+        id:'t50',
+        text:'🌟 Топология «Звезда» полностью построена и готова к следующему шагу!',
+        hint:'Все предыдущие условия должны быть выполнены',
+        check:()=> pcs().length >= 5 && renamedPCs() >= 5 && allPCsConnectedToSw() && isConnectedToSwitch('server') && swConnCount() >= 6,
+      },
+    ]
+  },
+];
+
+// ─────────────────────────────────────────────────────
+//  ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ ПРОВЕРКИ
+// ─────────────────────────────────────────────────────
+const pcs      = ()=> G.devices.filter(d=>d.type==='pc');
+const switches = ()=> G.devices.filter(d=>d.type==='switch');
+const servers  = ()=> G.devices.filter(d=>d.type==='server');
+
+function neighborsOf(id) {
+  return G.connections
+    .filter(c=>c.from===id||c.to===id)
+    .map(c=>c.from===id?c.to:c.from);
+}
+
+function isRenamed(dev, type) {
+  const defaults = {pc:/^PC\d+$/, switch:/^SW\d+$/, server:/^SRV\d+$/, router:/^R\d+$/};
+  return dev.name && !defaults[type]?.test(dev.name);
+}
+
+function renamedPCs() {
+  return pcs().filter(d=>isRenamed(d,'pc')).length;
+}
+
+function swConnCount() {
+  const sw = switches()[0];
+  if(!sw) return 0;
+  return G.connections.filter(c=>c.from===sw.id||c.to===sw.id).length;
+}
+
+function isConnectedToSwitch(type) {
+  const sw = switches()[0];
+  if(!sw) return false;
+  const nbrs = neighborsOf(sw.id);
+  return nbrs.some(id=>G.devices.find(d=>d.id===id&&d.type===type));
+}
+
+function pcConnectedToSw(pcIndex) {
+  const sw = switches()[0];
+  if(!sw) return false;
+  const pcList = pcs();
+  if(pcIndex >= pcList.length) return false;
+  const pcId = pcList[pcIndex].id;
+  return G.connections.some(c=>(c.from===pcId&&c.to===sw.id)||(c.from===sw.id&&c.to===pcId));
+}
+
+function allPCsConnectedToSw() {
+  const sw = switches()[0];
+  if(!sw) return false;
+  const pcList = pcs();
+  if(pcList.length < 5) return false;
+  return pcList.slice(0,5).every(pc=>
+    G.connections.some(c=>(c.from===pc.id&&c.to===sw.id)||(c.from===sw.id&&c.to===pc.id))
+  );
+}
+
+// ─────────────────────────────────────────────────────
+//  ОТСЛЕЖИВАНИЕ HOVER
+// ─────────────────────────────────────────────────────
+function trackHover(key) {
+  if(key.startsWith('tool-')) G.hoveredTools.add(key);
+  if(key.startsWith('panel-')) G.hoveredPanel.add(key);
+  runChecks();
+}
+
+// ─────────────────────────────────────────────────────
+//  DRAG FROM PANEL
+// ─────────────────────────────────────────────────────
+let dragType = null;
+const ghost = document.getElementById('ghost');
+
+function startPanelDrag(e, type) {
+  dragType = type;
+  ghost.innerHTML = getDevSVG(type, 48);
+  ghost.style.display = 'block';
+  ghost.style.left = e.clientX + 'px';
+  ghost.style.top  = e.clientY + 'px';
+  document.addEventListener('mousemove', onPanelDragMove);
+  document.addEventListener('mouseup',   onPanelDragEnd);
+  e.preventDefault();
+}
+function onPanelDragMove(e) {
+  ghost.style.left = e.clientX + 'px';
+  ghost.style.top  = e.clientY + 'px';
+}
+function onPanelDragEnd(e) {
+  document.removeEventListener('mousemove', onPanelDragMove);
+  document.removeEventListener('mouseup',   onPanelDragEnd);
+  ghost.style.display = 'none';
+  if(!dragType) return;
+  const cvr = document.getElementById('canvas-wrap').getBoundingClientRect();
+  if(e.clientX < cvr.left || e.clientX > cvr.right || e.clientY < cvr.top || e.clientY > cvr.bottom) {
+    dragType = null; return;
+  }
+  addDevice(dragType, e.clientX - cvr.left, e.clientY - cvr.top);
+  dragType = null;
+}
+
+// ─────────────────────────────────────────────────────
+//  УПРАВЛЕНИЕ УСТРОЙСТВАМИ
+// ─────────────────────────────────────────────────────
+function addDevice(type, x, y) {
+  const prefixes = {pc:'PC', switch:'SW', server:'SRV', router:'R'};
+  const n = G.devices.filter(d=>d.type===type).length;
+  const id = 'dev' + G.nextId++;
+  const dev = { id, type, name: prefixes[type]+n, x, y };
+  G.devices.push(dev);
+  renderDeviceNode(dev);
+  clog('ok', `Добавлено: ${dev.name} (${typeLabel(type)})`);
+  if(type === 'switch' && switches().length > 1) {
+    clog('wn', '⚠ В этой лабораторной работе используется топология с одним коммутатором. Проверка заданий учитывает только первый добавленный коммутатор — лишние лучше удалить.');
+  }
+  runChecks();
+  return dev;
+}
+
+function getDevSVG(type, sz) {
+  const s = sz || 48;
+  const map = {
+    pc: `<svg width="${s}" height="${Math.round(s*.85)}" viewBox="0 0 50 42">
+      <rect x="3" y="2" width="44" height="29" rx="2.5" fill="#0b1a0b" stroke="#2e7d32" stroke-width="1.5"/>
+      <rect x="5" y="4" width="40" height="25" rx="1" fill="#050e05"/>
+      <text x="25" y="20" text-anchor="middle" fill="#2e7d32" font-size="11" font-family="monospace">&gt;_</text>
+      <rect x="18" y="32" width="14" height="4" rx="1" fill="#1a3a1a"/>
+      <rect x="10" y="36" width="30" height="3" rx="1" fill="#0b1a0b" stroke="#2e7d32" stroke-width="1"/>
+      <circle cx="44" cy="7" r="2.5" fill="#00e676"/></svg>`,
+
+    switch: `<svg width="${Math.round(s*1.2)}" height="${Math.round(s*.65)}" viewBox="0 0 60 32">
+      <rect x="1" y="7" width="58" height="18" rx="2.5" fill="#040d1e" stroke="#1565c0" stroke-width="1.5"/>
+      <rect x="3" y="9" width="54" height="14" rx="1" fill="#020810"/>
+      <line x1="15" y1="8" x2="15" y2="24" stroke="#1565c0" stroke-width=".5" opacity=".8"/>
+      <line x1="28" y1="8" x2="28" y2="24" stroke="#1565c0" stroke-width=".5" opacity=".8"/>
+      <line x1="41" y1="8" x2="41" y2="24" stroke="#1565c0" stroke-width=".5" opacity=".8"/>
+      <line x1="52" y1="8" x2="52" y2="24" stroke="#1565c0" stroke-width=".5" opacity=".8"/>
+      <path d="M6 18 L11 13 L17 18 L22 13 L29 18 L34 13 L40 18 L45 13 L51 18 L56 13" stroke="#1565c0" fill="none" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="7"  cy="4" r="2.5" fill="#00c8ff" opacity=".9"/>
+      <circle cx="17" cy="4" r="2.5" fill="#00e676" opacity=".9"/>
+      <circle cx="27" cy="4" r="2.5" fill="#00e676" opacity=".9"/>
+      <circle cx="37" cy="4" r="2.5" fill="#00e676" opacity=".9"/>
+      <circle cx="47" cy="4" r="2.5" fill="#2196f3" opacity=".9"/></svg>`,
+
+    router: `<svg width="${s}" height="${s}" viewBox="0 0 50 50">
+      <circle cx="25" cy="25" r="22" fill="#160a00" stroke="#e65100" stroke-width="1.5"/>
+      <circle cx="25" cy="25" r="14" fill="#0d0600" stroke="#e65100" stroke-width=".8" stroke-dasharray="3.5 3"/>
+      <line x1="25" y1="3" x2="25" y2="47" stroke="#e65100" stroke-width=".8" opacity=".35"/>
+      <line x1="3"  y1="25" x2="47" y2="25" stroke="#e65100" stroke-width=".8" opacity=".35"/>
+      <ellipse cx="25" cy="25" rx="14" ry="5" fill="none" stroke="#e65100" stroke-width=".6" opacity=".35"/>
+      <circle cx="25" cy="25" r="4" fill="#e65100"/>
+      <path d="M19 20 L25 14 L31 20" stroke="#ff9100" fill="none" stroke-width="2" stroke-linecap="round"/>
+      <path d="M19 30 L25 36 L31 30" stroke="#ff9100" fill="none" stroke-width="2" stroke-linecap="round"/></svg>`,
+
+    server: `<svg width="${Math.round(s*.75)}" height="${s}" viewBox="0 0 36 48">
+      <rect x="3" y="1" width="30" height="46" rx="2.5" fill="#0f0622" stroke="#7b1fa2" stroke-width="1.5"/>
+      <rect x="5" y="5" width="26" height="10" rx="1" fill="#070314" stroke="#7b1fa2" stroke-width=".7"/>
+      <rect x="5" y="18" width="26" height="10" rx="1" fill="#070314" stroke="#7b1fa2" stroke-width=".7"/>
+      <rect x="5" y="31" width="26" height="10" rx="1" fill="#070314" stroke="#7b1fa2" stroke-width=".7"/>
+      <circle cx="27" cy="10" r="2" fill="#00e676"/>
+      <circle cx="27" cy="23" r="2" fill="#00e676"/>
+      <circle cx="27" cy="36" r="2" fill="#ffd600"/>
+      <rect x="7" y="7" width="14" height="6" rx=".5" fill="#190840"/></svg>`,
+  };
+  return map[type] || map.pc;
+}
+
+function typeLabel(type) {
+  return {pc:'ПК',switch:'Коммутатор',server:'Сервер',router:'Маршрутизатор'}[type]||type;
+}
+function typeColor(type) {
+  return {pc:'#2e7d32',switch:'#1565c0',server:'#7b1fa2',router:'#e65100'}[type]||'#444';
+}
+
+function renderDeviceNode(dev) {
+  const wrap = document.getElementById('canvas-nodes');
+  const el   = document.createElement('div');
+  el.className = 'dnode';
+  el.id = 'node-' + dev.id;
+  el.style.left = dev.x + 'px';
+  el.style.top  = dev.y + 'px';
+
+  const col = typeColor(dev.type);
+  const isRen = isRenamed(dev, dev.type);
+
+  el.innerHTML = `
+    <div class="dnode-body" style="background:rgba(${hexToRgb(col)},.12);border-color:${col}55;">
+      <div class="dnode-status"></div>
+      ${getDevSVG(dev.type, 48)}
+    </div>
+    <div class="dnode-name ${isRen?'dnode-renamed':''}" id="name-${dev.id}">${dev.name}</div>
+    <div class="dnode-port" id="port-${dev.id}"></div>`;
+
+  // Mouse events
+  el.addEventListener('mousedown', ev => {
+    if(G.tool === 'select') {
+      G.dragging = dev.id;
+      const r = el.getBoundingClientRect();
+      G.dragOff = { x: ev.clientX - (r.left + r.width/2), y: ev.clientY - (r.top + r.height/2) };
+      selectDevice(dev.id);
+      ev.stopPropagation();
+    } else if(G.tool === 'cable') {
+      doCable(dev.id);
+      ev.stopPropagation();
+    } else if(G.tool === 'delete') {
+      deleteDevice(dev.id);
+      ev.stopPropagation();
+    }
+  });
+
+  // dblclick открывает настройки только в режиме "Выбор" — иначе двойной клик
+  // в режиме "Кабель" одновременно отменял бы прокладку кабеля И открывал конфиг
+  el.addEventListener('dblclick', ev => {
+    if(G.tool === 'select') {
+      openCfg(dev.id);
+    }
+    ev.stopPropagation();
+  });
+
+  // Подсветка возможных целей кабеля (использует ранее неиспользуемый CSS-класс .cbl-tgt)
+  el.addEventListener('mouseenter', () => {
+    if(G.tool === 'cable' && G.cableFrom && G.cableFrom !== dev.id) {
+      el.classList.add('cbl-tgt');
+    }
+  });
+  el.addEventListener('mouseleave', () => {
+    el.classList.remove('cbl-tgt');
+  });
+
+  wrap.appendChild(el);
+}
+
+function deleteDevice(id) {
+  G.devices = G.devices.filter(d=>d.id!==id);
+  G.connections = G.connections.filter(c=>c.from!==id&&c.to!==id);
+  document.getElementById('node-'+id)?.remove();
+  if(G.selected === id) { G.selected = null; renderProps(); }
+  redrawConnections();
+  runChecks();
+}
+
+function hexToRgb(hex) {
+  const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  return `${r},${g},${b}`;
+}
+
+// ─────────────────────────────────────────────────────
+//  ВЫБОР УСТРОЙСТВА
+// ─────────────────────────────────────────────────────
+function selectDevice(id) {
+  document.querySelectorAll('.dnode').forEach(n=>n.classList.remove('sel'));
+  G.selected = id;
+  if(id) {
+    document.getElementById('node-'+id)?.classList.add('sel');
+    const dev = G.devices.find(d=>d.id===id);
+    if(dev) {
+      G.selectedTypes.add(dev.type);
+      renderProps(dev);
+      G.conDev = dev;
+      updatePrompt();
+    }
+  } else {
+    renderProps(null);
+  }
+  runChecks();
+}
+
+// ─────────────────────────────────────────────────────
+//  CANVAS EVENTS
+// ─────────────────────────────────────────────────────
+function onCanvasMove(e) {
+  const cvr = document.getElementById('canvas-wrap').getBoundingClientRect();
+  const x = e.clientX - cvr.left;
+  const y = e.clientY - cvr.top;
+
+  if (G.dragging) {
+    const dev = G.devices.find(d => d.id === G.dragging);
+    if (dev) {
+      const nx = x - G.dragOff.x;
+      const ny = y - G.dragOff.y;
+      if (Math.abs(nx - dev.x) > 2 || Math.abs(ny - dev.y) > 2) G.everMoved = true;
+      dev.x = nx;
+      dev.y = ny;
+      // Только обновляем позицию DOM-элемента, без рекурсии
+      const el = document.getElementById('node-' + dev.id);
+      if (el) { el.style.left = dev.x + 'px'; el.style.top = dev.y + 'px'; }
+      // Перерисовываем кабели при перетаскивании
+      redrawConnections();
+    }
+  }
+
+  if (G.tool === 'cable' && G.cableFrom) {
+    const src = G.devices.find(d => d.id === G.cableFrom);
+    if (src) {
+      const pl = document.getElementById('prev-line');
+      pl.setAttribute('x1', src.x); pl.setAttribute('y1', src.y);
+      pl.setAttribute('x2', x);     pl.setAttribute('y2', y);
+      pl.style.display = '';
+    }
+  }
+}
+
+function onCanvasUp(e) {
+  if(G.dragging) {
+    G.dragging = null;
+    runChecks();
+  }
+}
+
+// Подстраховка: если пользователь отпускает кнопку мыши за пределами #canvas-wrap,
+// событие mouseup там не сработает, и перетаскиваемый узел "залипнет" на курсоре.
+// Слушаем mouseup на всём документе, чтобы гарантированно сбросить состояние.
+document.addEventListener('mouseup', () => {
+  if(G.dragging) {
+    G.dragging = null;
+    runChecks();
+  }
+});
+
+function onCanvasClick(e) {
+  const t = e.target;
+  if(t === document.getElementById('canvas-wrap') || t === document.getElementById('canvas-nodes')) {
+    selectDevice(null);
+  }
+}
+
+// ─────────────────────────────────────────────────────
+//  ТЕМА: ДЕНЬ / НОЧЬ  (по умолчанию — день)
+// ─────────────────────────────────────────────────────
+function toggleTheme() {
+  const isDay = document.body.classList.toggle('day');
+  const icon  = document.getElementById('theme-icon');
+  const label = document.getElementById('theme-label');
+  if(isDay) {
+    icon.textContent = '☀';
+    label.textContent = 'День';
+  } else {
+    icon.textContent = '☾';
+    label.textContent = 'Ночь';
+  }
+}
+
+// ─────────────────────────────────────────────────────
+//  TOOL
+// ─────────────────────────────────────────────────────
+function setTool(t) {
+  G.tool = t;
+  G.toolsActivated.add(t);
+  G.cableFrom = null;
+  hidePrevLine();
+  document.querySelectorAll('.dnode').forEach(n => n.classList.remove('cable-src', 'sel'));
+
+  document.querySelectorAll('.tbtn').forEach(b => b.classList.remove('on'));
+  const bmap = { select: 'tsel', cable: 'tcab', delete: 'tdel' };
+  document.getElementById(bmap[t])?.classList.add('on');
+
+  const cw = document.getElementById('canvas-wrap');
+  cw.className = t === 'cable' ? 'tool-cable' : t === 'delete' ? 'tool-delete' : '';
+  // Enable pointer-events on SVG in delete mode so children get clicks
+  const svgEl = document.getElementById('conn-svg');
+  if (svgEl) svgEl.classList.toggle('deletable', t === 'delete');
+  // Show/hide HTML cable overlays for delete mode
+  const ovl = document.getElementById('cable-overlays');
+  if (ovl) {
+    ovl.classList.toggle('active', t === 'delete');
+    if (t === 'delete') rebuildCableOverlays();
+  }
+
+  const cbar = document.getElementById('cable-status-bar');
+  if (t === 'cable') {
+    cbar.style.display = 'flex';
+    updateCableStatus('Кликните на первое устройство для подключения кабеля');
+    clog('in', '🔌 Инструмент «Кабель» активен. Кликните на первое устройство...');
+  } else {
+    cbar.style.display = 'none';
+  }
+  runChecks();
+}
+
+function updateCableStatus(text) {
+  const el = document.getElementById('cable-status-text');
+  if (el) el.textContent = text;
+}
+
+function openCfgSelected() {
+  if(G.selected) openCfg(G.selected);
+}
+
+function clearAll() {
+  if(!confirm('Очистить холст? Все устройства и кабели будут удалены.')) return;
+  G.devices=[]; G.connections=[]; G.selected=null; G.cableFrom=null; G.everMoved=false;
+  G.deletedCableOnce=false; G.restoredAfterDelete=false;
+  document.getElementById('canvas-nodes').innerHTML='';
+  redrawConnections(); renderProps(null); runChecks();
+  clog('wn','Холст очищен');
+}
+
+// ─────────────────────────────────────────────────────
+//  КАБЕЛИ
+// ─────────────────────────────────────────────────────
+function doCable(devId) {
+  if (!G.cableFrom) {
+    // === Выбираем ПЕРВОЕ устройство ===
+    G.cableFrom = devId;
+    // Убираем все выделения, ставим cable-src на выбранное
+    document.querySelectorAll('.dnode').forEach(n => {
+      n.classList.remove('sel');
+      n.classList.remove('cable-src');
+    });
+    document.getElementById('node-' + devId)?.classList.add('cable-src');
+    const dev = G.devices.find(d => d.id === devId);
+    clog('in', `🔌 Кабель от: ${dev?.name} — теперь кликните на второе устройство`);
+    updateCableStatus(`▶ Кабель от: ${dev?.name} → кликните на второе устройство`);
+  } else {
+    // === Выбираем ВТОРОЕ устройство ===
+    if (G.cableFrom === devId) {
+      // Клик на то же устройство — отмена
+      G.cableFrom = null;
+      hidePrevLine();
+      document.querySelectorAll('.dnode').forEach(n => n.classList.remove('sel', 'cable-src'));
+      updateCableStatus('Кабель: кликните на первое устройство');
+      return;
+    }
+    const exists = G.connections.some(c =>
+      (c.from === G.cableFrom && c.to === devId) ||
+      (c.from === devId && c.to === G.cableFrom)
+    );
+    if (exists) {
+      clog('wn', '⚠ Эти устройства уже соединены!');
+    } else {
+      G.connections.push({ id: 'con' + G.nextId++, from: G.cableFrom, to: devId });
+      redrawConnections();
+      const a = G.devices.find(d => d.id === G.cableFrom);
+      const b = G.devices.find(d => d.id === devId);
+      clog('ok', `✓ Кабель проложен: ${a?.name} ↔ ${b?.name}`);
+      updateCableStatus(`✓ Соединено: ${a?.name} ↔ ${b?.name} — кликните на следующее устройство`);
+      // Detect restore after delete
+      if (G.deletedCableOnce && G.wasBelow6AfterDelete && swConnCount() >= 6) {
+        G.restoredAfterDelete = true;
+      }
+    }
+    document.querySelectorAll('.dnode').forEach(n => n.classList.remove('sel', 'cable-src'));
+    G.cableFrom = null;
+    hidePrevLine();
+    runChecks();
+  }
+}
+
+function hidePrevLine() {
+  const pl = document.getElementById('prev-line');
+  pl.style.display='none';
+  ['x1','y1','x2','y2'].forEach(a=>pl.setAttribute(a,'0'));
+}
+
+function redrawConnections() {
+  const svg = document.getElementById('conn-svg');
+  // Удаляем только линии кабелей и хитбоксы (не prev-line)
+  [...svg.querySelectorAll('.cline,.chit')].forEach(l => l.remove());
+
+  G.connections.forEach(con => {
+    const a = G.devices.find(d => d.id === con.from);
+    const b = G.devices.find(d => d.id === con.to);
+    if (!a || !b) return;
+
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', a.x);
+    line.setAttribute('y1', a.y);
+    line.setAttribute('x2', b.x);
+    line.setAttribute('y2', b.y);
+    line.setAttribute('class', 'cline');
+    line.setAttribute('data-id', con.id);
+
+    // cline itself has no pointer-events; hit-area above handles clicks
+
+    // Wide transparent hit-area on top — receives clicks in delete mode
+    const hit = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    hit.setAttribute('x1', a.x); hit.setAttribute('y1', a.y);
+    hit.setAttribute('x2', b.x); hit.setAttribute('y2', b.y);
+    hit.setAttribute('class', 'chit');
+    hit.setAttribute('data-id', con.id);
+    hit.addEventListener('click', ev => {
+      deleteCable(con.id, a.name, b.name);
+      ev.stopPropagation();
+    });
+    hit.addEventListener('mouseenter', () => { line.classList.add('del-hover'); });
+    hit.addEventListener('mouseleave', () => { line.classList.remove('del-hover'); });
+
+    // Вставляем перед prev-line, чтобы preview был поверх кабелей
+    const prevLine = document.getElementById('prev-line');
+    svg.insertBefore(line, prevLine);
+    svg.insertBefore(hit, prevLine);  // hit поверх линии
+  });
+  // НЕ вызываем updateNodeVisual здесь — избегаем рекурсии!
+  // Rebuild overlays if in delete mode
+  if (G.tool === 'delete') rebuildCableOverlays();
+}
+
+function deleteCable(conId, nameA, nameB) {
+  const prevCnt = swConnCount();
+  G.connections = G.connections.filter(c=>c.id!==conId);
+  G.deletedCableOnce = true;
+  if(swConnCount() < 6 && prevCnt >= 6) G.wasBelow6AfterDelete = true;
+  redrawConnections();
+  rebuildCableOverlays();
+  clog('wn', `Кабель удалён: ${nameA} ↔ ${nameB}`);
+  runChecks();
+}
+
+/* ─── HTML-оверлеи для удаления кабелей ─────────────────────────────────── */
+function rebuildCableOverlays() {
+  const ovl = document.getElementById('cable-overlays');
+  if (!ovl) return;
+  ovl.innerHTML = '';
+  if (G.tool !== 'delete') return;
+
+  G.connections.forEach(con => {
+    const a = G.devices.find(d => d.id === con.from);
+    const b = G.devices.find(d => d.id === con.to);
+    if (!a || !b) return;
+
+    // Вычисляем позицию, угол и длину отрезка
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const len = Math.sqrt(dx*dx + dy*dy);
+    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+    const midX = (a.x + b.x) / 2 - len / 2;
+    const midY = (a.y + b.y) / 2 - 9; // -9 = половина height:18px
+
+    const div = document.createElement('div');
+    div.className = 'cable-hit';
+    div.style.left   = a.x + 'px';
+    div.style.top    = (a.y - 9) + 'px';
+    div.style.width  = len + 'px';
+    div.style.transform = `rotate(${angle}deg)`;
+    div.title = `Удалить кабель: ${a.name} ↔ ${b.name}`;
+
+    // Label badge
+    const lbl = document.createElement('span');
+    lbl.className = 'cable-hit-lbl';
+    lbl.textContent = `✂ ${a.name} ↔ ${b.name}`;
+    div.appendChild(lbl);
+
+    div.addEventListener('click', ev => {
+      deleteCable(con.id, a.name, b.name);
+      ev.stopPropagation();
+    });
+    ovl.appendChild(div);
+  });
+}
+
+// ─────────────────────────────────────────────────────
+//  PROPERTIES PANEL
+// ─────────────────────────────────────────────────────
+function togglePropBody() {
+  const body = document.getElementById('prop-body');
+  const arr  = document.getElementById('prop-arr');
+  const open = body.classList.toggle('open');
+  arr.classList.toggle('open', open);
+}
+
+function renderProps(dev) {
+  const nosel = document.getElementById('prop-nosel');
+  const data  = document.getElementById('prop-data');
+  if(!dev) {
+    nosel.style.display=''; data.style.display='none'; return;
+  }
+  nosel.style.display='none'; data.style.display='';
+  const conns = G.connections.filter(c=>c.from===dev.id||c.to===dev.id).length;
+  data.innerHTML = `
+    <div class="prow"><span class="pk">ИМЯ</span><span class="pv">${dev.name}</span></div>
+    <div class="prow"><span class="pk">ТИП</span><span class="pv">${typeLabel(dev.type)}</span></div>
+    <div class="prow"><span class="pk">IP-АДРЕС</span><span class="pv warn">не назначен</span></div>
+    <div class="prow"><span class="pk">СОЕДИНЕНИЙ</span><span class="pv ${conns>0?'ok':'warn'}">${conns}</span></div>
+    <div class="prow"><span class="pk">СТАТУС</span><span class="pv ok">Активен</span></div>
+    ${dev.type==='switch'?`<div class="prow"><span class="pk">МОДЕЛЬ</span><span class="pv">Catalyst 2960</span></div>`:''}
+    ${dev.type==='server'?`<div class="prow"><span class="pk">РОЛЬ</span><span class="pv ip">Файловый сервер</span></div>`:''}
+    <button class="open-cfg-btn" onclick="openCfg('${dev.id}')">⚙ Открыть настройки</button>`;
+
+  // Show props
+  const body = document.getElementById('prop-body');
+  const arr  = document.getElementById('prop-arr');
+  body.classList.add('open'); arr.classList.add('open');
+}
+
+// ─────────────────────────────────────────────────────
+//  CONFIG MODAL
+// ─────────────────────────────────────────────────────
+function openCfg(id) {
+  const dev = G.devices.find(d=>d.id===id);
+  if(!dev) return;
+  G.cfgDevice = dev;
+  G.openedCfg.add(id);
+  runChecks();
+
+  const typeNames = {pc:'ПК',switch:'Коммутатор',server:'Сервер',router:'Маршрутизатор'};
+  document.getElementById('m-type-badge').textContent = typeNames[dev.type];
+  document.getElementById('m-title').textContent = 'Настройки: ' + dev.name;
+
+  const infoTexts = {
+    pc:`<b>Рабочая станция.</b> В этой лабораторной настраиваем только имя. IP-адрес, маску подсети и шлюз будем настраивать в <b>Лабораторной 2</b>.`,
+    switch:`<b>Коммутатор Layer 2.</b> Работает автоматически — коммутирует кадры по MAC-адресам. Настройка VLAN изучается в продвинутом курсе.`,
+    server:`<b>Файловый сервер.</b> Хранит общие файлы, может выступать как DHCP/DNS-сервер. IP-адрес настроим в <b>Лабораторной 2</b>.`,
+    router:`<b>Маршрутизатор Layer 3.</b> Соединяет разные сети. Настройка маршрутизации — в <b>Лабораторной 3</b>.`,
+  };
+
+  document.getElementById('m-body').innerHTML = `
+    <div class="fg">
+      <label class="fl">Имя устройства</label>
+      <input class="fi" id="cfg-name" value="${dev.name}" placeholder="Введите осмысленное имя...">
+    </div>
+    <div class="fg">
+      <label class="fl">Тип устройства</label>
+      <input class="fi" value="${typeLabel(dev.type)}" readonly style="opacity:.5;cursor:not-allowed">
+    </div>
+    ${dev.type==='switch'?`
+    <div class="fg">
+      <label class="fl">Количество портов</label>
+      <input class="fi" value="24 × FastEthernet" readonly style="opacity:.5;cursor:not-allowed">
+    </div>` : ''}
+    ${dev.type==='server'?`
+    <div class="fg">
+      <label class="fl">Роль сервера</label>
+      <input class="fi" value="Файловый сервер (File Server)" readonly style="opacity:.5;cursor:not-allowed">
+    </div>` : ''}
+    <div class="m-info">ℹ <b>Примечание:</b> ${infoTexts[dev.type]||''}
+    <br><br>💡 <b>Совет по именованию:</b> Используйте осмысленные имена: «Бухгалтерия-1», «SW-Офис», «File-Server». Это упрощает администрирование сети.</div>`;
+
+  document.getElementById('cfg-modal').classList.remove('hid');
+}
+
+function saveCfg() {
+  const dev = G.cfgDevice;
+  if(!dev) return;
+  const newName = document.getElementById('cfg-name')?.value?.trim();
+  if(newName && newName !== dev.name) {
+    clog('ok', `${dev.name} → переименован в: ${newName}`);
+    dev.name = newName;
+    // Обновляем только имя в DOM (updateNodeVisual без рекурсии)
+    const nm = document.getElementById('name-' + dev.id);
+    if(nm) {
+      nm.textContent = dev.name;
+      nm.className = 'dnode-name' + (isRenamed(dev,dev.type)?' dnode-renamed':'');
+    }
+    renderProps(dev);
+  }
+  closeModal('cfg-modal');
+  runChecks();
+}
+
+function closeModal(id) {
+  document.getElementById(id)?.classList.add('hid');
+}
+
+// ─────────────────────────────────────────────────────
+//  TASK SYSTEM — АВТОПРОВЕРКА В РЕАЛЬНОМ ВРЕМЕНИ
+// ─────────────────────────────────────────────────────
+function runChecks() {
+  let anyChanged = false;
+  GROUPS.forEach(g => {
+    g.tasks.forEach(t => {
+      let result = false;
+      try { result = t.check(); } catch(e) {}
+      // "Липкие" задания: раз выполненное задание остаётся выполненным,
+      // даже если текущее состояние топологии временно перестало ему удовлетворять
+      // (например, студент удалил кабель по заданию из группы "Управление топологией").
+      // Группа с флагом live:true — исключение, она всегда отражает актуальное состояние.
+      const newVal = g.live ? result : (G.taskDone[t.id] || result);
+      if(newVal !== G.taskDone[t.id]) {
+        G.taskDone[t.id] = newVal;
+        anyChanged = true;
+      }
+    });
+  });
+  if(anyChanged) {
+    renderTaskList();
+    updateProgress();
+  }
+}
+
+function updateProgress() {
+  const total = GROUPS.reduce((s,g)=>s+g.tasks.length,0);
+  const done  = Object.values(G.taskDone).filter(Boolean).length;
+  const pct   = Math.round(done/total*100);
+
+  document.getElementById('prog-fill').style.width = pct+'%';
+  document.getElementById('prog-done').textContent = done+' выполнено';
+  document.getElementById('prog-total').textContent = 'из '+total+' заданий';
+  document.getElementById('hdr-done').textContent = done;
+  updateDots(done, total);
+
+  const allTasksDone = done >= total - 2; // 48+ из 50 (допуск)
+  const criticalDone = G.taskDone['t50']; // последний итоговый пункт
+  if((allTasksDone || criticalDone) && !G.labComplete) {
+    G.labComplete = true;
+    document.getElementById('btn-next').classList.add('show');
+    setTimeout(()=>{ document.getElementById('smod').classList.remove('hid'); }, 800);
+  }
+}
+
+function updateDots(done, total) {
+  const dotsEl = document.getElementById('hdr-dots');
+  dotsEl.innerHTML = '';
+  const steps = 10;
+  for(let i=0; i<steps; i++) {
+    const d = document.createElement('div');
+    d.className = 'hdot' + (done >= Math.round(total*(i+1)/steps) ? ' on' : '');
+    dotsEl.appendChild(d);
+  }
+}
+
+function renderTaskList() {
+  const scroll = document.getElementById('tasks-scroll');
+  scroll.innerHTML = '';
+  let globalNum = 0;
+
+  GROUPS.forEach((g, gi) => {
+    const groupDone  = g.tasks.filter(t=>G.taskDone[t.id]).length;
+    const groupTotal = g.tasks.length;
+    const isFull     = groupDone === groupTotal;
+
+    const gEl = document.createElement('div');
+    gEl.className = 'tgroup';
+
+    // Group header
+    const hdr = document.createElement('div');
+    hdr.className = 'tgroup-hdr';
+    hdr.innerHTML = `
+      <span class="tgroup-icon open" id="garr-${gi}">▶</span>
+      <span class="tgroup-name">${g.icon} ${g.name}</span>
+      <span class="tgroup-score${isFull?' full':''}">${groupDone}/${groupTotal}</span>`;
+    hdr.onclick = () => {
+      const body = document.getElementById('gbody-'+gi);
+      const arr  = document.getElementById('garr-'+gi);
+      const open = body.style.display!=='none';
+      body.style.display = open ? 'none' : '';
+      arr.classList.toggle('open', !open);
+    };
+
+    // Group body
+    const body = document.createElement('div');
+    body.className = 'tgroup-body';
+    body.id = 'gbody-'+gi;
+
+    g.tasks.forEach((task, ti) => {
+      globalNum++;
+      const done = G.taskDone[task.id];
+
+      const item = document.createElement('div');
+      item.className = 'titem' + (done ? ' done' : '');
+      item.innerHTML = `
+        <span class="t-num${done?' done-n':''}">${globalNum}</span>
+        <div class="t-check">${done?'✓':''}</div>
+        <div class="t-content">
+          <div class="t-main">${task.text}</div>
+          ${!done && task.hint ? `<div class="t-hint">${task.hint}</div>` : ''}
+        </div>`;
+      body.appendChild(item);
+    });
+
+    gEl.appendChild(hdr);
+    gEl.appendChild(body);
+    scroll.appendChild(gEl);
+  });
+
+  // Auto-scroll to first undone
+  setTimeout(()=>{
+    const undone = scroll.querySelector('.titem:not(.done)');
+    if(undone) undone.scrollIntoView({block:'nearest',behavior:'smooth'});
+  }, 100);
+}
+
+function manualCheck() {
+  runChecks();
+  const total = GROUPS.reduce((s,g)=>s+g.tasks.length,0);
+  const done  = Object.values(G.taskDone).filter(Boolean).length;
+  const pct   = Math.round(done/total*100);
+  clog(pct>=90?'ok':'in', `Прогресс: ${done}/${total} (${pct}%)`);
+  if(pct<90) {
+    const first = GROUPS.flatMap(g=>g.tasks).find(t=>!G.taskDone[t.id]);
+    if(first) clog('wn', `→ Следующее задание: ${first.text}`);
+  }
+}
+
+// ─────────────────────────────────────────────────────
+//  CONSOLE
+// ─────────────────────────────────────────────────────
+let cmdHist = [], cmdHistIdx = -1;
+
+function clog(type, text) {
+  const out = document.getElementById('cout');
+  const div = document.createElement('div');
+  div.className = 'cl '+type;
+  div.textContent = text;
+  out.appendChild(div);
+  out.scrollTop = out.scrollHeight;
+}
+
+function clearCon() {
+  document.getElementById('cout').innerHTML='';
+}
+
+function updatePrompt() {
+  const dev = G.conDev || G.devices[0];
+  document.getElementById('con-prompt').textContent = (dev ? dev.name : 'NetSim') + '>';
+}
+
+function onConKey(e) {
+  const inp = document.getElementById('cin');
+  if(e.key === 'Enter') {
+    const cmd = inp.value.trim();
+    if(!cmd) return;
+    clog('cmd','> '+cmd);
+    cmdHist.unshift(cmd); cmdHistIdx=-1; inp.value='';
+    execCmd(cmd);
+  } else if(e.key==='ArrowUp') {
+    cmdHistIdx = Math.min(cmdHistIdx+1, cmdHist.length-1);
+    inp.value = cmdHist[cmdHistIdx]||'';
+    e.preventDefault();
+  } else if(e.key==='ArrowDown') {
+    cmdHistIdx = Math.max(cmdHistIdx-1,-1);
+    inp.value = cmdHistIdx>=0?cmdHist[cmdHistIdx]:'';
+    e.preventDefault();
+  }
+}
+
+function execCmd(raw) {
+  const p = raw.trim().toLowerCase().split(/\s+/);
+  const v = p[0];
+  const src = G.conDev || pcs()[0];
+
+  if(v==='help') {
+    [
+      '╔══════════════════════════════════════════╗',
+      '║          NetSim Pro — Команды            ║',
+      '╠══════════════════════════════════════════╣',
+      '║  devices          — список устройств     ║',
+      '║  select <имя>     — выбрать устройство   ║',
+      '║  info             — инфо о топологии     ║',
+      '║  ping <IP>        — (доступно в Лаб. 2)  ║',
+      '║  ipconfig         — (доступно в Лаб. 2)  ║',
+      '║  clear            — очистить консоль     ║',
+      '╚══════════════════════════════════════════╝',
+    ].forEach(l=>clog('in',l));
+    return;
+  }
+
+  if(v==='clear') { clearCon(); return; }
+
+  if(v==='devices') {
+    if(G.devices.length===0) { clog('wn','Устройств на холсте нет. Добавьте устройства из левой панели.'); return; }
+    clog('in','─── Устройства в сети ─────────────────────────');
+    clog('in','  Имя                Тип                  IP');
+    clog('in','  ─────────────────────────────────────────────');
+    G.devices.forEach(d=>{
+      const conns = G.connections.filter(c=>c.from===d.id||c.to===d.id).length;
+      clog('in',`  ${d.name.padEnd(20)}${typeLabel(d.type).padEnd(22)}не назначен [${conns} портов]`);
+    });
+    clog('in',`  ─────────────────────────────────────────────`);
+    clog('in',`  Всего: ${G.devices.length} устройств, ${G.connections.length} соединений`);
+    return;
+  }
+
+  if(v==='select') {
+    const nm = p.slice(1).join(' ');
+    if(!nm) { clog('er','Использование: select <имя_устройства>'); return; }
+    const dev = G.devices.find(d=>d.name.toLowerCase()===nm.toLowerCase());
+    if(dev) {
+      G.conDev = dev;
+      selectDevice(dev.id);
+      updatePrompt();
+      clog('ok',`Активное устройство: ${dev.name} (${typeLabel(dev.type)})`);
+    } else {
+      clog('er',`Устройство "${nm}" не найдено. Введите devices для просмотра списка.`);
+    }
+    return;
+  }
+
+  if(v==='info') {
+    const pcl=pcs().length, swl=switches().length, srvl=servers().length;
+    clog('in','─── Топология сети ─────────────────────────────');
+    clog('in',`  ПК (рабочих станций): ${pcl}`);
+    clog('in',`  Коммутаторов:         ${swl}`);
+    clog('in',`  Серверов:             ${srvl}`);
+    clog('in',`  Кабелей:              ${G.connections.length}`);
+    clog('in',`  Тип топологии:        ${swl===1&&G.connections.length>=6?'⭐ Звезда (Star)':'В процессе построения'}`);
+    clog('in',`  Переименовано:        ${renamedPCs()}/${pcl} ПК`);
+    clog('in','────────────────────────────────────────────────');
+    return;
+  }
+
+  if(v==='ping') {
+    clog('wn','Команда ping будет доступна в Лабораторной работе 2.');
+    clog('in','В Лаб. 2 вы назначите IP-адреса и сможете проверить связь между устройствами.');
+    return;
+  }
+
+  if(v==='ipconfig') {
+    clog('wn','Команда ipconfig будет доступна в Лабораторной работе 2.');
+    clog('in','Сейчас IP-адреса ещё не назначены — это следующий шаг!');
+    return;
+  }
+
+  clog('er',`Команда не найдена: "${v}". Введите help для справки.`);
+}
+
+// ─────────────────────────────────────────────────────
+//  KEYBOARD SHORTCUTS
+// ─────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if(e.target.tagName==='INPUT') return;
+
+  // Если открыто модальное окно (конфиг устройства или финальное окно поздравления),
+  // единственное, что должно работать — Escape, которым его закрывают.
+  // Раньше остальные хоткеи (V/C/D/Enter) продолжали срабатывать "сквозь" модалку.
+  const openModal = document.querySelector('.overlay:not(.hid)');
+  if(openModal) {
+    if(e.key==='Escape') {
+      closeModal('cfg-modal');
+      closeModal('smod');
+    }
+    return;
+  }
+
+  if(e.key==='v'||e.key==='V'||e.key==='м'||e.key==='М') setTool('select');
+  if(e.key==='c'||e.key==='C'||e.key==='с'||e.key==='С') setTool('cable');
+  if(e.key==='d'||e.key==='D'||e.key==='в'||e.key==='В') setTool('delete');
+  if(e.key==='Delete') {
+    if(G.selected) deleteDevice(G.selected);
+  }
+  if(e.key==='Enter'||e.key==='e'||e.key==='E') {
+    if(G.selected) openCfg(G.selected);
+  }
+  if(e.key==='Escape') {
+    G.cableFrom=null; hidePrevLine();
+    document.querySelectorAll('.dnode').forEach(n=>n.classList.remove('sel','cable-src','cbl-tgt'));
+    document.getElementById('cable-status-bar').style.display='none';
+    setTool('select');
+  }
+});
+
+// Prevent right-click menu on canvas
+document.getElementById('canvas-wrap').addEventListener('contextmenu', e=>e.preventDefault());
+
+// ─────────────────────────────────────────────────────
+//  INIT
+// ─────────────────────────────────────────────────────
+(function init() {
+  // Render empty task list
+  renderTaskList();
+  updateProgress();
+
+  // Init header dots
+  updateDots(0, 50);
+
+  // Initial console messages
+  clog('sy','══════════════════════════════════════════════');
+  clog('sy','   NetSim Pro  —  Лаб. 1: Топология сети');
+  clog('sy','══════════════════════════════════════════════');
+  clog('in','▶ Ваша задача: построить топологию «Звезда»');
+  clog('in','  5 ПК + 1 Коммутатор + 1 Сервер = 7 устройств');
+  clog('in','  Все устройства подключены к центральному SW');
+  clog('sy','──────────────────────────────────────────────');
+  clog('in','💡 Начните с изучения интерфейса:');
+  clog('in','   Наведите курсор на кнопки панели инструментов');
+  clog('in','   Затем перетащите устройства из левой панели');
+  clog('sy','──────────────────────────────────────────────');
+  clog('in','Введите help для списка команд консоли');
+
+  // Periodic check (every 2s as fallback)
+  setInterval(runChecks, 2000);
+})();
+</script>
+</body>
+</html>
